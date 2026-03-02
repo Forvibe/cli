@@ -73,7 +73,14 @@ export class ForvibeClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: "Unknown error" }));
+      const bodyText = await response.text().catch(() => "");
+      let errorMessage: string | undefined;
+      try {
+        const errorJson = JSON.parse(bodyText);
+        errorMessage = errorJson.error;
+      } catch {
+        // Response is not JSON (e.g., HTML error page)
+      }
 
       if (response.status === 401) {
         throw new Error("Session expired. Please generate a new connection code.");
@@ -81,8 +88,13 @@ export class ForvibeClient {
       if (response.status === 409) {
         throw new Error("Report has already been submitted for this session.");
       }
+      if (response.status === 413) {
+        throw new Error("Report too large. Try reducing the number of screenshots.");
+      }
 
-      throw new Error(error.error || `Report submission failed (${response.status})`);
+      throw new Error(
+        errorMessage || `Report submission failed (HTTP ${response.status}: ${bodyText.substring(0, 200)})`
+      );
     }
 
     return (await response.json()) as SubmitReportResponse;

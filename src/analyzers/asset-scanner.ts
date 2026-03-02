@@ -2,7 +2,8 @@ import { readFileSync, existsSync, readdirSync, statSync } from "fs";
 import { join, extname, relative, basename } from "path";
 import type { TechStack, CLIAppAsset, CLIAssetType } from "../types/report.js";
 
-const MAX_ASSET_SIZE = 5 * 1024 * 1024; // 5MB per asset (screenshots can be large)
+const MAX_ASSET_SIZE = 1 * 1024 * 1024; // 1MB per asset (keeps total under Vercel's 4.5MB body limit)
+const MAX_TOTAL_BASE64_SIZE = 3 * 1024 * 1024; // 3MB total base64 budget (leaves room for report JSON)
 const MAX_TOTAL_ASSETS = 10;
 const MAX_SCREENSHOTS = 5;
 const MIN_ASSET_SIZE = 500; // Skip tiny placeholders
@@ -327,6 +328,14 @@ function getPromotionalPaths(rootDir: string, techStack: TechStack): string[] {
  * feature graphics, and promotional images.
  * Note: App icon is handled separately by branding.ts
  */
+function totalBase64Size(assets: CLIAppAsset[]): number {
+  return assets.reduce((sum, a) => sum + a.base64_data.length, 0);
+}
+
+function wouldExceedBudget(assets: CLIAppAsset[], candidate: CLIAppAsset): boolean {
+  return totalBase64Size(assets) + candidate.base64_data.length > MAX_TOTAL_BASE64_SIZE;
+}
+
 export function scanAppAssets(
   rootDir: string,
   techStack: TechStack
@@ -377,5 +386,18 @@ export function scanAppAssets(
     }
   }
 
-  return assets.slice(0, MAX_TOTAL_ASSETS);
+  // Enforce total base64 budget — drop largest assets until under limit
+  const result = assets.slice(0, MAX_TOTAL_ASSETS);
+  while (result.length > 0 && totalBase64Size(result) > MAX_TOTAL_BASE64_SIZE) {
+    // Remove the largest asset
+    let largestIdx = 0;
+    for (let i = 1; i < result.length; i++) {
+      if (result[i].base64_data.length > result[largestIdx].base64_data.length) {
+        largestIdx = i;
+      }
+    }
+    result.splice(largestIdx, 1);
+  }
+
+  return result;
 }
