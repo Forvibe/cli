@@ -21,10 +21,6 @@ program
     "Forvibe API URL (for development)",
     undefined
   )
-  .option(
-    "--local",
-    "Use local Gemini API key instead of Forvibe backend (requires GEMINI_API_KEY env var)"
-  )
   .action(analyzeCommand);
 
 program.parse();

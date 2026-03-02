@@ -23,7 +23,7 @@ function askQuestion(question: string): Promise<string> {
   });
 }
 
-export async function analyzeCommand(options: { dir?: string; apiUrl?: string; local?: boolean }) {
+export async function analyzeCommand(options: { dir?: string; apiUrl?: string }) {
   const rootDir = options.dir || process.cwd();
 
   console.log();
@@ -31,6 +31,17 @@ export async function analyzeCommand(options: { dir?: string; apiUrl?: string; l
     chalk.bold("  Forvibe CLI") + chalk.gray(" — AI-powered App Store automation")
   );
   console.log();
+
+  // Step 0: Check for Gemini API key
+  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
+  if (!geminiApiKey) {
+    console.log(chalk.red("  ✗ Gemini API key is required for project analysis.\n"));
+    console.log(chalk.white("  Set your API key:"));
+    console.log(chalk.cyan("    export GEMINI_API_KEY=your-api-key-here\n"));
+    console.log(chalk.gray("  Get a free API key at: https://aistudio.google.com/apikey"));
+    console.log(chalk.gray("  Your source code is analyzed locally — it never leaves your machine.\n"));
+    process.exit(1);
+  }
 
   // Step 1: Ask for OTC code
   const otcCode = await askQuestion(
@@ -169,93 +180,45 @@ export async function analyzeCommand(options: { dir?: string; apiUrl?: string; l
 
   console.log();
 
-  // Step 9: AI Analysis (via Forvibe backend or local)
-  const useLocalAI = options.local && (process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY);
-
+  // Step 9: AI Analysis (local Gemini — source code never leaves the machine)
   let report;
 
-  if (useLocalAI) {
-    // Deprecated: Local Gemini API path
-    console.log(chalk.yellow("  ⚠ Using local Gemini API (deprecated — will be removed in a future version)"));
+  const aiSpinner = ora({
+    text: "Analyzing locally with Gemini AI (your source code never leaves your machine)...",
+    prefixText: "  ",
+  }).start();
 
-    const geminiApiKey = (process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY)!;
-
-    const aiSpinner = ora({
-      text: "AI is analyzing your project...",
-      prefixText: "  ",
-    }).start();
-
-    try {
-      const { generateReport } = await import("../ai/report-generator.js");
-      report = await generateReport(
-        { techStack, config, sdkScan, branding, readmeContent, sourceCode, projectTree },
-        geminiApiKey
-      );
-      if (appAssets.length > 0) {
-        report.app_assets = appAssets;
-      }
-      aiSpinner.succeed(chalk.green("Analysis complete!"));
-    } catch (error) {
-      aiSpinner.fail(
-        chalk.red(`AI analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`)
-      );
-      process.exit(1);
+  try {
+    const { generateReport } = await import("../ai/report-generator.js");
+    report = await generateReport(
+      { techStack, config, sdkScan, branding, readmeContent, sourceCode, projectTree },
+      geminiApiKey
+    );
+    if (appAssets.length > 0) {
+      report.app_assets = appAssets;
     }
+    aiSpinner.succeed(chalk.green("Analysis complete!"));
+  } catch (error) {
+    aiSpinner.fail(
+      chalk.red(`AI analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`)
+    );
+    process.exit(1);
+  }
 
-    const asoSpinner = ora({
-      text: "Generating ASO-optimized store listing...",
-      prefixText: "  ",
-    }).start();
+  const asoSpinner = ora({
+    text: "Generating ASO-optimized store listing...",
+    prefixText: "  ",
+  }).start();
 
-    try {
-      const { generateASOContent } = await import("../ai/aso-generator.js");
-      const asoContent = await generateASOContent(report, geminiApiKey);
-      report.aso_content = asoContent;
-      asoSpinner.succeed(chalk.green("Store listing content generated!"));
-    } catch (error) {
-      asoSpinner.warn(
-        chalk.yellow(`ASO generation skipped: ${error instanceof Error ? error.message : "Unknown error"}`)
-      );
-    }
-  } else {
-    // Default: Backend AI proxy (no API key needed)
-    const aiSpinner = ora({
-      text: "Analyzing your project...",
-      prefixText: "  ",
-    }).start();
-
-    try {
-      const result = await client.analyzeProject({
-        techStack,
-        config,
-        sdkScan,
-        branding,
-        readmeContent,
-        sourceCode,
-        projectTree,
-      });
-
-      report = result.report;
-
-      // Attach locally scanned assets
-      if (appAssets.length > 0) {
-        report.app_assets = appAssets;
-      }
-
-      if (result.warnings && result.warnings.length > 0) {
-        aiSpinner.succeed(chalk.green("Analysis complete!"));
-        for (const warning of result.warnings) {
-          console.log(chalk.yellow(`  ⚠ ${warning}`));
-        }
-      } else {
-        aiSpinner.succeed(chalk.green("Analysis complete!"));
-      }
-    } catch (error) {
-      aiSpinner.fail(
-        chalk.red(`Analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`)
-      );
-      process.exit(1);
-    }
+  try {
+    const { generateASOContent } = await import("../ai/aso-generator.js");
+    const asoContent = await generateASOContent(report, geminiApiKey);
+    report.aso_content = asoContent;
+    asoSpinner.succeed(chalk.green("Store listing content generated!"));
+  } catch (error) {
+    asoSpinner.warn(
+      chalk.yellow(`ASO generation skipped: ${error instanceof Error ? error.message : "Unknown error"}`)
+    );
   }
 
   console.log();
