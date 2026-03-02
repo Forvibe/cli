@@ -8,6 +8,7 @@ import { extractBranding } from "../analyzers/branding.js";
 import { readReadme, readSourceCode, generateProjectTree } from "../analyzers/source-reader.js";
 import { scanAppAssets } from "../analyzers/asset-scanner.js";
 import { ForvibeClient } from "../api/forvibe-client.js";
+import { detectProvider } from "../ai/providers.js";
 
 function askQuestion(question: string): Promise<string> {
   const rl = createInterface({
@@ -32,16 +33,21 @@ export async function analyzeCommand(options: { dir?: string; apiUrl?: string })
   );
   console.log();
 
-  // Step 0: Check for Gemini API key
-  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
-  if (!geminiApiKey) {
-    console.log(chalk.red("  ✗ Gemini API key is required for project analysis.\n"));
-    console.log(chalk.white("  Set your API key:"));
-    console.log(chalk.cyan("    export GEMINI_API_KEY=your-api-key-here\n"));
-    console.log(chalk.gray("  Get a free API key at: https://aistudio.google.com/apikey"));
+  // Step 0: Detect AI provider
+  let provider;
+  try {
+    provider = detectProvider();
+  } catch {
+    console.log(chalk.red("  ✗ No AI API key found. Set one of the following:\n"));
+    console.log(chalk.cyan("    export GEMINI_API_KEY=your-key") + chalk.gray("       https://aistudio.google.com/apikey"));
+    console.log(chalk.cyan("    export OPENAI_API_KEY=your-key") + chalk.gray("      https://platform.openai.com/api-keys"));
+    console.log(chalk.cyan("    export ANTHROPIC_API_KEY=your-key") + chalk.gray("   https://console.anthropic.com/settings/keys"));
+    console.log();
     console.log(chalk.gray("  Your source code is analyzed locally — it never leaves your machine.\n"));
     process.exit(1);
   }
+
+  console.log(chalk.gray(`  AI Provider: ${provider.name} ✓`));
 
   // Step 1: Ask for OTC code
   const otcCode = await askQuestion(
@@ -180,11 +186,11 @@ export async function analyzeCommand(options: { dir?: string; apiUrl?: string })
 
   console.log();
 
-  // Step 9: AI Analysis (local Gemini — source code never leaves the machine)
+  // Step 9: AI Analysis (source code never leaves the machine)
   let report;
 
   const aiSpinner = ora({
-    text: "Analyzing locally with Gemini AI (your source code never leaves your machine)...",
+    text: `Analyzing locally with ${provider.name} (your source code never leaves your machine)...`,
     prefixText: "  ",
   }).start();
 
@@ -192,7 +198,7 @@ export async function analyzeCommand(options: { dir?: string; apiUrl?: string })
     const { generateReport } = await import("../ai/report-generator.js");
     report = await generateReport(
       { techStack, config, sdkScan, branding, readmeContent, sourceCode, projectTree },
-      geminiApiKey
+      provider
     );
     if (appAssets.length > 0) {
       report.app_assets = appAssets;
@@ -212,7 +218,7 @@ export async function analyzeCommand(options: { dir?: string; apiUrl?: string })
 
   try {
     const { generateASOContent } = await import("../ai/aso-generator.js");
-    const asoContent = await generateASOContent(report, geminiApiKey);
+    const asoContent = await generateASOContent(report, provider);
     report.aso_content = asoContent;
     asoSpinner.succeed(chalk.green("Store listing content generated!"));
   } catch (error) {

@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import type { AIProvider } from "./providers.js";
 import type {
   CLIProjectReport,
   ParsedConfig,
@@ -137,29 +137,15 @@ interface AIAnalysis {
 }
 
 /**
- * Generate a comprehensive project report using Gemini AI
+ * Generate a comprehensive project report using the detected AI provider
  */
 export async function generateReport(
   input: ReportInput,
-  apiKey: string
+  provider: AIProvider
 ): Promise<CLIProjectReport> {
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
-    generationConfig: {
-      temperature: 0.4,
-      responseMimeType: "application/json",
-    },
-  });
-
   const userPrompt = buildUserPrompt(input);
 
-  const result = await model.generateContent([
-    { text: SYSTEM_PROMPT },
-    { text: userPrompt },
-  ]);
-
-  const responseText = result.response.text();
+  const responseText = await provider.generateJSON(SYSTEM_PROMPT, userPrompt, 0.4);
   let aiAnalysis: AIAnalysis;
 
   try {

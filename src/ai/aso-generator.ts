@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import type { AIProvider } from "./providers.js";
 import type { CLIProjectReport, ASOContent } from "../types/report.js";
 
 const ASO_SYSTEM_PROMPT = `You are a world-class App Store Optimization (ASO) specialist with deep expertise in keyword strategy, conversion optimization, and store listing copywriting.
@@ -144,29 +144,15 @@ function enforceCharLimits(raw: RawASOResponse): ASOContent {
 }
 
 /**
- * Generate ASO-optimized store listing content using Gemini AI
+ * Generate ASO-optimized store listing content using the detected AI provider
  */
 export async function generateASOContent(
   report: CLIProjectReport,
-  apiKey: string
+  provider: AIProvider
 ): Promise<ASOContent> {
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
-    generationConfig: {
-      temperature: 0.5,
-      responseMimeType: "application/json",
-    },
-  });
-
   const userPrompt = buildASOPrompt(report);
 
-  const result = await model.generateContent([
-    { text: ASO_SYSTEM_PROMPT },
-    { text: userPrompt },
-  ]);
-
-  const responseText = result.response.text();
+  const responseText = await provider.generateJSON(ASO_SYSTEM_PROMPT, userPrompt, 0.5);
   let parsed: RawASOResponse;
 
   try {
