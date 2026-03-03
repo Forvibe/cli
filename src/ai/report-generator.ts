@@ -204,6 +204,7 @@ export async function generateReport(
     // Branding
     primary_color: input.branding.primary_color || "#007AFF",
     secondary_color: input.branding.secondary_color || "#5856D6",
+    brand_colors: input.branding.brand_colors.length > 0 ? input.branding.brand_colors : undefined,
     app_icon_base64: input.branding.app_icon_base64,
 
     // Raw data

@@ -121,6 +121,8 @@ export interface CLIProjectReport {
   // Landing page / branding
   primary_color: string;
   secondary_color: string;
+  brand_colors?: string[];
+  detected_fonts?: string[];
   app_icon_base64: string | null;
 
   // App assets (extracted from project)
@@ -166,6 +168,7 @@ export interface BrandingResult {
   secondary_color: string | null;
   app_icon_base64: string | null;
   app_icon_path: string | null;
+  brand_colors: string[];
 }
 
 // SDK scan result

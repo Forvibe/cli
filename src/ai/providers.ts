@@ -121,16 +121,46 @@ function createClaudeProvider(apiKey: string): AIProvider {
   };
 }
 
-export function detectProvider(): AIProvider {
-  const geminiKey =
-    process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
-  if (geminiKey) return createGeminiProvider(geminiKey);
+export interface AvailableProvider {
+  id: string;
+  name: string;
+  recommended: boolean;
+  create: () => AIProvider;
+}
 
-  const openaiKey = process.env.OPENAI_API_KEY;
-  if (openaiKey) return createOpenAIProvider(openaiKey);
+export function getAvailableProviders(): AvailableProvider[] {
+  const providers: AvailableProvider[] = [];
 
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  if (anthropicKey) return createClaudeProvider(anthropicKey);
+  if (anthropicKey) {
+    providers.push({
+      id: "claude",
+      name: "Claude",
+      recommended: true,
+      create: () => createClaudeProvider(anthropicKey),
+    });
+  }
 
-  throw new Error("NO_API_KEY");
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (openaiKey) {
+    providers.push({
+      id: "openai",
+      name: "OpenAI",
+      recommended: false,
+      create: () => createOpenAIProvider(openaiKey),
+    });
+  }
+
+  const geminiKey =
+    process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
+  if (geminiKey) {
+    providers.push({
+      id: "gemini",
+      name: "Gemini",
+      recommended: false,
+      create: () => createGeminiProvider(geminiKey),
+    });
+  }
+
+  return providers;
 }

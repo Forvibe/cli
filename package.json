@@ -1,6 +1,6 @@
 {
   "name": "@forvibe/cli",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "Forvibe CLI - AI-powered project analyzer for App Store automation",
   "type": "module",
   "bin": {

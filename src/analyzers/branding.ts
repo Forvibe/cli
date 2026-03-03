@@ -15,12 +15,14 @@ export function extractBranding(
     secondary_color: null,
     app_icon_base64: null,
     app_icon_path: null,
+    brand_colors: [],
   };
 
   // Extract colors
   const colors = extractColors(rootDir, techStack);
   result.primary_color = colors.primary;
   result.secondary_color = colors.secondary;
+  result.brand_colors = extractBrandColors(colors.allColors);
 
   // Find and encode app icon
   const icon = findAppIcon(rootDir, techStack);
@@ -34,10 +36,12 @@ export function extractBranding(
 // Color Extraction
 // =============================================
 
+type ColorResult = { primary: string | null; secondary: string | null; allColors: string[] };
+
 function extractColors(
   rootDir: string,
   techStack: TechStack
-): { primary: string | null; secondary: string | null } {
+): ColorResult {
   switch (techStack) {
     case "flutter":
       return extractFlutterColors(rootDir);
@@ -50,14 +54,40 @@ function extractColors(
     case "java":
       return extractAndroidColors(rootDir);
     default:
-      return { primary: null, secondary: null };
+      return { primary: null, secondary: null, allColors: [] };
   }
 }
 
-function extractFlutterColors(rootDir: string): {
-  primary: string | null;
-  secondary: string | null;
-} {
+function isIrrelevantColor(hex: string): boolean {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  // Perceived brightness (0-255)
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  if (brightness > 242 || brightness < 13) return true;
+  // Grayscale check (R ≈ G ≈ B)
+  const maxDiff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
+  if (maxDiff < 15) return true;
+  return false;
+}
+
+function extractBrandColors(allColors: string[]): string[] {
+  const freq = new Map<string, number>();
+  for (const raw of allColors) {
+    const hex = raw.toLowerCase().slice(0, 7); // normalize to #rrggbb
+    if (hex.length !== 7 || !hex.startsWith("#")) continue;
+    freq.set(hex, (freq.get(hex) || 0) + 1);
+  }
+
+  // Filter irrelevant and sort by frequency
+  const filtered = [...freq.entries()]
+    .filter(([hex]) => !isIrrelevantColor(hex))
+    .sort((a, b) => b[1] - a[1]);
+
+  return filtered.slice(0, 3).map(([hex]) => hex);
+}
+
+function extractFlutterColors(rootDir: string): ColorResult {
   // Search in lib/ for Color patterns
   const dartFiles = findFiles(rootDir, [".dart"], 6);
   const hexColors: string[] = [];
@@ -93,6 +123,7 @@ function extractFlutterColors(rootDir: string): {
         return {
           primary: `#${primaryMatch[2].substring(2)}`,
           secondary: hexColors.length > 1 ? hexColors[1] : null,
+          allColors: hexColors,
         };
       }
     }
@@ -101,13 +132,11 @@ function extractFlutterColors(rootDir: string): {
   return {
     primary: hexColors.length > 0 ? hexColors[0] : null,
     secondary: hexColors.length > 1 ? hexColors[1] : null,
+    allColors: hexColors,
   };
 }
 
-function extractJSColors(rootDir: string): {
-  primary: string | null;
-  secondary: string | null;
-} {
+function extractJSColors(rootDir: string): ColorResult {
   // Look for theme/colors files
   const themeFileNames = [
     "theme.ts",
@@ -149,6 +178,7 @@ function extractJSColors(rootDir: string): {
         return {
           primary: `#${primaryMatch[1]}`,
           secondary: secondaryMatch ? `#${secondaryMatch[1]}` : null,
+          allColors: hexColors,
         };
       }
     }
@@ -157,13 +187,11 @@ function extractJSColors(rootDir: string): {
   return {
     primary: hexColors.length > 0 ? hexColors[0] : null,
     secondary: hexColors.length > 1 ? hexColors[1] : null,
+    allColors: hexColors,
   };
 }
 
-function extractSwiftColors(rootDir: string): {
-  primary: string | null;
-  secondary: string | null;
-} {
+function extractSwiftColors(rootDir: string): ColorResult {
   const hexColors: string[] = [];
 
   // 1. First check Assets.xcassets for AccentColor (most reliable for SwiftUI)
@@ -231,13 +259,11 @@ function extractSwiftColors(rootDir: string): {
   return {
     primary: hexColors.length > 0 ? hexColors[0] : null,
     secondary: hexColors.length > 1 ? hexColors[1] : null,
+    allColors: hexColors,
   };
 }
 
-function extractAndroidColors(rootDir: string): {
-  primary: string | null;
-  secondary: string | null;
-} {
+function extractAndroidColors(rootDir: string): ColorResult {
   const hexColors: string[] = [];
 
   // Check colors.xml and themes.xml
@@ -300,6 +326,7 @@ function extractAndroidColors(rootDir: string): {
   return {
     primary: hexColors.length > 0 ? hexColors[0] : null,
     secondary: hexColors.length > 1 ? hexColors[1] : null,
+    allColors: hexColors,
   };
 }
 

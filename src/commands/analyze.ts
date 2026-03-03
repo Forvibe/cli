@@ -5,10 +5,11 @@ import { detectTechStack } from "../analyzers/tech-detector.js";
 import { parseConfig } from "../analyzers/config-parser.js";
 import { scanSDKs } from "../analyzers/sdk-scanner.js";
 import { extractBranding } from "../analyzers/branding.js";
+import { detectFonts } from "../analyzers/font-detector.js";
 import { readReadme, readSourceCode, generateProjectTree } from "../analyzers/source-reader.js";
 import { scanAppAssets } from "../analyzers/asset-scanner.js";
 import { ForvibeClient } from "../api/forvibe-client.js";
-import { detectProvider } from "../ai/providers.js";
+import { getAvailableProviders } from "../ai/providers.js";
 
 function askQuestion(question: string): Promise<string> {
   const rl = createInterface({
@@ -34,17 +35,41 @@ export async function analyzeCommand(options: { dir?: string; apiUrl?: string })
   console.log();
 
   // Step 0: Detect AI provider
-  let provider;
-  try {
-    provider = detectProvider();
-  } catch {
+  const availableProviders = getAvailableProviders();
+
+  if (availableProviders.length === 0) {
     console.log(chalk.red("  ✗ No AI API key found. Set one of the following:\n"));
-    console.log(chalk.cyan("    export GEMINI_API_KEY=your-key") + chalk.gray("       https://aistudio.google.com/apikey"));
+    console.log(chalk.cyan("    export ANTHROPIC_API_KEY=your-key") + chalk.gray("   https://console.anthropic.com/settings/keys") + chalk.green(" (recommended)"));
     console.log(chalk.cyan("    export OPENAI_API_KEY=your-key") + chalk.gray("      https://platform.openai.com/api-keys"));
-    console.log(chalk.cyan("    export ANTHROPIC_API_KEY=your-key") + chalk.gray("   https://console.anthropic.com/settings/keys"));
+    console.log(chalk.cyan("    export GEMINI_API_KEY=your-key") + chalk.gray("       https://aistudio.google.com/apikey"));
     console.log();
     console.log(chalk.gray("  Your source code is analyzed locally — it never leaves your machine.\n"));
     process.exit(1);
+  }
+
+  let provider;
+
+  if (availableProviders.length === 1) {
+    provider = availableProviders[0].create();
+  } else {
+    console.log(chalk.white("  Multiple AI API keys detected. Choose a provider:\n"));
+    availableProviders.forEach((p, i) => {
+      const label = `${i + 1}. ${p.name}${p.recommended ? chalk.green(" (recommended)") : ""}`;
+      console.log(`    ${label}`);
+    });
+    console.log();
+
+    const answer = await askQuestion(chalk.cyan(`  Enter choice (1-${availableProviders.length}): `));
+    const index = parseInt(answer, 10) - 1;
+
+    if (isNaN(index) || index < 0 || index >= availableProviders.length) {
+      // Default to recommended (Claude) or first
+      const recommended = availableProviders.find((p) => p.recommended) || availableProviders[0];
+      provider = recommended.create();
+      console.log(chalk.gray(`  Using ${recommended.name} (default)\n`));
+    } else {
+      provider = availableProviders[index].create();
+    }
   }
 
   console.log(chalk.gray(`  AI Provider: ${provider.name} ✓`));
@@ -150,6 +175,17 @@ export async function analyzeCommand(options: { dir?: string; apiUrl?: string })
     `Branding: ${chalk.gray(brandingDetails || "no colors/icon detected")}`
   );
 
+  // Step 6b: Detect fonts
+  const fontSpinner = ora({
+    text: "Detecting fonts...",
+    prefixText: "  ",
+  }).start();
+
+  const detectedFonts = detectFonts(rootDir, techStack.stack);
+  fontSpinner.succeed(
+    `Fonts: ${detectedFonts.length > 0 ? chalk.white(detectedFonts.join(", ")) : chalk.gray("none detected")}`
+  );
+
   // Step 7: Scan app assets (screenshots, splash, feature graphic)
   const assetSpinner = ora({
     text: "Scanning app assets...",
@@ -203,6 +239,12 @@ export async function analyzeCommand(options: { dir?: string; apiUrl?: string })
     if (appAssets.length > 0) {
       report.app_assets = appAssets;
     }
+    if (branding.brand_colors.length > 0) {
+      report.brand_colors = branding.brand_colors;
+    }
+    if (detectedFonts.length > 0) {
+      report.detected_fonts = detectedFonts;
+    }
     aiSpinner.succeed(chalk.green("Analysis complete!"));
   } catch (error) {
     aiSpinner.fail(
@@ -249,7 +291,8 @@ export async function analyzeCommand(options: { dir?: string; apiUrl?: string })
   console.log(`  Audience:     ${chalk.white(report.target_audience.length > 100 ? report.target_audience.substring(0, 100) + "..." : report.target_audience)}`);
   console.log(`  SDKs:         ${chalk.white(String(report.detected_sdks.length))} detected`);
   console.log(`  Data:         ${chalk.white(report.data_collected.join(", ") || "none")}`);
-  console.log(`  Colors:       ${chalk.hex(report.primary_color)("■")} ${report.primary_color} ${report.secondary_color ? `${chalk.hex(report.secondary_color)("■")} ${report.secondary_color}` : ""}`);
+  console.log(`  Colors:       ${chalk.hex(report.primary_color)("■")} ${report.primary_color} ${report.secondary_color ? `${chalk.hex(report.secondary_color)("■")} ${report.secondary_color}` : ""}${report.brand_colors?.length ? chalk.gray(` +${report.brand_colors.length} brand colors`) : ""}`);
+  console.log(`  Fonts:        ${report.detected_fonts?.length ? chalk.white(report.detected_fonts.join(", ")) : chalk.gray("none detected")}`);
   console.log(`  Icon:         ${report.app_icon_base64 ? chalk.green("✓ found") : chalk.gray("not found")}`);
   console.log(`  Assets:       ${report.app_assets?.length ? chalk.green(`${report.app_assets.length} found`) : chalk.gray("none")}`);
   console.log(chalk.gray("  ─────────────────────────────────────"));
