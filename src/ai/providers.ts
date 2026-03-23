@@ -9,13 +9,14 @@ export interface AIProvider {
   ): Promise<string>;
 }
 
-function createGeminiProvider(apiKey: string): AIProvider {
+function createGeminiProvider(apiKey: string, deep: boolean): AIProvider {
+  const modelId = deep ? "gemini-3.1-pro-preview" : "gemini-3-flash-preview";
   return {
-    name: "Gemini",
+    name: `Gemini (${deep ? "3.1 Pro" : "3 Flash"})`,
     async generateJSON(systemPrompt, userPrompt, temperature) {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
+        model: modelId,
         generationConfig: {
           temperature,
           responseMimeType: "application/json",
@@ -128,7 +129,7 @@ export interface AvailableProvider {
   create: () => AIProvider;
 }
 
-export function getAvailableProviders(): AvailableProvider[] {
+export function getAvailableProviders(deep: boolean = false): AvailableProvider[] {
   const providers: AvailableProvider[] = [];
 
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
@@ -156,9 +157,9 @@ export function getAvailableProviders(): AvailableProvider[] {
   if (geminiKey) {
     providers.push({
       id: "gemini",
-      name: "Gemini",
+      name: deep ? "Gemini 3.1 Pro" : "Gemini 3 Flash",
       recommended: false,
-      create: () => createGeminiProvider(geminiKey),
+      create: () => createGeminiProvider(geminiKey, deep),
     });
   }
 

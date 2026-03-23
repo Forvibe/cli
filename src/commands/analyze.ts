@@ -327,9 +327,67 @@ export async function analyzeCommand(options: { dir?: string; apiUrl?: string })
     console.log(chalk.gray("  ─────────────────────────────────────"));
   }
 
+  // Step 10: App Review Information
+  console.log();
+  console.log(chalk.bold("  📝 App Review Information"));
+  console.log(chalk.gray("  ─────────────────────────────────────"));
+  console.log(chalk.gray("  Apple's review team may need to sign in to your app."));
+  console.log(chalk.gray("  You can also provide this later in the Forvibe dashboard."));
   console.log();
 
-  // Step 10: Send report
+  // Check if app has auth SDKs
+  const hasAuthSDKs = (sdkScan.third_party_services.auth?.length ?? 0) > 0;
+
+  if (hasAuthSDKs) {
+    const signInAnswer = await askQuestion(
+      chalk.cyan("  Does your app require sign-in to use? (y/n): ")
+    );
+    const signInRequired = signInAnswer.toLowerCase().startsWith("y");
+    report.sign_in_required = signInRequired;
+
+    if (signInRequired) {
+      console.log();
+      console.log(chalk.yellow("  ⚠ Please create a test account in your app for Apple's review team."));
+      console.log(chalk.gray("  This account should have full access to your app's features."));
+      console.log();
+
+      const testEmail = await askQuestion(chalk.cyan("  Test account email: "));
+      const testPassword = await askQuestion(chalk.cyan("  Test account password: "));
+
+      if (testEmail && testPassword) {
+        report.test_account = { email: testEmail, password: testPassword };
+        console.log(chalk.green("  ✓ Test account saved"));
+      }
+    }
+  } else {
+    report.sign_in_required = false;
+  }
+
+  console.log();
+  console.log(chalk.gray("  Contact information for Apple's review team (press Enter to skip):"));
+  console.log();
+
+  const firstName = await askQuestion(chalk.cyan("  First name: "));
+  const lastName = await askQuestion(chalk.cyan("  Last name: "));
+  const contactEmail = await askQuestion(chalk.cyan("  Email: "));
+  const contactPhone = await askQuestion(chalk.cyan("  Phone (e.g. +1 555 123 4567): "));
+
+  if (firstName && lastName && contactEmail) {
+    report.review_contact = {
+      first_name: firstName,
+      last_name: lastName,
+      email: contactEmail,
+      phone: contactPhone || "",
+    };
+    console.log(chalk.green("  ✓ Contact info saved"));
+  } else {
+    console.log(chalk.gray("  ℹ Skipped — you can add this later in the dashboard."));
+  }
+
+  console.log(chalk.gray("  ─────────────────────────────────────"));
+  console.log();
+
+  // Step 11: Send report
   const sendSpinner = ora({
     text: "Sending report to Forvibe...",
     prefixText: "  ",

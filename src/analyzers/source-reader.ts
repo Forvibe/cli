@@ -49,8 +49,8 @@ export function readSourceCode(
   // Find all source files
   const allFiles = scanDirectory(rootDir, {
     extensions,
-    maxDepth: 6,
-    maxFiles: 200,
+    maxDepth: 8,
+    maxFiles: 500,
   });
 
   // Sort by priority (important files first)
@@ -71,7 +71,7 @@ export function readSourceCode(
     // Skip generated files
     if (isGeneratedFile(file, content)) continue;
 
-    const truncated = content.substring(0, 8000); // Max 8k per file for deeper AI analysis
+    const truncated = content.substring(0, 15000); // Max 15k per file for thorough AI analysis
     parts.push(`--- ${file} ---\n${truncated}`);
     totalChars += truncated.length;
   }

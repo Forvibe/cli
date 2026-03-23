@@ -1,4 +1,5 @@
 import type { CLIProjectReport } from "../types/report.js";
+import type { CodeReviewReport } from "../types/review.js";
 
 const DEFAULT_API_URL = "https://forvibe.app";
 
@@ -130,6 +131,56 @@ export class ForvibeClient {
 
       throw new Error(
         errorMessage || `Report submission failed (HTTP ${response.status}: ${bodyText.substring(0, 200)})`
+      );
+    }
+
+    return (await response.json()) as SubmitReportResponse;
+  }
+
+  /**
+   * Submit codebase review results for combined analysis
+   */
+  async submitCodebaseReview(
+    review: CodeReviewReport
+  ): Promise<SubmitReportResponse> {
+    if (!this.sessionToken) {
+      throw new Error("Not connected. Please validate OTC code first.");
+    }
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${this.sessionToken}`,
+    };
+
+    const response = await fetchWithAuth(
+      `${this.baseUrl}/api/review/codebase`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ codebase_review: review }),
+      }
+    );
+
+    if (!response.ok) {
+      const bodyText = await response.text().catch(() => "");
+      let errorMessage: string | undefined;
+      try {
+        const errorJson = JSON.parse(bodyText);
+        errorMessage = errorJson.error;
+      } catch {
+        // Response is not JSON
+      }
+
+      if (response.status === 401) {
+        throw new Error(
+          errorMessage ||
+            "Session expired. Please generate a new connection code."
+        );
+      }
+
+      throw new Error(
+        errorMessage ||
+          `Review submission failed (HTTP ${response.status}: ${bodyText.substring(0, 200)})`
       );
     }
 

@@ -128,6 +128,12 @@ export interface CLIProjectReport {
   // App assets (extracted from project)
   app_assets?: CLIAppAsset[];
 
+  // App Review Information
+  sign_in_required?: boolean;
+  test_account?: { email: string; password: string };
+  review_contact?: { first_name: string; last_name: string; email: string; phone: string };
+  review_notes?: string;
+
   // Raw data
   detected_sdks: DetectedSDK[];
   readme_content: string | null;
