@@ -1,0 +1,8 @@
+platform :ios, '15.0'
+
+target 'MyApp' do
+  use_frameworks!
+
+  pod 'AppsFlyerFramework'
+  pod 'Google-Mobile-Ads-SDK'
+end
