@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "store": "appstore",
-  "version": "2.0.2",
-  "updated_at": "2026-07-09",
+  "version": "2.1.0",
+  "updated_at": "2026-07-10",
   "rules": [
     {
       "id": "appstore.att-usage-description-missing",
@@ -590,6 +590,608 @@
       "tags": [
         "ugc"
       ]
+    },
+    {
+      "id": "appstore.privacy-policy-link-missing",
+      "store": "appstore",
+      "guideline": {
+        "number": "5.1.1",
+        "name": "Data Collection and Storage"
+      },
+      "severity": "medium",
+      "category": "legal",
+      "title": "Data-collecting SDKs present but no in-app privacy policy link was found",
+      "description": "The app includes {{sdk_names}}, which collect analytics, advertising, attribution, or account data, but static analysis found no privacy policy link anywhere in the scanned source. Guideline 5.1.1 requires every app to include a link to its privacy policy inside the app as well as in the App Store Connect metadata field. Detection is heuristic since the link may live in server-driven content, so severity stays at medium.",
+      "user_impact": "The reviewer looks for the privacy policy link inside the app, typically in Settings, onboarding, or the account screen, cannot find one, and rejects under 5.1.1 even if the App Store Connect metadata field is filled in.",
+      "fix": "Add a visible Privacy Policy link inside the app, typically in Settings or the sign-up screen, pointing to a live page that explains what data the app and its third-party SDKs collect, how it is used, and the retention and deletion policy. Keep the same URL in the App Store Connect privacy policy field.",
+      "applies_if": {
+        "any": [
+          {
+            "sdk_category": "analytics"
+          },
+          {
+            "sdk_category": "ads"
+          },
+          {
+            "sdk_category": "attribution"
+          },
+          {
+            "sdk_category": "auth"
+          }
+        ]
+      },
+      "unverified_if": {
+        "fact": "signals.privacy_policy_link_found",
+        "op": "absent"
+      },
+      "fail_if": {
+        "fact": "signals.privacy_policy_link_found",
+        "op": "eq",
+        "value": false
+      },
+      "evidence_facts": [
+        "sdks",
+        "signals.privacy_policy_link_found"
+      ],
+      "related_story_ids": [
+        "privacy-policy-url-broken",
+        "privacy-policy-missing-details"
+      ],
+      "tags": [
+        "privacy"
+      ]
+    },
+    {
+      "id": "appstore.att-declared-but-manifest-says-no-tracking",
+      "store": "appstore",
+      "guideline": {
+        "number": "5.1.2",
+        "name": "Data Use and Sharing"
+      },
+      "severity": "medium",
+      "category": "legal",
+      "title": "NSUserTrackingUsageDescription declared but the privacy manifest says the app does not track",
+      "description": "Info.plist declares NSUserTrackingUsageDescription, signaling that the app intends to request App Tracking Transparency permission, but the app's PrivacyInfo.xcprivacy sets NSPrivacyTracking to false. App Store Connect cross-checks these declarations, and a tracking prompt combined with a manifest that denies tracking is an inconsistency that triggers follow-up questions or a rejection under 5.1.2.",
+      "user_impact": "App Store Connect or the reviewer flags the mismatch between the ATT prompt and the privacy manifest, and the submission is held until the declarations agree with each other and with the app's actual data flows.",
+      "fix": "Make the declarations consistent. If the app tracks users or shares data with data brokers, set NSPrivacyTracking to true and list the tracking domains in NSPrivacyTrackingDomains. If it genuinely does not track, remove NSUserTrackingUsageDescription and the ATT prompt instead.",
+      "applies_if": {
+        "all": [
+          {
+            "platform": "ios"
+          },
+          {
+            "fact": "ios.plist.usage_descriptions.NSUserTrackingUsageDescription",
+            "op": "exists"
+          }
+        ]
+      },
+      "fail_if": {
+        "all": [
+          {
+            "fact": "ios.privacy_manifest.app_manifest_present",
+            "op": "eq",
+            "value": true
+          },
+          {
+            "fact": "ios.privacy_manifest.tracking",
+            "op": "eq",
+            "value": false
+          }
+        ]
+      },
+      "evidence_facts": [
+        "ios.plist.usage_descriptions.NSUserTrackingUsageDescription",
+        "ios.privacy_manifest.app_manifest_present",
+        "ios.privacy_manifest.tracking"
+      ],
+      "related_story_ids": [],
+      "tags": [
+        "privacy",
+        "tracking"
+      ]
+    },
+    {
+      "id": "appstore.skadnetwork-missing-with-ads",
+      "store": "appstore",
+      "guideline": {
+        "number": "5.1.2",
+        "name": "Data Use and Sharing"
+      },
+      "severity": "info",
+      "category": "business",
+      "title": "Ads SDK present but Info.plist declares no SKAdNetworkItems",
+      "description": "The app includes {{sdk_names}} but Info.plist contains no SKAdNetworkItems entries. SKAdNetwork is Apple's privacy-preserving attribution framework, and ad networks rely on their SKAdNetwork identifiers being listed in the app's Info.plist to attribute installs when App Tracking Transparency consent is denied. This does not cause a rejection, but it silently degrades campaign attribution and ad revenue reporting.",
+      "user_impact": "No rejection risk. Install attribution for ad campaigns degrades because SKAdNetwork postbacks cannot be matched to the ad networks serving this app's ads, which hurts monetization reporting rather than the review outcome.",
+      "fix": "Add the SKAdNetworkItems array to Info.plist with the SKAdNetworkIdentifier values each integrated ad network publishes in its integration docs, and keep the list in sync when adding mediation partners.",
+      "autofix_hint": "plist:SKAdNetworkItems",
+      "applies_if": {
+        "all": [
+          {
+            "platform": "ios"
+          },
+          {
+            "sdk_category": "ads"
+          }
+        ]
+      },
+      "unverified_if": {
+        "fact": "ios.plist",
+        "op": "absent"
+      },
+      "fail_if": {
+        "fact": "ios.plist.sk_ad_network_count",
+        "op": "eq",
+        "value": 0
+      },
+      "evidence_facts": [
+        "sdks",
+        "ios.plist.sk_ad_network_count"
+      ],
+      "related_story_ids": [],
+      "tags": [
+        "ads",
+        "attribution"
+      ]
+    },
+    {
+      "id": "appstore.gambling-needs-licensing",
+      "store": "appstore",
+      "guideline": {
+        "number": "5.3.4",
+        "name": "Gaming, Gambling, and Lotteries"
+      },
+      "severity": "high",
+      "category": "legal",
+      "title": "Real-money gaming features require licensing and geo-restrictions",
+      "description": "The app appears to offer gambling, betting, or lottery functionality. Guideline 5.3.4 requires apps offering real money gaming or lotteries to have the necessary licensing and permissions in every location where the app is available, to be geo-restricted to those locations, and to be free on the App Store. Static analysis cannot confirm licensing, so this always needs manual verification.",
+      "user_impact": "The reviewer asks for proof of gambling licenses for every storefront where the app is distributed, and rejects or removes the app if licensing, geo-restriction, or the developer's organization enrollment cannot be demonstrated.",
+      "fix": "Restrict the app's App Store availability to territories where you hold valid gambling licenses, attach the licensing documentation in the Notes for Review, keep the app free to download, and make sure the developer account is enrolled as an organization rather than an individual.",
+      "applies_if": {
+        "capability": "gambling"
+      },
+      "unverified_if": {
+        "always": true
+      },
+      "fail_if": {
+        "always": true
+      },
+      "evidence_facts": [
+        "capabilities"
+      ],
+      "related_story_ids": [
+        "missing-age-rating-violence-gambling"
+      ],
+      "tags": [
+        "gambling"
+      ]
+    },
+    {
+      "id": "appstore.crypto-compliance",
+      "store": "appstore",
+      "guideline": {
+        "number": "3.1.5(b)",
+        "name": "Cryptocurrencies"
+      },
+      "severity": "high",
+      "category": "business",
+      "title": "Cryptocurrency features are restricted to enrolled organizations and approved use cases",
+      "description": "The app appears to include cryptocurrency functionality such as a wallet, exchange, or token features. Guideline 3.1.5(b) only allows crypto wallets from developers enrolled as organizations, forbids on-device mining, restricts exchange features to the exchanges themselves, and requires ICO functionality to come from established financial institutions. Static analysis cannot determine which case applies, so this always needs manual verification.",
+      "user_impact": "The reviewer checks the developer's enrollment type and the app's crypto features against 3.1.5(b), and rejects if a wallet ships from an individual account, if any mining runs on the device, or if exchange functionality is offered by a party other than the exchange itself.",
+      "fix": "Confirm the developer account is enrolled as an organization, remove any on-device mining, and if the app offers exchange or ICO functionality, confirm it is offered directly by the licensed exchange or institution. Document regulatory approvals in the Notes for Review.",
+      "applies_if": {
+        "capability": "crypto"
+      },
+      "unverified_if": {
+        "always": true
+      },
+      "fail_if": {
+        "always": true
+      },
+      "evidence_facts": [
+        "capabilities"
+      ],
+      "related_story_ids": [
+        "crypto-wallet-regulatory-rejection"
+      ],
+      "tags": [
+        "crypto"
+      ]
+    },
+    {
+      "id": "appstore.ai-content-moderation",
+      "store": "appstore",
+      "guideline": {
+        "number": "1.2",
+        "name": "User-Generated Content"
+      },
+      "severity": "medium",
+      "category": "safety",
+      "title": "AI-generated content needs moderation and reporting controls",
+      "description": "The app appears to generate content with AI. App Review applies guideline 1.2's user-generated content standards to AI-generated content: the app needs filtering of objectionable material, a way for users to report problematic output, and an age rating that matches what the generator can produce. Apps that can generate adult or abusive content without guardrails are rejected. Whether these controls exist is behavioral, so this always needs manual verification.",
+      "user_impact": "The reviewer prompts the AI feature with borderline requests, and rejects under 1.2 or demands a 17+ age rating if the app produces objectionable content without filtering, reporting, or blocking controls.",
+      "fix": "Add server-side content filtering for AI output, an in-app report action on generated content, and a block mechanism where user-to-user sharing exists, then set the age rating to match what the generator can actually produce and describe the moderation pipeline in the Notes for Review.",
+      "applies_if": {
+        "capability": "ai_generated_content"
+      },
+      "unverified_if": {
+        "always": true
+      },
+      "fail_if": {
+        "always": true
+      },
+      "evidence_facts": [
+        "capabilities"
+      ],
+      "related_story_ids": [
+        "anonymous-chat-pornography-risk"
+      ],
+      "tags": [
+        "ai",
+        "ugc"
+      ]
+    },
+    {
+      "id": "appstore.background-audio-unjustified",
+      "store": "appstore",
+      "guideline": {
+        "number": "2.5.4",
+        "name": "Software Requirements - Background Modes"
+      },
+      "severity": "medium",
+      "category": "performance",
+      "title": "Audio background mode declared but background playback cannot be confirmed",
+      "description": "Info.plist declares \"audio\" in UIBackgroundModes, which is only permitted for apps that actually play audible content while backgrounded, such as music, podcast, or navigation apps. Whether this app truly plays background audio is behavioral, so it needs verification. Declaring the mode without real background playback is a common 2.5.4 rejection.",
+      "user_impact": "The reviewer backgrounds the app, hears no ongoing audio and finds no feature that needs it, and rejects under 2.5.4 for declaring a background mode the app does not use for its intended purpose.",
+      "fix": "If the app plays ongoing audio in the background, keep the mode and point the reviewer to the feature in the Notes for Review. If not, remove \"audio\" from UIBackgroundModes; apps that only play short foreground sounds do not need it.",
+      "applies_if": {
+        "all": [
+          {
+            "platform": "ios"
+          },
+          {
+            "fact": "ios.plist.background_modes",
+            "op": "includes",
+            "value": "audio"
+          }
+        ]
+      },
+      "unverified_if": {
+        "always": true
+      },
+      "fail_if": {
+        "always": true
+      },
+      "evidence_facts": [
+        "ios.plist.background_modes"
+      ],
+      "related_story_ids": [],
+      "tags": [
+        "background-modes"
+      ]
+    },
+    {
+      "id": "appstore.remote-notification-bgmode-unjustified",
+      "store": "appstore",
+      "guideline": {
+        "number": "2.5.4",
+        "name": "Software Requirements - Background Modes"
+      },
+      "severity": "low",
+      "category": "performance",
+      "title": "remote-notification background mode declared without any push notification setup",
+      "description": "Info.plist declares \"remote-notification\" in UIBackgroundModes, but no push notification SDK was detected and the entitlements do not declare aps-environment. Background remote notifications only work for apps that actually receive push notifications, and an unused background mode is flagged under 2.5.4.",
+      "user_impact": "The reviewer or an automated check questions why the app wakes for remote notifications it can never receive, which triggers a Resolution Center question or a 2.5.4 rejection for declaring an unneeded background mode.",
+      "fix": "Remove \"remote-notification\" from UIBackgroundModes if the app does not receive push notifications. If it should, add the Push Notifications capability so the aps-environment entitlement is generated, and register for remote notifications in code.",
+      "applies_if": {
+        "all": [
+          {
+            "platform": "ios"
+          },
+          {
+            "fact": "ios.plist.background_modes",
+            "op": "includes",
+            "value": "remote-notification"
+          }
+        ]
+      },
+      "unverified_if": {
+        "fact": "ios.entitlements",
+        "op": "absent"
+      },
+      "fail_if": {
+        "not": {
+          "capability": "push_notifications"
+        }
+      },
+      "evidence_facts": [
+        "ios.plist.background_modes",
+        "capabilities",
+        "ios.entitlements.aps_environment"
+      ],
+      "related_story_ids": [],
+      "tags": [
+        "background-modes",
+        "push"
+      ]
+    },
+    {
+      "id": "appstore.kids-category-health-data",
+      "store": "appstore",
+      "guideline": {
+        "number": "5.1.4",
+        "name": "Kids"
+      },
+      "severity": "high",
+      "category": "safety",
+      "title": "Kids Category app collects health data",
+      "description": "The app targets the Kids Category while also using HealthKit or another health data source. Guideline 5.1.4 subjects apps for kids to strict data collection limits and children's privacy law compliance such as COPPA and GDPR-K, and guideline 1.3 prohibits sending personally identifiable or device data from kids apps to third parties. Health data collection in a kids app draws the strictest review and is rejected without documented parental consent flows and a clear justification.",
+      "user_impact": "The reviewer sees health or sensor data collection in an app aimed at children and rejects under 5.1.4 unless the app demonstrates verifiable parental consent and a core feature that genuinely requires that data.",
+      "fix": "Remove health data collection from the Kids Category build, or if it is essential to the app's core purpose, implement verifiable parental consent before any collection, minimize what is collected, keep it off third-party services, and explain the flow in the Notes for Review.",
+      "applies_if": {
+        "capability": "kids_category"
+      },
+      "fail_if": {
+        "capability": "health"
+      },
+      "evidence_facts": [
+        "capabilities"
+      ],
+      "related_story_ids": [
+        "tinyco-kids-email-collection-ftc",
+        "kids-app-third-party-advertising"
+      ],
+      "tags": [
+        "kids",
+        "health"
+      ]
+    },
+    {
+      "id": "appstore.contacts-with-ads-sharing-risk",
+      "store": "appstore",
+      "guideline": {
+        "number": "5.1.2",
+        "name": "Data Use and Sharing"
+      },
+      "severity": "medium",
+      "category": "legal",
+      "title": "Contacts access alongside advertising SDKs risks undisclosed data sharing",
+      "description": "The app reads the user's contacts and also includes {{sdk_names}}. Guideline 5.1.2 forbids using, transmitting, or sharing personal data such as the address book without explicit permission for that purpose, and sharing contact data with advertising SDKs is treated as repurposing data that was collected for a different feature. Whether contact data actually reaches the ad SDK is behavioral, so this needs verification.",
+      "user_impact": "If review determines contact data is available to the advertising stack without separate consent, the app is rejected under 5.1.2, and a live app can face expedited removal for the same finding.",
+      "fix": "Keep contacts data strictly inside the feature that needs it, confirm the ad SDKs are configured without access to contact fields, and disclose contacts collection in the privacy nutrition label. If contacts are only used for an invite feature, say so in the Notes for Review.",
+      "applies_if": {
+        "all": [
+          {
+            "capability": "contacts"
+          },
+          {
+            "sdk_category": "ads"
+          }
+        ]
+      },
+      "unverified_if": {
+        "always": true
+      },
+      "fail_if": {
+        "always": true
+      },
+      "evidence_facts": [
+        "sdks",
+        "capabilities"
+      ],
+      "related_story_ids": [
+        "third-party-sdk-data-sharing-undisclosed"
+      ],
+      "tags": [
+        "privacy",
+        "contacts",
+        "ads"
+      ]
+    },
+    {
+      "id": "appstore.voip-background-mode-unjustified",
+      "store": "appstore",
+      "guideline": {
+        "number": "2.5.4",
+        "name": "Software Requirements - Background Modes"
+      },
+      "severity": "medium",
+      "category": "performance",
+      "title": "VoIP background mode declared but calling functionality cannot be confirmed",
+      "description": "Info.plist declares \"voip\" in UIBackgroundModes. Since iOS 13, VoIP push notifications must be reported to CallKit as incoming calls, and the voip background mode is only permitted for apps with real voice calling functionality. Apps that declare it for keep-alive pings or silent wake-ups are rejected under 2.5.4. Whether this app implements real calling is behavioral, so it needs verification.",
+      "user_impact": "The reviewer looks for an actual calling feature, and rejects under 2.5.4 if the voip mode exists only to keep the app alive in the background or to deliver silent wake-ups.",
+      "fix": "If the app offers voice calls, integrate CallKit and report every VoIP push as an incoming call. If it does not, remove \"voip\" from UIBackgroundModes and deliver messages through regular push notifications.",
+      "applies_if": {
+        "all": [
+          {
+            "platform": "ios"
+          },
+          {
+            "fact": "ios.plist.background_modes",
+            "op": "includes",
+            "value": "voip"
+          }
+        ]
+      },
+      "unverified_if": {
+        "always": true
+      },
+      "fail_if": {
+        "always": true
+      },
+      "evidence_facts": [
+        "ios.plist.background_modes"
+      ],
+      "related_story_ids": [],
+      "tags": [
+        "background-modes",
+        "voip"
+      ]
+    },
+    {
+      "id": "appstore.always-location-justification",
+      "store": "appstore",
+      "guideline": {
+        "number": "5.1.1",
+        "name": "Data Collection and Storage"
+      },
+      "severity": "low",
+      "category": "legal",
+      "title": "Always location permission requested where When In Use may be sufficient",
+      "description": "Info.plist declares an Always location usage description, which requests location access even while the app is not in use. App Review regularly challenges Always access and asks developers to justify why When In Use authorization is not sufficient, since iOS 13 made When In Use plus background updates cover most legitimate use cases. Whether this app's features genuinely need Always access is behavioral, so it needs verification.",
+      "user_impact": "The reviewer or a Resolution Center follow-up asks what feature needs location while the app is closed, and the submission is held or rejected until the justification is convincing or the request is downgraded to When In Use.",
+      "fix": "Audit the features that consume location. If geofencing, background tracking, or automatic check-ins genuinely run without the app open, keep Always access and explain the feature in the Notes for Review. Otherwise request only When In Use authorization and remove the Always usage descriptions.",
+      "applies_if": {
+        "all": [
+          {
+            "platform": "ios"
+          },
+          {
+            "any": [
+              {
+                "fact": "ios.plist.usage_descriptions.NSLocationAlwaysAndWhenInUseUsageDescription",
+                "op": "exists"
+              },
+              {
+                "fact": "ios.plist.usage_descriptions.NSLocationAlwaysUsageDescription",
+                "op": "exists"
+              }
+            ]
+          }
+        ]
+      },
+      "unverified_if": {
+        "always": true
+      },
+      "fail_if": {
+        "always": true
+      },
+      "evidence_facts": [
+        "ios.plist.usage_descriptions.NSLocationAlwaysAndWhenInUseUsageDescription",
+        "ios.plist.usage_descriptions.NSLocationAlwaysUsageDescription"
+      ],
+      "related_story_ids": [
+        "always-location-when-while-using-sufficient",
+        "ios13-always-location-behavior-change"
+      ],
+      "tags": [
+        "location",
+        "permissions"
+      ]
+    },
+    {
+      "id": "appstore.health-privacy-policy-missing",
+      "store": "appstore",
+      "guideline": {
+        "number": "5.1.1",
+        "name": "Data Collection and Storage"
+      },
+      "severity": "medium",
+      "category": "legal",
+      "title": "Health data collected without a confirmed privacy policy link",
+      "description": "The app collects health data, but static analysis found no privacy policy link in the scanned source. Apps that access HealthKit or other health data must provide a privacy policy explaining exactly how health data is used and stored, and guidelines 5.1.1 and 5.1.3 hold health data to stricter standards than ordinary usage data. Detection is heuristic since the link may live in server-driven content, so severity stays at medium.",
+      "user_impact": "The reviewer checks the app and its metadata for a privacy policy that covers health data handling, and rejects under 5.1.1 when it is missing, incomplete, or silent about HealthKit.",
+      "fix": "Publish a privacy policy that explicitly covers what health data the app reads and writes, how it is stored, that it is never shared for advertising, and how users can delete it, then link it inside the app and in App Store Connect.",
+      "applies_if": {
+        "capability": "health"
+      },
+      "unverified_if": {
+        "fact": "signals.privacy_policy_link_found",
+        "op": "absent"
+      },
+      "fail_if": {
+        "fact": "signals.privacy_policy_link_found",
+        "op": "eq",
+        "value": false
+      },
+      "evidence_facts": [
+        "capabilities",
+        "signals.privacy_policy_link_found"
+      ],
+      "related_story_ids": [
+        "privacy-policy-missing-details"
+      ],
+      "tags": [
+        "health",
+        "privacy"
+      ]
+    },
+    {
+      "id": "appstore.manifest-tracking-without-att-key",
+      "store": "appstore",
+      "guideline": {
+        "number": "5.1.2",
+        "name": "Data Use and Sharing"
+      },
+      "severity": "high",
+      "category": "legal",
+      "title": "Privacy manifest declares tracking but NSUserTrackingUsageDescription is missing",
+      "description": "The app's PrivacyInfo.xcprivacy sets NSPrivacyTracking to true, declaring that the app or its SDKs track users across apps and websites, but Info.plist does not declare NSUserTrackingUsageDescription. A tracking declaration without the ATT usage description means the app can never present the required App Tracking Transparency prompt, which violates 5.1.2.",
+      "user_impact": "The reviewer sees a manifest that declares tracking, verifies that no ATT prompt can ever appear because the usage description is missing, and rejects under 5.1.2 for tracking without obtaining permission.",
+      "fix": "Add NSUserTrackingUsageDescription to Info.plist with a specific reason and request ATTrackingManager authorization before any tracking or IDFA access occurs, or if the app genuinely stopped tracking, set NSPrivacyTracking to false and clear NSPrivacyTrackingDomains.",
+      "autofix_hint": "plist:NSUserTrackingUsageDescription",
+      "applies_if": {
+        "platform": "ios"
+      },
+      "unverified_if": {
+        "fact": "ios.plist",
+        "op": "absent"
+      },
+      "fail_if": {
+        "all": [
+          {
+            "fact": "ios.privacy_manifest.tracking",
+            "op": "eq",
+            "value": true
+          },
+          {
+            "fact": "ios.plist.usage_descriptions.NSUserTrackingUsageDescription",
+            "op": "absent"
+          }
+        ]
+      },
+      "evidence_facts": [
+        "ios.privacy_manifest.tracking",
+        "ios.privacy_manifest.tracking_domains",
+        "ios.plist_source"
+      ],
+      "related_story_ids": [],
+      "tags": [
+        "privacy",
+        "tracking"
+      ]
+    },
+    {
+      "id": "appstore.health-claims-scrutiny",
+      "store": "appstore",
+      "guideline": {
+        "number": "1.4.1",
+        "name": "Physical Harm"
+      },
+      "severity": "medium",
+      "category": "safety",
+      "title": "Health features may require medical disclaimers and methodology disclosure",
+      "description": "The app works with health data, and guideline 1.4.1 reviews medical and health apps with greater scrutiny. Apps that could provide inaccurate readings, make diagnostic claims, or present health measurements must disclose the data and methodology behind those claims, and drug dosage calculators are restricted to approved entities under 1.4.2. What the app actually claims is behavioral, so this always needs manual verification.",
+      "user_impact": "The reviewer examines health-related claims in the app and its metadata, and rejects under 1.4.1 when measurement or diagnostic features lack supporting methodology, disclaimers, or regulatory clearance where required.",
+      "fix": "Add clear disclaimers that the app does not provide medical advice, cite the methodology or studies behind any measurement features, avoid diagnostic language unless you hold regulatory clearance, and describe data sources in the Notes for Review.",
+      "applies_if": {
+        "capability": "health"
+      },
+      "unverified_if": {
+        "always": true
+      },
+      "fail_if": {
+        "always": true
+      },
+      "evidence_facts": [
+        "capabilities"
+      ],
+      "related_story_ids": [
+        "medical-app-no-disclaimers",
+        "drug-dosage-calculator-unapproved-entity"
+      ],
+      "tags": [
+        "health"
+      ]
     }
   ],
   "sdk_registry": [
@@ -791,7 +1393,11 @@
           "AppLovinSDK"
         ],
         "gradle": [
-          "com.applovin:applovin-sdk"
+          "com.applovin:applovin-sdk",
+          "applovin-sdk*"
+        ],
+        "upm": [
+          "com.applovin.mediation.ads"
         ],
         "ios_imports": [
           "AppLovinSDK"
@@ -812,6 +1418,7 @@
       "implies": [
         "ads"
       ],
+      "notes": "The bare 'applovin-sdk*' gradle prefix pattern matches versioned AAR basenames vendored under Unity Assets/Plugins/Android (e.g. applovin-sdk-12.1.0.aar).",
       "stories": []
     },
     {
@@ -1433,6 +2040,9 @@
         "pods": [
           "GoogleSignIn"
         ],
+        "spm": [
+          "googlesignin-ios"
+        ],
         "gradle": [
           "com.google.android.gms:play-services-auth"
         ],
@@ -1446,10 +2056,13 @@
       "data_collection": [
         "name_email"
       ],
-      "flags": {},
+      "flags": {
+        "requires_privacy_manifest": true
+      },
       "implies": [
         "third_party_login"
       ],
+      "notes": "GoogleSignIn is on Apple's privacy-manifest-required SDK list.",
       "stories": []
     },
     {
@@ -1468,8 +2081,12 @@
           "FBSDKCoreKit",
           "FBSDKLoginKit"
         ],
+        "spm": [
+          "facebook-ios-sdk"
+        ],
         "gradle": [
-          "com.facebook.android:facebook-login"
+          "com.facebook.android:facebook-login",
+          "com.facebook.android:facebook-android-sdk"
         ],
         "ios_imports": [
           "FBSDKCoreKit",
@@ -1484,11 +2101,13 @@
         "device_id"
       ],
       "flags": {
-        "att_required": true
+        "att_required": true,
+        "requires_privacy_manifest": true
       },
       "implies": [
         "third_party_login"
       ],
+      "notes": "FBSDKCoreKit, FBSDKLoginKit, and FBSDKShareKit are on Apple's privacy-manifest-required SDK list.",
       "stories": [
         "sign-in-with-apple-missing"
       ]
@@ -1639,6 +2258,9 @@
       "vendor": "Apple",
       "category": "health",
       "match": {
+        "pub": [
+          "health"
+        ],
         "ios_imports": [
           "HealthKit"
         ]
@@ -1664,6 +2286,7 @@
           }
         ]
       },
+      "notes": "The Flutter 'health' plugin bridges HealthKit on iOS (and Health Connect on Android), so it carries the same usage-description requirements.",
       "stories": []
     },
     {
@@ -1729,7 +2352,9 @@
       "data_collection": [
         "location"
       ],
-      "flags": {},
+      "flags": {
+        "requires_privacy_manifest": true
+      },
       "implies": [
         "location"
       ],
@@ -1742,6 +2367,7 @@
           }
         ]
       },
+      "notes": "geolocator_apple, the plugin's iOS implementation, is on Apple's privacy-manifest-required SDK list.",
       "stories": []
     },
     {
@@ -1784,6 +2410,7 @@
         "npm": [
           "react-native-vision-camera",
           "react-native-image-picker",
+          "react-native-camera",
           "expo-camera",
           "expo-image-picker"
         ]
@@ -1848,6 +2475,9 @@
         "gradle": [
           "com.google.android.gms:play-services-maps"
         ],
+        "ios_imports": [
+          "GoogleMaps"
+        ],
         "android_imports": [
           "com.google.android.gms.maps"
         ]
@@ -1857,6 +2487,2312 @@
       ],
       "flags": {},
       "implies": [],
+      "stories": []
+    },
+    {
+      "id": "alamofire",
+      "name": "Alamofire",
+      "vendor": "Alamofire Software Foundation",
+      "category": "other",
+      "match": {
+        "pods": [
+          "Alamofire"
+        ],
+        "spm": [
+          "alamofire"
+        ],
+        "ios_imports": [
+          "Alamofire"
+        ]
+      },
+      "data_collection": [],
+      "flags": {
+        "requires_privacy_manifest": true
+      },
+      "implies": [],
+      "notes": "HTTP networking library on Apple's privacy-manifest-required SDK list; update to a manifest-shipping version when App Store Connect flags it.",
+      "stories": []
+    },
+    {
+      "id": "afnetworking",
+      "name": "AFNetworking",
+      "category": "other",
+      "match": {
+        "pods": [
+          "AFNetworking"
+        ],
+        "ios_imports": [
+          "AFNetworking"
+        ]
+      },
+      "data_collection": [],
+      "flags": {
+        "requires_privacy_manifest": true
+      },
+      "implies": [],
+      "notes": "Retired since 2020 but still on Apple's privacy-manifest-required SDK list; it ships no manifest of its own, so the app target must cover its Required Reason API usage.",
+      "stories": []
+    },
+    {
+      "id": "kingfisher",
+      "name": "Kingfisher",
+      "category": "media",
+      "match": {
+        "pods": [
+          "Kingfisher"
+        ],
+        "spm": [
+          "kingfisher"
+        ],
+        "ios_imports": [
+          "Kingfisher"
+        ]
+      },
+      "data_collection": [],
+      "flags": {
+        "requires_privacy_manifest": true
+      },
+      "implies": [],
+      "notes": "Image loading and caching library on Apple's privacy-manifest-required SDK list.",
+      "stories": []
+    },
+    {
+      "id": "sdwebimage",
+      "name": "SDWebImage",
+      "category": "media",
+      "match": {
+        "pods": [
+          "SDWebImage"
+        ],
+        "spm": [
+          "sdwebimage"
+        ],
+        "ios_imports": [
+          "SDWebImage"
+        ]
+      },
+      "data_collection": [],
+      "flags": {
+        "requires_privacy_manifest": true
+      },
+      "implies": [],
+      "notes": "Image loading and caching library on Apple's privacy-manifest-required SDK list.",
+      "stories": []
+    },
+    {
+      "id": "lottie",
+      "name": "Lottie",
+      "vendor": "Airbnb",
+      "category": "media",
+      "match": {
+        "npm": [
+          "lottie-react-native"
+        ],
+        "pods": [
+          "lottie-ios"
+        ],
+        "spm": [
+          "lottie-ios",
+          "lottie-spm"
+        ],
+        "ios_imports": [
+          "Lottie"
+        ]
+      },
+      "data_collection": [],
+      "flags": {
+        "requires_privacy_manifest": true
+      },
+      "implies": [],
+      "notes": "Vector animation renderer on Apple's privacy-manifest-required SDK list. The pub.dev 'lottie' package is a pure Dart reimplementation without the native library, so it is intentionally not matched.",
+      "stories": []
+    },
+    {
+      "id": "realm",
+      "name": "Realm",
+      "vendor": "MongoDB",
+      "category": "other",
+      "match": {
+        "npm": [
+          "realm"
+        ],
+        "pub": [
+          "realm"
+        ],
+        "pods": [
+          "RealmSwift",
+          "Realm"
+        ],
+        "spm": [
+          "realm-swift"
+        ],
+        "ios_imports": [
+          "RealmSwift",
+          "Realm"
+        ]
+      },
+      "data_collection": [],
+      "flags": {
+        "requires_privacy_manifest": true
+      },
+      "implies": [],
+      "notes": "Local database; RealmSwift is on Apple's privacy-manifest-required SDK list. MongoDB deprecated Atlas Device Sync in 2024, but the local database remains widely deployed.",
+      "stories": []
+    },
+    {
+      "id": "rxswift",
+      "name": "RxSwift",
+      "category": "other",
+      "match": {
+        "pods": [
+          "RxSwift"
+        ],
+        "spm": [
+          "rxswift"
+        ],
+        "ios_imports": [
+          "RxSwift",
+          "RxCocoa"
+        ]
+      },
+      "data_collection": [],
+      "flags": {
+        "requires_privacy_manifest": true
+      },
+      "implies": [],
+      "notes": "Reactive programming library; RxSwift, RxCocoa, and RxRelay are on Apple's privacy-manifest-required SDK list.",
+      "stories": []
+    },
+    {
+      "id": "snapkit-autolayout",
+      "name": "SnapKit",
+      "category": "other",
+      "match": {
+        "pods": [
+          "SnapKit"
+        ],
+        "spm": [
+          "snapkit"
+        ],
+        "ios_imports": [
+          "SnapKit"
+        ]
+      },
+      "data_collection": [],
+      "flags": {
+        "requires_privacy_manifest": true
+      },
+      "implies": [],
+      "notes": "Auto Layout DSL on Apple's privacy-manifest-required SDK list. Not related to Snapchat's Snap Kit, which ships as SnapSDK.",
+      "stories": []
+    },
+    {
+      "id": "dgcharts",
+      "name": "Charts (DGCharts)",
+      "category": "other",
+      "match": {
+        "pods": [
+          "DGCharts",
+          "Charts"
+        ],
+        "spm": [
+          "charts"
+        ],
+        "ios_imports": [
+          "DGCharts",
+          "Charts"
+        ]
+      },
+      "data_collection": [],
+      "flags": {
+        "requires_privacy_manifest": true
+      },
+      "implies": [],
+      "notes": "Charting library, renamed from Charts to DGCharts in v5; the Charts name is on Apple's privacy-manifest-required SDK list.",
+      "stories": []
+    },
+    {
+      "id": "fmdb",
+      "name": "FMDB",
+      "category": "other",
+      "match": {
+        "pods": [
+          "FMDB"
+        ],
+        "ios_imports": [
+          "FMDB"
+        ]
+      },
+      "data_collection": [],
+      "flags": {
+        "requires_privacy_manifest": true
+      },
+      "implies": [],
+      "notes": "SQLite wrapper on Apple's privacy-manifest-required SDK list.",
+      "stories": []
+    },
+    {
+      "id": "google-data-transport",
+      "name": "GoogleDataTransport",
+      "vendor": "Google",
+      "category": "other",
+      "match": {
+        "pods": [
+          "GoogleDataTransport"
+        ],
+        "ios_imports": [
+          "GoogleDataTransport"
+        ]
+      },
+      "data_collection": [],
+      "flags": {
+        "requires_privacy_manifest": true
+      },
+      "implies": [],
+      "notes": "Transport layer pulled in transitively by Firebase and Google SDKs; on Apple's privacy-manifest-required SDK list.",
+      "stories": []
+    },
+    {
+      "id": "google-utilities",
+      "name": "GoogleUtilities",
+      "vendor": "Google",
+      "category": "other",
+      "match": {
+        "pods": [
+          "GoogleUtilities"
+        ],
+        "ios_imports": [
+          "GoogleUtilities"
+        ]
+      },
+      "data_collection": [],
+      "flags": {
+        "requires_privacy_manifest": true
+      },
+      "implies": [],
+      "notes": "Shared utilities pulled in transitively by Firebase and Google SDKs; on Apple's privacy-manifest-required SDK list.",
+      "stories": []
+    },
+    {
+      "id": "firebase-core",
+      "name": "Firebase Core",
+      "vendor": "Google",
+      "category": "other",
+      "match": {
+        "pub": [
+          "firebase_core"
+        ],
+        "npm": [
+          "@react-native-firebase/app"
+        ],
+        "pods": [
+          "FirebaseCore",
+          "Firebase"
+        ],
+        "spm": [
+          "firebase-ios-sdk"
+        ],
+        "gradle": [
+          "com.google.firebase:firebase-common"
+        ],
+        "ios_imports": [
+          "FirebaseCore",
+          "Firebase"
+        ],
+        "android_imports": [
+          "com.google.firebase"
+        ]
+      },
+      "data_collection": [],
+      "flags": {
+        "requires_privacy_manifest": true
+      },
+      "implies": [],
+      "notes": "Base Firebase initialization module that every other Firebase product depends on; FirebaseCore is on Apple's privacy-manifest-required SDK list.",
+      "stories": []
+    },
+    {
+      "id": "firebase-firestore",
+      "name": "Cloud Firestore",
+      "vendor": "Google",
+      "category": "cloud",
+      "match": {
+        "pub": [
+          "cloud_firestore"
+        ],
+        "npm": [
+          "@react-native-firebase/firestore"
+        ],
+        "pods": [
+          "FirebaseFirestore"
+        ],
+        "gradle": [
+          "com.google.firebase:firebase-firestore"
+        ],
+        "ios_imports": [
+          "FirebaseFirestore"
+        ],
+        "android_imports": [
+          "com.google.firebase.firestore"
+        ]
+      },
+      "data_collection": [],
+      "flags": {
+        "requires_privacy_manifest": true
+      },
+      "implies": [],
+      "notes": "NoSQL cloud database; FirebaseFirestore is on Apple's privacy-manifest-required SDK list.",
+      "stories": []
+    },
+    {
+      "id": "firebase-remote-config",
+      "name": "Firebase Remote Config",
+      "vendor": "Google",
+      "category": "other",
+      "match": {
+        "pub": [
+          "firebase_remote_config"
+        ],
+        "npm": [
+          "@react-native-firebase/remote-config"
+        ],
+        "pods": [
+          "FirebaseRemoteConfig"
+        ],
+        "gradle": [
+          "com.google.firebase:firebase-config"
+        ],
+        "ios_imports": [
+          "FirebaseRemoteConfig"
+        ],
+        "android_imports": [
+          "com.google.firebase.remoteconfig"
+        ]
+      },
+      "data_collection": [],
+      "flags": {
+        "requires_privacy_manifest": true
+      },
+      "implies": [],
+      "notes": "The Android Maven artifact is firebase-config, not firebase-remote-config. FirebaseRemoteConfig is on Apple's privacy-manifest-required SDK list.",
+      "stories": []
+    },
+    {
+      "id": "firebase-storage",
+      "name": "Firebase Cloud Storage",
+      "vendor": "Google",
+      "category": "cloud",
+      "match": {
+        "pub": [
+          "firebase_storage"
+        ],
+        "npm": [
+          "@react-native-firebase/storage"
+        ],
+        "pods": [
+          "FirebaseStorage"
+        ],
+        "gradle": [
+          "com.google.firebase:firebase-storage"
+        ],
+        "ios_imports": [
+          "FirebaseStorage"
+        ],
+        "android_imports": [
+          "com.google.firebase.storage"
+        ]
+      },
+      "data_collection": [],
+      "flags": {},
+      "implies": [],
+      "notes": "File storage for user-generated content. Unlike most Firebase modules, FirebaseStorage is not on Apple's named privacy-manifest-required SDK list.",
+      "stories": []
+    },
+    {
+      "id": "firebase-dynamic-links",
+      "name": "Firebase Dynamic Links",
+      "vendor": "Google",
+      "category": "other",
+      "match": {
+        "pub": [
+          "firebase_dynamic_links"
+        ],
+        "npm": [
+          "@react-native-firebase/dynamic-links"
+        ],
+        "pods": [
+          "FirebaseDynamicLinks"
+        ],
+        "gradle": [
+          "com.google.firebase:firebase-dynamic-links"
+        ],
+        "ios_imports": [
+          "FirebaseDynamicLinks"
+        ],
+        "android_imports": [
+          "com.google.firebase.dynamiclinks"
+        ]
+      },
+      "data_collection": [
+        "usage"
+      ],
+      "flags": {
+        "requires_privacy_manifest": true
+      },
+      "implies": [],
+      "notes": "Deep linking service that Google shut down on August 25, 2025; flag lingering integrations for migration. FirebaseDynamicLinks is on Apple's privacy-manifest-required SDK list.",
+      "stories": []
+    },
+    {
+      "id": "firebase-abtesting",
+      "name": "Firebase A/B Testing",
+      "vendor": "Google",
+      "category": "other",
+      "match": {
+        "pods": [
+          "FirebaseABTesting"
+        ],
+        "gradle": [
+          "com.google.firebase:firebase-abt"
+        ],
+        "ios_imports": [
+          "FirebaseABTesting"
+        ]
+      },
+      "data_collection": [
+        "usage"
+      ],
+      "flags": {
+        "requires_privacy_manifest": true
+      },
+      "implies": [],
+      "notes": "Experimentation layer used with Remote Config; no standalone React Native or Flutter plugin exists. FirebaseABTesting is on Apple's privacy-manifest-required SDK list.",
+      "stories": []
+    },
+    {
+      "id": "expo-notifications",
+      "name": "Expo Notifications",
+      "vendor": "Expo",
+      "category": "push",
+      "match": {
+        "npm": [
+          "expo-notifications"
+        ]
+      },
+      "data_collection": [
+        "push_token"
+      ],
+      "flags": {},
+      "implies": [
+        "push_notifications"
+      ],
+      "stories": []
+    },
+    {
+      "id": "expo-location",
+      "name": "Expo Location",
+      "vendor": "Expo",
+      "category": "other",
+      "match": {
+        "npm": [
+          "expo-location"
+        ]
+      },
+      "data_collection": [
+        "location"
+      ],
+      "flags": {},
+      "implies": [
+        "location"
+      ],
+      "requires": {
+        "ios_plist_keys": [
+          {
+            "key": "NSLocationWhenInUseUsageDescription",
+            "reason": "Required to access the user's location while the app is in use",
+            "guideline": "5.1.1"
+          }
+        ]
+      },
+      "stories": []
+    },
+    {
+      "id": "expo-av",
+      "name": "Expo AV",
+      "vendor": "Expo",
+      "category": "media",
+      "match": {
+        "npm": [
+          "expo-av"
+        ]
+      },
+      "data_collection": [],
+      "flags": {},
+      "implies": [],
+      "requires": {
+        "ios_plist_keys": [
+          {
+            "key": "NSMicrophoneUsageDescription",
+            "reason": "expo-av includes audio recording APIs, and App Store Connect flags binaries that reference the microphone without this key",
+            "guideline": "5.1.1"
+          }
+        ]
+      },
+      "notes": "Audio/video playback and recording. Expo is replacing it with expo-audio and expo-video in newer SDK releases.",
+      "stories": []
+    },
+    {
+      "id": "expo-tracking-transparency",
+      "name": "Expo Tracking Transparency",
+      "vendor": "Expo",
+      "category": "other",
+      "match": {
+        "npm": [
+          "expo-tracking-transparency"
+        ]
+      },
+      "data_collection": [],
+      "flags": {
+        "att_required": true
+      },
+      "implies": [
+        "tracking"
+      ],
+      "notes": "Wraps the ATT prompt; including it declares tracking intent, so NSUserTrackingUsageDescription must be present (the config plugin injects a default).",
+      "stories": []
+    },
+    {
+      "id": "expo-contacts",
+      "name": "Expo Contacts",
+      "vendor": "Expo",
+      "category": "other",
+      "match": {
+        "npm": [
+          "expo-contacts"
+        ]
+      },
+      "data_collection": [
+        "contacts"
+      ],
+      "flags": {},
+      "implies": [
+        "contacts"
+      ],
+      "requires": {
+        "ios_plist_keys": [
+          {
+            "key": "NSContactsUsageDescription",
+            "reason": "Required to access the user's contacts",
+            "guideline": "5.1.1"
+          }
+        ]
+      },
+      "stories": []
+    },
+    {
+      "id": "expo-in-app-purchases",
+      "name": "Expo In-App Purchases",
+      "vendor": "Expo",
+      "category": "payments",
+      "match": {
+        "npm": [
+          "expo-in-app-purchases"
+        ]
+      },
+      "data_collection": [
+        "purchase_history"
+      ],
+      "flags": {},
+      "implies": [
+        "iap"
+      ],
+      "notes": "Deprecated and unmaintained; Expo recommends react-native-purchases (RevenueCat) or react-native-iap instead.",
+      "stories": []
+    },
+    {
+      "id": "expo-secure-store",
+      "name": "Expo SecureStore",
+      "vendor": "Expo",
+      "category": "other",
+      "match": {
+        "npm": [
+          "expo-secure-store"
+        ]
+      },
+      "data_collection": [],
+      "flags": {},
+      "implies": [],
+      "notes": "Keychain/Keystore-backed key-value storage; no review risk by itself.",
+      "stories": []
+    },
+    {
+      "id": "react-native-webview",
+      "name": "React Native WebView",
+      "category": "other",
+      "match": {
+        "npm": [
+          "react-native-webview"
+        ]
+      },
+      "data_collection": [],
+      "flags": {},
+      "implies": [],
+      "notes": "Deliberately implies nothing: the webview_heavy capability comes from the scanner's webview_ratio signal, so a single embedded WebView never triggers a 4.2 minimum-functionality flag.",
+      "stories": []
+    },
+    {
+      "id": "react-native-permissions",
+      "name": "react-native-permissions",
+      "category": "other",
+      "match": {
+        "npm": [
+          "react-native-permissions"
+        ]
+      },
+      "data_collection": [],
+      "flags": {},
+      "implies": [],
+      "notes": "Unified permissions wrapper; which usage-description keys are required depends on the permissions the app actually requests through it.",
+      "stories": []
+    },
+    {
+      "id": "react-native-health",
+      "name": "react-native-health",
+      "category": "health",
+      "match": {
+        "npm": [
+          "react-native-health"
+        ]
+      },
+      "data_collection": [
+        "health_data"
+      ],
+      "flags": {},
+      "implies": [
+        "health"
+      ],
+      "requires": {
+        "ios_plist_keys": [
+          {
+            "key": "NSHealthShareUsageDescription",
+            "reason": "Required to read data from HealthKit",
+            "guideline": "5.1.1"
+          },
+          {
+            "key": "NSHealthUpdateUsageDescription",
+            "reason": "Required to write data to HealthKit",
+            "guideline": "5.1.1"
+          }
+        ]
+      },
+      "stories": []
+    },
+    {
+      "id": "react-native-push-notification-ios",
+      "name": "React Native Push Notification iOS",
+      "category": "push",
+      "match": {
+        "npm": [
+          "@react-native-community/push-notification-ios"
+        ]
+      },
+      "data_collection": [
+        "push_token"
+      ],
+      "flags": {},
+      "implies": [
+        "push_notifications"
+      ],
+      "stories": []
+    },
+    {
+      "id": "react-native-code-push",
+      "name": "CodePush",
+      "vendor": "Microsoft",
+      "category": "other",
+      "match": {
+        "npm": [
+          "react-native-code-push"
+        ]
+      },
+      "data_collection": [
+        "device_id"
+      ],
+      "flags": {},
+      "implies": [],
+      "notes": "Over-the-air JS bundle updates. Interpreted-code updates are permitted as long as they do not change the app's primary purpose; shipping native code changes outside App Review violates 2.5.2. The hosted App Center service retired in 2025, so deployments now use the standalone CodePush server.",
+      "stories": []
+    },
+    {
+      "id": "bugsnag",
+      "name": "BugSnag",
+      "vendor": "SmartBear",
+      "category": "crash",
+      "match": {
+        "npm": [
+          "@bugsnag/react-native"
+        ],
+        "pub": [
+          "bugsnag_flutter"
+        ],
+        "pods": [
+          "Bugsnag"
+        ],
+        "gradle": [
+          "com.bugsnag:bugsnag-android"
+        ],
+        "ios_imports": [
+          "Bugsnag"
+        ],
+        "android_imports": [
+          "com.bugsnag.android"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "crash_logs"
+      ],
+      "flags": {},
+      "implies": [],
+      "stories": []
+    },
+    {
+      "id": "newrelic",
+      "name": "New Relic Mobile",
+      "vendor": "New Relic",
+      "category": "crash",
+      "match": {
+        "npm": [
+          "newrelic-react-native-agent"
+        ],
+        "pub": [
+          "newrelic_mobile"
+        ],
+        "pods": [
+          "NewRelicAgent"
+        ],
+        "gradle": [
+          "com.newrelic.agent.android:android-agent"
+        ],
+        "ios_imports": [
+          "NewRelic"
+        ],
+        "android_imports": [
+          "com.newrelic.agent.android"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "usage",
+        "crash_logs"
+      ],
+      "flags": {},
+      "implies": [],
+      "stories": []
+    },
+    {
+      "id": "instabug",
+      "name": "Instabug",
+      "vendor": "Instabug",
+      "category": "crash",
+      "match": {
+        "npm": [
+          "instabug-reactnative",
+          "@luciq/react-native"
+        ],
+        "pub": [
+          "instabug_flutter",
+          "luciq_flutter"
+        ],
+        "pods": [
+          "Instabug",
+          "Luciq"
+        ],
+        "gradle": [
+          "com.instabug.library:instabug"
+        ],
+        "ios_imports": [
+          "Instabug"
+        ],
+        "android_imports": [
+          "com.instabug.library"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "crash_logs",
+        "usage"
+      ],
+      "flags": {},
+      "implies": [],
+      "notes": "Bug reporting with screen recording; session replays that capture user input can raise 5.1.1 disclosure questions if not covered by the privacy policy. Instabug is rebranding to Luciq, so both package families are matched.",
+      "stories": []
+    },
+    {
+      "id": "core-bluetooth",
+      "name": "Core Bluetooth",
+      "vendor": "Apple",
+      "category": "other",
+      "match": {
+        "ios_imports": [
+          "CoreBluetooth"
+        ]
+      },
+      "data_collection": [],
+      "flags": {},
+      "implies": [
+        "bluetooth"
+      ],
+      "requires": {
+        "ios_plist_keys": [
+          {
+            "key": "NSBluetoothAlwaysUsageDescription",
+            "reason": "Required to use Bluetooth; apps linking CoreBluetooth without it are flagged at upload",
+            "guideline": "5.1.1"
+          }
+        ]
+      },
+      "stories": []
+    },
+    {
+      "id": "contacts-framework",
+      "name": "Contacts Framework",
+      "vendor": "Apple",
+      "category": "other",
+      "match": {
+        "ios_imports": [
+          "Contacts",
+          "ContactsUI"
+        ]
+      },
+      "data_collection": [
+        "contacts"
+      ],
+      "flags": {},
+      "implies": [
+        "contacts"
+      ],
+      "requires": {
+        "ios_plist_keys": [
+          {
+            "key": "NSContactsUsageDescription",
+            "reason": "Required to access the user's contacts",
+            "guideline": "5.1.1"
+          }
+        ]
+      },
+      "stories": []
+    },
+    {
+      "id": "photos-framework",
+      "name": "Photos Framework",
+      "vendor": "Apple",
+      "category": "other",
+      "match": {
+        "ios_imports": [
+          "Photos"
+        ]
+      },
+      "data_collection": [
+        "photos"
+      ],
+      "flags": {},
+      "implies": [
+        "photos"
+      ],
+      "requires": {
+        "ios_plist_keys": [
+          {
+            "key": "NSPhotoLibraryUsageDescription",
+            "reason": "Required to access the photo library through PHPhotoLibrary",
+            "guideline": "5.1.1"
+          }
+        ]
+      },
+      "notes": "PhotosUI is intentionally not matched: PHPickerViewController runs out of process and needs no photo library permission, so matching it would produce false positives.",
+      "stories": []
+    },
+    {
+      "id": "core-motion",
+      "name": "Core Motion",
+      "vendor": "Apple",
+      "category": "other",
+      "match": {
+        "ios_imports": [
+          "CoreMotion"
+        ]
+      },
+      "data_collection": [],
+      "flags": {},
+      "implies": [],
+      "requires": {
+        "ios_plist_keys": [
+          {
+            "key": "NSMotionUsageDescription",
+            "reason": "Required to access motion and fitness data from the device sensors",
+            "guideline": "5.1.1"
+          }
+        ]
+      },
+      "stories": []
+    },
+    {
+      "id": "speech-framework",
+      "name": "Speech Framework",
+      "vendor": "Apple",
+      "category": "ai",
+      "match": {
+        "ios_imports": [
+          "Speech"
+        ]
+      },
+      "data_collection": [],
+      "flags": {},
+      "implies": [],
+      "requires": {
+        "ios_plist_keys": [
+          {
+            "key": "NSSpeechRecognitionUsageDescription",
+            "reason": "Required to send audio to Apple's speech recognition service",
+            "guideline": "5.1.1"
+          }
+        ]
+      },
+      "stories": []
+    },
+    {
+      "id": "local-authentication",
+      "name": "Local Authentication",
+      "vendor": "Apple",
+      "category": "other",
+      "match": {
+        "ios_imports": [
+          "LocalAuthentication"
+        ]
+      },
+      "data_collection": [],
+      "flags": {},
+      "implies": [],
+      "requires": {
+        "ios_plist_keys": [
+          {
+            "key": "NSFaceIDUsageDescription",
+            "reason": "Required for Face ID; without it the biometric prompt fails silently on Face ID devices while Touch ID still works",
+            "guideline": "5.1.1"
+          }
+        ]
+      },
+      "stories": []
+    },
+    {
+      "id": "eventkit",
+      "name": "EventKit",
+      "vendor": "Apple",
+      "category": "other",
+      "match": {
+        "ios_imports": [
+          "EventKit",
+          "EventKitUI"
+        ]
+      },
+      "data_collection": [],
+      "flags": {},
+      "implies": [],
+      "requires": {
+        "ios_plist_keys": [
+          {
+            "key": "NSCalendarsUsageDescription",
+            "reason": "Required to access calendar events; iOS 17 additionally introduced NSCalendarsFullAccessUsageDescription and NSCalendarsWriteOnlyAccessUsageDescription",
+            "guideline": "5.1.1"
+          }
+        ]
+      },
+      "stories": []
+    },
+    {
+      "id": "androidx-biometric",
+      "name": "AndroidX Biometric",
+      "vendor": "Google",
+      "category": "other",
+      "match": {
+        "gradle": [
+          "androidx.biometric:biometric"
+        ],
+        "android_imports": [
+          "androidx.biometric"
+        ]
+      },
+      "data_collection": [],
+      "flags": {},
+      "implies": [],
+      "stories": []
+    },
+    {
+      "id": "play-services-location",
+      "name": "Google Play Services Location",
+      "vendor": "Google",
+      "category": "other",
+      "match": {
+        "gradle": [
+          "com.google.android.gms:play-services-location"
+        ],
+        "android_imports": [
+          "com.google.android.gms.location"
+        ]
+      },
+      "data_collection": [
+        "location"
+      ],
+      "flags": {},
+      "implies": [
+        "location"
+      ],
+      "stories": []
+    },
+    {
+      "id": "unity-iap",
+      "name": "Unity In-App Purchasing",
+      "vendor": "Unity",
+      "category": "payments",
+      "match": {
+        "upm": [
+          "com.unity.purchasing"
+        ]
+      },
+      "data_collection": [
+        "purchase_history"
+      ],
+      "flags": {},
+      "implies": [
+        "iap"
+      ],
+      "stories": []
+    },
+    {
+      "id": "unity-analytics",
+      "name": "Unity Analytics",
+      "vendor": "Unity",
+      "category": "analytics",
+      "match": {
+        "upm": [
+          "com.unity.services.analytics"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "usage"
+      ],
+      "flags": {},
+      "implies": [],
+      "stories": []
+    },
+    {
+      "id": "unity-notifications",
+      "name": "Unity Mobile Notifications",
+      "vendor": "Unity",
+      "category": "push",
+      "match": {
+        "upm": [
+          "com.unity.mobile.notifications"
+        ]
+      },
+      "data_collection": [],
+      "flags": {},
+      "implies": [
+        "push_notifications"
+      ],
+      "notes": "Covers both local and remote notifications; the package id is com.unity.mobile.notifications.",
+      "stories": []
+    },
+    {
+      "id": "launchdarkly",
+      "name": "LaunchDarkly",
+      "vendor": "LaunchDarkly",
+      "category": "other",
+      "match": {
+        "npm": [
+          "launchdarkly-react-native-client-sdk",
+          "@launchdarkly/react-native-client-sdk"
+        ],
+        "pub": [
+          "launchdarkly_flutter_client_sdk"
+        ],
+        "pods": [
+          "LaunchDarkly"
+        ],
+        "gradle": [
+          "com.launchdarkly:launchdarkly-android-client-sdk"
+        ],
+        "ios_imports": [
+          "LaunchDarkly"
+        ],
+        "android_imports": [
+          "com.launchdarkly.sdk"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "usage"
+      ],
+      "flags": {},
+      "implies": [],
+      "stories": []
+    },
+    {
+      "id": "countly",
+      "name": "Countly",
+      "vendor": "Countly",
+      "category": "analytics",
+      "match": {
+        "npm": [
+          "countly-sdk-react-native-bridge"
+        ],
+        "pub": [
+          "countly_flutter"
+        ],
+        "pods": [
+          "Countly"
+        ],
+        "gradle": [
+          "ly.count.android:sdk"
+        ],
+        "ios_imports": [
+          "Countly"
+        ],
+        "android_imports": [
+          "ly.count.android.sdk"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "usage"
+      ],
+      "flags": {},
+      "implies": [],
+      "stories": []
+    },
+    {
+      "id": "clevertap",
+      "name": "CleverTap",
+      "vendor": "CleverTap",
+      "category": "support",
+      "match": {
+        "npm": [
+          "clevertap-react-native"
+        ],
+        "pub": [
+          "clevertap_plugin"
+        ],
+        "pods": [
+          "CleverTap-iOS-SDK"
+        ],
+        "gradle": [
+          "com.clevertap.android:clevertap-android-sdk"
+        ],
+        "ios_imports": [
+          "CleverTapSDK"
+        ],
+        "android_imports": [
+          "com.clevertap.android.sdk"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "usage",
+        "push_token"
+      ],
+      "flags": {},
+      "implies": [],
+      "stories": []
+    },
+    {
+      "id": "stream-chat",
+      "name": "Stream Chat",
+      "vendor": "Stream",
+      "category": "support",
+      "match": {
+        "npm": [
+          "stream-chat-react-native"
+        ],
+        "pub": [
+          "stream_chat_flutter"
+        ],
+        "pods": [
+          "StreamChat",
+          "StreamChatUI"
+        ],
+        "spm": [
+          "stream-chat-swift"
+        ],
+        "gradle": [
+          "io.getstream:stream-chat-android-client"
+        ],
+        "ios_imports": [
+          "StreamChat"
+        ],
+        "android_imports": [
+          "io.getstream.chat.android"
+        ]
+      },
+      "data_collection": [
+        "name_email",
+        "usage"
+      ],
+      "flags": {},
+      "implies": [
+        "ugc"
+      ],
+      "notes": "In-app chat is user-generated content, so guideline 1.2 moderation requirements apply.",
+      "stories": []
+    },
+    {
+      "id": "sendbird",
+      "name": "Sendbird Chat",
+      "vendor": "Sendbird",
+      "category": "support",
+      "match": {
+        "npm": [
+          "@sendbird/chat"
+        ],
+        "pods": [
+          "SendbirdChatSDK"
+        ],
+        "gradle": [
+          "com.sendbird.sdk:sendbird-chat"
+        ],
+        "ios_imports": [
+          "SendbirdChatSDK"
+        ]
+      },
+      "data_collection": [
+        "name_email",
+        "usage"
+      ],
+      "flags": {},
+      "implies": [
+        "ugc"
+      ],
+      "notes": "In-app chat is user-generated content, so guideline 1.2 moderation requirements apply. The Android artifact resolves from Sendbird's own Maven repository rather than Maven Central.",
+      "stories": []
+    },
+    {
+      "id": "agora",
+      "name": "Agora RTC",
+      "vendor": "Agora",
+      "category": "media",
+      "match": {
+        "npm": [
+          "react-native-agora"
+        ],
+        "pub": [
+          "agora_rtc_engine"
+        ],
+        "pods": [
+          "AgoraRtcEngine_iOS"
+        ],
+        "gradle": [
+          "io.agora.rtc:full-sdk"
+        ],
+        "ios_imports": [
+          "AgoraRtcKit"
+        ]
+      },
+      "data_collection": [
+        "camera",
+        "microphone"
+      ],
+      "flags": {},
+      "implies": [],
+      "requires": {
+        "ios_plist_keys": [
+          {
+            "key": "NSMicrophoneUsageDescription",
+            "reason": "Required for voice and video calls through the Agora engine",
+            "guideline": "5.1.1"
+          },
+          {
+            "key": "NSCameraUsageDescription",
+            "reason": "Required for video calls through the Agora engine",
+            "guideline": "5.1.1"
+          }
+        ]
+      },
+      "stories": []
+    },
+    {
+      "id": "twilio-voice",
+      "name": "Twilio Voice",
+      "vendor": "Twilio",
+      "category": "media",
+      "match": {
+        "npm": [
+          "@twilio/voice-react-native-sdk"
+        ],
+        "pods": [
+          "TwilioVoice"
+        ],
+        "gradle": [
+          "com.twilio:voice-android"
+        ],
+        "ios_imports": [
+          "TwilioVoice"
+        ]
+      },
+      "data_collection": [
+        "microphone"
+      ],
+      "flags": {},
+      "implies": [],
+      "requires": {
+        "ios_plist_keys": [
+          {
+            "key": "NSMicrophoneUsageDescription",
+            "reason": "Required for voice calls through Twilio Voice",
+            "guideline": "5.1.1"
+          }
+        ]
+      },
+      "notes": "VoIP calling SDK; pairs with the voip background mode and CallKit requirements under 2.5.4.",
+      "stories": []
+    },
+    {
+      "id": "airship",
+      "name": "Airship",
+      "vendor": "Airship",
+      "category": "push",
+      "match": {
+        "npm": [
+          "@ua/react-native-airship"
+        ],
+        "pub": [
+          "airship_flutter"
+        ],
+        "pods": [
+          "Airship"
+        ],
+        "gradle": [
+          "com.urbanairship.android:urbanairship-core"
+        ],
+        "android_imports": [
+          "com.urbanairship"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "push_token",
+        "usage"
+      ],
+      "flags": {},
+      "implies": [
+        "push_notifications"
+      ],
+      "stories": []
+    },
+    {
+      "id": "moengage",
+      "name": "MoEngage",
+      "vendor": "MoEngage",
+      "category": "support",
+      "match": {
+        "npm": [
+          "react-native-moengage"
+        ],
+        "pub": [
+          "moengage_flutter"
+        ],
+        "pods": [
+          "MoEngage-iOS-SDK"
+        ],
+        "gradle": [
+          "com.moengage:moe-android-sdk"
+        ],
+        "android_imports": [
+          "com.moengage"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "usage",
+        "push_token"
+      ],
+      "flags": {},
+      "implies": [],
+      "stories": []
+    },
+    {
+      "id": "paypal",
+      "name": "PayPal Checkout",
+      "vendor": "PayPal",
+      "category": "payments",
+      "match": {
+        "pods": [
+          "PayPalCheckout"
+        ],
+        "gradle": [
+          "com.paypal.checkout:android-sdk"
+        ],
+        "ios_imports": [
+          "PayPalCheckout"
+        ]
+      },
+      "data_collection": [
+        "payment_info",
+        "name_email"
+      ],
+      "flags": {},
+      "implies": [
+        "external_payment"
+      ],
+      "notes": "Legitimate for physical goods and services under 3.1.5(a); selling digital content consumed in-app through PayPal violates 3.1.1. PayPal marks the native checkout SDK inactive for new integrations and points to Braintree. No official React Native package exists.",
+      "stories": [
+        "paypal-checkout-premium-features"
+      ]
+    },
+    {
+      "id": "braintree",
+      "name": "Braintree",
+      "vendor": "PayPal",
+      "category": "payments",
+      "match": {
+        "pods": [
+          "Braintree"
+        ],
+        "gradle": [
+          "com.braintreepayments.api:braintree-core",
+          "com.braintreepayments.api:drop-in",
+          "com.braintreepayments.api:braintree"
+        ],
+        "android_imports": [
+          "com.braintreepayments.api"
+        ]
+      },
+      "data_collection": [
+        "payment_info"
+      ],
+      "flags": {},
+      "implies": [
+        "external_payment"
+      ],
+      "notes": "braintree-core is the v4/v5 Android artifact; the bare braintree artifact is the legacy v3 line and drop-in is being sunset. Digital goods sold through Braintree in-app violate 3.1.1; physical goods and services are fine under 3.1.5(a).",
+      "stories": []
+    },
+    {
+      "id": "adyen",
+      "name": "Adyen",
+      "vendor": "Adyen",
+      "category": "payments",
+      "match": {
+        "npm": [
+          "@adyen/react-native"
+        ],
+        "pods": [
+          "Adyen"
+        ],
+        "gradle": [
+          "com.adyen.checkout:drop-in"
+        ],
+        "ios_imports": [
+          "Adyen"
+        ]
+      },
+      "data_collection": [
+        "payment_info"
+      ],
+      "flags": {},
+      "implies": [
+        "external_payment"
+      ],
+      "notes": "Card and wallet checkout; the 3.1.1 digital-goods versus 3.1.5(a) physical-goods distinction applies.",
+      "stories": []
+    },
+    {
+      "id": "qonversion",
+      "name": "Qonversion",
+      "vendor": "Qonversion",
+      "category": "payments",
+      "match": {
+        "npm": [
+          "react-native-qonversion"
+        ],
+        "pub": [
+          "qonversion_flutter"
+        ],
+        "pods": [
+          "Qonversion"
+        ],
+        "gradle": [
+          "io.qonversion.android.sdk:sdk"
+        ],
+        "ios_imports": [
+          "Qonversion"
+        ]
+      },
+      "data_collection": [
+        "purchase_history",
+        "device_id"
+      ],
+      "flags": {},
+      "implies": [
+        "iap",
+        "subscriptions"
+      ],
+      "notes": "Subscription infrastructure like RevenueCat; triggers subscription disclosure and restore-purchases rules.",
+      "stories": []
+    },
+    {
+      "id": "adapty",
+      "name": "Adapty",
+      "vendor": "Adapty",
+      "category": "payments",
+      "match": {
+        "npm": [
+          "react-native-adapty"
+        ],
+        "pub": [
+          "adapty_flutter"
+        ],
+        "pods": [
+          "Adapty"
+        ],
+        "gradle": [
+          "io.adapty:android-sdk"
+        ],
+        "ios_imports": [
+          "Adapty"
+        ]
+      },
+      "data_collection": [
+        "purchase_history",
+        "device_id"
+      ],
+      "flags": {},
+      "implies": [
+        "iap",
+        "subscriptions"
+      ],
+      "notes": "Subscription infrastructure like RevenueCat; triggers subscription disclosure and restore-purchases rules.",
+      "stories": []
+    },
+    {
+      "id": "datadog",
+      "name": "Datadog",
+      "vendor": "Datadog",
+      "category": "crash",
+      "match": {
+        "npm": [
+          "@datadog/mobile-react-native"
+        ],
+        "pub": [
+          "datadog_flutter_plugin"
+        ],
+        "pods": [
+          "DatadogCore",
+          "DatadogRUM"
+        ],
+        "spm": [
+          "dd-sdk-ios"
+        ],
+        "gradle": [
+          "com.datadoghq:dd-sdk-android-rum"
+        ],
+        "ios_imports": [
+          "DatadogCore",
+          "DatadogRUM"
+        ],
+        "android_imports": [
+          "com.datadog.android"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "usage",
+        "crash_logs"
+      ],
+      "flags": {},
+      "implies": [],
+      "notes": "RUM session tracking and session replay need privacy policy coverage; replay masking should exclude sensitive fields.",
+      "stories": []
+    },
+    {
+      "id": "embrace",
+      "name": "Embrace",
+      "vendor": "Embrace",
+      "category": "crash",
+      "match": {
+        "npm": [
+          "@embrace-io/react-native"
+        ],
+        "pods": [
+          "EmbraceIO"
+        ],
+        "gradle": [
+          "io.embrace:embrace-android-sdk"
+        ],
+        "ios_imports": [
+          "EmbraceIO"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "crash_logs"
+      ],
+      "flags": {},
+      "implies": [],
+      "stories": []
+    },
+    {
+      "id": "mapbox",
+      "name": "Mapbox",
+      "vendor": "Mapbox",
+      "category": "maps",
+      "match": {
+        "npm": [
+          "@rnmapbox/maps"
+        ],
+        "pub": [
+          "mapbox_maps_flutter"
+        ],
+        "pods": [
+          "MapboxMaps"
+        ],
+        "gradle": [
+          "com.mapbox.maps:android"
+        ],
+        "ios_imports": [
+          "MapboxMaps"
+        ]
+      },
+      "data_collection": [
+        "location"
+      ],
+      "flags": {},
+      "implies": [],
+      "requires": {
+        "ios_plist_keys": [
+          {
+            "key": "NSLocationWhenInUseUsageDescription",
+            "reason": "The Mapbox location component references CoreLocation, and App Store Connect flags uploads that reference location APIs without this key",
+            "guideline": "5.1.1"
+          }
+        ]
+      },
+      "notes": "The Android artifact resolves from Mapbox's token-authenticated Maven repository rather than Maven Central.",
+      "stories": []
+    },
+    {
+      "id": "radar",
+      "name": "Radar",
+      "vendor": "Radar Labs",
+      "category": "other",
+      "match": {
+        "npm": [
+          "react-native-radar"
+        ],
+        "pub": [
+          "flutter_radar"
+        ],
+        "pods": [
+          "RadarSDK"
+        ],
+        "gradle": [
+          "io.radar:sdk"
+        ],
+        "ios_imports": [
+          "RadarSDK"
+        ]
+      },
+      "data_collection": [
+        "location",
+        "device_id"
+      ],
+      "flags": {},
+      "implies": [
+        "location"
+      ],
+      "requires": {
+        "ios_plist_keys": [
+          {
+            "key": "NSLocationWhenInUseUsageDescription",
+            "reason": "Required for Radar's location tracking and geofencing",
+            "guideline": "5.1.1"
+          }
+        ]
+      },
+      "notes": "Geofencing platform; if configured for background tracking, the Always authorization and 2.5.4 background-location justification apply.",
+      "stories": []
+    },
+    {
+      "id": "google-mlkit",
+      "name": "Google ML Kit",
+      "vendor": "Google",
+      "category": "ai",
+      "match": {
+        "pub": [
+          "google_ml_kit",
+          "google_mlkit_*"
+        ],
+        "pods": [
+          "GoogleMLKit*"
+        ],
+        "gradle": [
+          "com.google.mlkit:barcode-scanning",
+          "com.google.mlkit:*"
+        ],
+        "ios_imports": [
+          "MLKit"
+        ],
+        "android_imports": [
+          "com.google.mlkit"
+        ]
+      },
+      "data_collection": [],
+      "flags": {},
+      "implies": [],
+      "notes": "On-device machine learning (barcode scanning, face detection, text recognition and more); prefix patterns cover the per-feature pods, pub packages, and Google Maven artifacts.",
+      "stories": []
+    },
+    {
+      "id": "kochava",
+      "name": "Kochava",
+      "vendor": "Kochava",
+      "category": "attribution",
+      "match": {
+        "npm": [
+          "react-native-kochava-tracker",
+          "react-native-kochava-measurement"
+        ],
+        "pods": [
+          "KochavaTracker",
+          "Apple-Cocoapod-KochavaTracker"
+        ],
+        "spm": [
+          "apple-swiftpackage-kochavameasurement-xcframework",
+          "apple-swiftpackage-kochavatracking-xcframework"
+        ],
+        "gradle": [
+          "com.kochava.tracker:tracker",
+          "com.kochava.base:tracker"
+        ],
+        "ios_imports": [
+          "KochavaMeasurement",
+          "KochavaTracking",
+          "KochavaTracker"
+        ],
+        "android_imports": [
+          "com.kochava"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "advertising_id",
+        "usage"
+      ],
+      "flags": {
+        "att_required": true
+      },
+      "implies": [],
+      "notes": "Current Apple SDK (v8+) is Swift Package Manager only under the KochavaMeasurement/KochavaTracking names; the CocoaPods and legacy coordinates identify older integrations.",
+      "stories": []
+    },
+    {
+      "id": "singular",
+      "name": "Singular",
+      "vendor": "Singular",
+      "category": "attribution",
+      "match": {
+        "npm": [
+          "singular-react-native"
+        ],
+        "pub": [
+          "singular_flutter_sdk"
+        ],
+        "pods": [
+          "Singular-SDK"
+        ],
+        "gradle": [
+          "com.singular.sdk:singular_sdk"
+        ],
+        "ios_imports": [
+          "Singular"
+        ],
+        "android_imports": [
+          "com.singular.sdk"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "advertising_id",
+        "usage"
+      ],
+      "flags": {
+        "att_required": true
+      },
+      "implies": [],
+      "notes": "The Android artifact resolves from Singular's own Maven repository rather than Maven Central.",
+      "stories": []
+    },
+    {
+      "id": "tenjin",
+      "name": "Tenjin",
+      "vendor": "Tenjin",
+      "category": "attribution",
+      "match": {
+        "pods": [
+          "TenjinSDK"
+        ],
+        "gradle": [
+          "com.tenjin:android-sdk"
+        ],
+        "ios_imports": [
+          "TenjinSDK"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "advertising_id",
+        "usage"
+      ],
+      "flags": {
+        "att_required": true
+      },
+      "implies": [],
+      "stories": []
+    },
+    {
+      "id": "heap",
+      "name": "Heap (Contentsquare)",
+      "vendor": "Contentsquare",
+      "category": "analytics",
+      "match": {
+        "npm": [
+          "@heap/react-native-heap"
+        ],
+        "pods": [
+          "HeapSwiftCore",
+          "HeapIOSAutocapture",
+          "Heap"
+        ],
+        "gradle": [
+          "io.heap.core:heap-android-core"
+        ],
+        "ios_imports": [
+          "HeapSwiftCore",
+          "Heap"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "usage"
+      ],
+      "flags": {},
+      "implies": [],
+      "notes": "Autocapture analytics records broad interaction data, which the privacy nutrition label must reflect.",
+      "stories": []
+    },
+    {
+      "id": "statsig",
+      "name": "Statsig",
+      "vendor": "Statsig",
+      "category": "analytics",
+      "match": {
+        "npm": [
+          "statsig-react-native",
+          "@statsig/react-native-bindings"
+        ],
+        "pods": [
+          "Statsig"
+        ],
+        "gradle": [
+          "com.statsig:android-sdk"
+        ],
+        "ios_imports": [
+          "Statsig"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "usage"
+      ],
+      "flags": {},
+      "implies": [],
+      "stories": []
+    },
+    {
+      "id": "optimizely",
+      "name": "Optimizely Feature Experimentation",
+      "vendor": "Optimizely",
+      "category": "other",
+      "match": {
+        "npm": [
+          "@optimizely/react-sdk"
+        ],
+        "pods": [
+          "OptimizelySwiftSDK"
+        ],
+        "gradle": [
+          "com.optimizely.ab:android-sdk"
+        ],
+        "ios_imports": [
+          "Optimizely"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "usage"
+      ],
+      "flags": {},
+      "implies": [],
+      "notes": "Feature flags and experimentation; no dedicated React Native package exists, the react-sdk officially covers React Native.",
+      "stories": []
+    },
+    {
+      "id": "growthbook",
+      "name": "GrowthBook",
+      "vendor": "GrowthBook",
+      "category": "other",
+      "match": {
+        "npm": [
+          "@growthbook/growthbook-react"
+        ],
+        "pub": [
+          "growthbook_sdk_flutter"
+        ],
+        "pods": [
+          "GrowthBook-IOS"
+        ],
+        "spm": [
+          "growthbook-swift"
+        ],
+        "gradle": [
+          "io.growthbook.sdk:GrowthBook"
+        ],
+        "ios_imports": [
+          "GrowthBook"
+        ]
+      },
+      "data_collection": [
+        "usage"
+      ],
+      "flags": {},
+      "implies": [],
+      "stories": []
+    },
+    {
+      "id": "vungle",
+      "name": "Vungle (Liftoff Monetize)",
+      "vendor": "Liftoff",
+      "category": "ads",
+      "match": {
+        "pods": [
+          "VungleAds",
+          "VungleSDK-iOS"
+        ],
+        "gradle": [
+          "com.vungle:vungle-ads",
+          "com.vungle:publisher-sdk-android"
+        ],
+        "ios_imports": [
+          "VungleAdsSDK"
+        ],
+        "android_imports": [
+          "com.vungle.ads"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "advertising_id",
+        "usage"
+      ],
+      "flags": {
+        "att_required": true,
+        "advertising": true
+      },
+      "implies": [
+        "ads"
+      ],
+      "notes": "VungleAds/vungle-ads are the current v7 coordinates; VungleSDK-iOS and publisher-sdk-android identify legacy v6 integrations.",
+      "stories": []
+    },
+    {
+      "id": "chartboost",
+      "name": "Chartboost",
+      "vendor": "Chartboost",
+      "category": "ads",
+      "match": {
+        "pods": [
+          "ChartboostSDK"
+        ],
+        "gradle": [
+          "com.chartboost:chartboost-sdk"
+        ],
+        "ios_imports": [
+          "ChartboostSDK"
+        ],
+        "android_imports": [
+          "com.chartboost.sdk"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "advertising_id",
+        "usage"
+      ],
+      "flags": {
+        "att_required": true,
+        "advertising": true
+      },
+      "implies": [
+        "ads"
+      ],
+      "notes": "The Android artifact is chartboost-sdk (not chartboost-sdk-android); current versions resolve from Chartboost's JFrog repository.",
+      "stories": []
+    },
+    {
+      "id": "inmobi",
+      "name": "InMobi",
+      "vendor": "InMobi",
+      "category": "ads",
+      "match": {
+        "pods": [
+          "InMobiSDK",
+          "InMobiSDK-Swift"
+        ],
+        "gradle": [
+          "com.inmobi.monetization:inmobi-ads-kotlin",
+          "com.inmobi.monetization:inmobi-ads"
+        ],
+        "ios_imports": [
+          "InMobiSDK"
+        ],
+        "android_imports": [
+          "com.inmobi"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "advertising_id",
+        "usage",
+        "coarse_location"
+      ],
+      "flags": {
+        "att_required": true,
+        "advertising": true
+      },
+      "implies": [
+        "ads"
+      ],
+      "notes": "inmobi-ads-kotlin is the current artifact; inmobi-ads is the legacy Java line that stopped at 10.1.4.",
+      "stories": []
+    },
+    {
+      "id": "mintegral",
+      "name": "Mintegral",
+      "vendor": "Mintegral",
+      "category": "ads",
+      "match": {
+        "pods": [
+          "MintegralAdSDK"
+        ],
+        "gradle": [
+          "com.mbridge.msdk.oversea:mbridge_android_sdk",
+          "com.mbridge.msdk.oversea:reward",
+          "com.mbridge.msdk.oversea:mbbid"
+        ],
+        "ios_imports": [
+          "MTGSDK"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "advertising_id",
+        "usage"
+      ],
+      "flags": {
+        "att_required": true,
+        "advertising": true
+      },
+      "implies": [
+        "ads"
+      ],
+      "notes": "Android artifacts resolve from Mintegral's own Maven repository under the com.mbridge.msdk.oversea group.",
+      "stories": []
+    },
+    {
+      "id": "pangle",
+      "name": "Pangle",
+      "vendor": "ByteDance",
+      "category": "ads",
+      "match": {
+        "pods": [
+          "Ads-Global"
+        ],
+        "gradle": [
+          "com.pangle.global:ads-sdk"
+        ],
+        "ios_imports": [
+          "PAGAdSDK"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "advertising_id",
+        "usage"
+      ],
+      "flags": {
+        "att_required": true,
+        "advertising": true
+      },
+      "implies": [
+        "ads"
+      ],
+      "notes": "The iOS import module is PAGAdSDK even though the pod is named Ads-Global; the Android artifact resolves from ByteDance's own Maven repository.",
+      "stories": []
+    },
+    {
+      "id": "tapjoy",
+      "name": "Tapjoy (Unity Offerwall)",
+      "vendor": "Unity",
+      "category": "ads",
+      "match": {
+        "pub": [
+          "tapjoy_offerwall"
+        ],
+        "pods": [
+          "TapjoySDK"
+        ],
+        "gradle": [
+          "com.tapjoy:tapjoy-android-sdk"
+        ],
+        "ios_imports": [
+          "Tapjoy"
+        ],
+        "android_imports": [
+          "com.tapjoy"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "advertising_id",
+        "usage"
+      ],
+      "flags": {
+        "att_required": true,
+        "advertising": true
+      },
+      "implies": [
+        "ads"
+      ],
+      "notes": "Offerwall and rewarded advertising, now maintained under Unity Grow; the Android artifact resolves from Tapjoy's own Maven repository.",
+      "stories": []
+    },
+    {
+      "id": "fyber",
+      "name": "DT Exchange (Fyber)",
+      "vendor": "Digital Turbine",
+      "category": "ads",
+      "match": {
+        "pods": [
+          "Fyber_Marketplace_SDK"
+        ],
+        "gradle": [
+          "com.fyber:marketplace-sdk"
+        ],
+        "ios_imports": [
+          "IASDKCore"
+        ],
+        "android_imports": [
+          "com.fyber.inneractive.sdk"
+        ]
+      },
+      "data_collection": [
+        "device_id",
+        "advertising_id",
+        "usage"
+      ],
+      "flags": {
+        "att_required": true,
+        "advertising": true
+      },
+      "implies": [
+        "ads"
+      ],
+      "notes": "Formerly Fyber Marketplace; the iOS import module is IASDKCore rather than the pod name.",
+      "stories": []
+    },
+    {
+      "id": "tiktok-opensdk",
+      "name": "TikTok OpenSDK",
+      "vendor": "TikTok",
+      "category": "social",
+      "match": {
+        "pods": [
+          "TikTokOpenSDKCore",
+          "TikTokOpenAuthSDK",
+          "TikTokOpenShareSDK"
+        ],
+        "gradle": [
+          "com.tiktok.open.sdk:tiktok-open-sdk-core",
+          "com.tiktok.open.sdk:tiktok-open-sdk-auth",
+          "com.tiktok.open.sdk:tiktok-open-sdk-share"
+        ],
+        "ios_imports": [
+          "TikTokOpenSDKCore",
+          "TikTokOpenAuthSDK",
+          "TikTokOpenShareSDK"
+        ],
+        "android_imports": [
+          "com.tiktok.open.sdk"
+        ]
+      },
+      "data_collection": [
+        "name_email",
+        "device_id",
+        "usage"
+      ],
+      "flags": {
+        "att_required": true
+      },
+      "implies": [],
+      "notes": "Login and share kits. When the auth kit provides account login, guideline 4.8 requires an equivalent Sign in with Apple option; the AI pass verifies this since the share-only integration does not. Android artifacts resolve from ByteDance's own Maven repository.",
+      "stories": []
+    },
+    {
+      "id": "snap-kit",
+      "name": "Snap Kit",
+      "vendor": "Snap",
+      "category": "social",
+      "match": {
+        "npm": [
+          "@snapchat/snap-kit-react-native"
+        ],
+        "pods": [
+          "SnapSDK"
+        ],
+        "gradle": [
+          "com.snap.loginkit:loginkit",
+          "com.snap.loginkit:loginkit-api",
+          "com.snap.creativekit:creativekit"
+        ],
+        "ios_imports": [
+          "SCSDKCoreKit",
+          "SCSDKLoginKit",
+          "SCSDKCreativeKit"
+        ],
+        "android_imports": [
+          "com.snap.loginkit",
+          "com.snap.creativekit"
+        ]
+      },
+      "data_collection": [
+        "name_email",
+        "device_id",
+        "usage"
+      ],
+      "flags": {
+        "att_required": true
+      },
+      "implies": [],
+      "notes": "Login Kit and Creative Kit. When Login Kit provides account login, guideline 4.8 requires an equivalent Sign in with Apple option; the AI pass verifies this since share-only integrations do not.",
       "stories": []
     }
   ],
@@ -4602,6 +7538,11 @@
       "summary": "Apps may facilitate virtual currency storage only when offered by a developer enrolled as an organization, and apps may not mine for cryptocurrency on the device unless the processing happens off device, such as cloud-based mining.",
       "section": "Business"
     },
+    "3.1.5(b)": {
+      "name": "Cryptocurrencies",
+      "summary": "Crypto wallets may only be offered by developers enrolled as organizations. Apps may not mine cryptocurrency on the device, exchange features may only be offered by the exchanges themselves, and ICO or token sale functionality must come from established financial institutions in compliance with local law.",
+      "section": "Business"
+    },
     "3.2": {
       "name": "Other Business Model Issues",
       "summary": "Apps must follow acceptable business practices. Apps may not artificially increase impressions or click-throughs of ads, and apps designed predominantly for the display of ads are not permitted.",
@@ -4660,6 +7601,16 @@
     "5.1.3": {
       "name": "Health and Health Research",
       "summary": "Apps may not use or disclose data gathered in health, fitness, or medical research contexts to third parties for advertising, marketing, or other use-based data mining purposes unrelated to improving health management or the research itself.",
+      "section": "Legal"
+    },
+    "5.1.4": {
+      "name": "Kids",
+      "summary": "Apps primarily designed for kids must comply with children's privacy statutes such as COPPA and GDPR-K, must handle any personal data from minors with heightened care and parental consent where required, and may not send personally identifiable information or device information from kids apps to third parties.",
+      "section": "Legal"
+    },
+    "5.3.4": {
+      "name": "Gaming, Gambling, and Lotteries",
+      "summary": "Apps that offer real money gaming such as sports betting, poker, casino games, or lotteries must have the necessary licensing and permissions in every location where the app is used, must be geo-restricted to those locations, and must be free on the App Store.",
       "section": "Legal"
     },
     "5.4": {

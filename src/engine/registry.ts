@@ -12,8 +12,12 @@
 //     already lowercased (see collectSpmSlugs in sdk-scanner.ts).
 //   - gradle: a "group:artifact" pattern matches a "group:artifact" dep
 //     exactly; a bare-artifact pattern matches a bare-artifact dep OR the
-//     artifact segment of a "group:artifact" dep. Case-sensitive, no "*"
-//     wildcard (not part of this ecosystem's spec).
+//     artifact segment of a "group:artifact" dep. Case-sensitive. A trailing
+//     "*" is a prefix match (per the schema comment in types.ts), applied to
+//     the same form the exact pattern would compare against: a bare "foo*"
+//     prefix-matches bare deps and artifact segments (Unity vendored-AAR
+//     basenames like "applovin-sdk-12.1.0"), a "group:foo*" pattern
+//     prefix-matches full coordinates.
 //   - ios_imports / android_imports: pattern is a module/package prefix,
 //     matched at a segment (".") boundary: dep === pattern, or
 //     dep.startsWith(pattern + "."). NOT the generic "*" mechanism - e.g.
@@ -52,9 +56,22 @@ function matchDefault(pattern: string, dep: string, caseInsensitive: boolean): b
  * Gradle coordinate matching: a "group:artifact" pattern must match a dep of
  * that exact same full form. A bare-artifact pattern (no ":") matches either
  * a bare dep of the same name, or the artifact segment (substring after the
- * last ":") of a "group:artifact" dep. Case-sensitive; no "*" wildcard.
+ * last ":") of a "group:artifact" dep. Case-sensitive.
+ *
+ * A trailing "*" turns the comparison into a prefix match on the same form
+ * (types.ts: `"*" suffix = prefix match`). This is what lets one registry
+ * pattern like "applovin-sdk*" cover versioned AAR basenames that Unity
+ * projects vendor under Assets/Plugins/Android (e.g. "applovin-sdk-12.1.0"),
+ * and "com.google.mlkit:*" cover a vendor's whole artifact family.
  */
 function matchGradle(pattern: string, dep: string): boolean {
+  if (pattern.endsWith("*")) {
+    const prefix = pattern.slice(0, -1);
+    if (prefix.includes(":")) return dep.startsWith(prefix);
+    if (dep.startsWith(prefix)) return true;
+    const idx = dep.lastIndexOf(":");
+    return idx >= 0 && dep.slice(idx + 1).startsWith(prefix);
+  }
   if (pattern.includes(":")) return dep === pattern;
   if (dep === pattern) return true;
   const idx = dep.lastIndexOf(":");

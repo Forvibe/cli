@@ -10,8 +10,8 @@ import { loadSnapshotBundle } from "../helpers/load-bundle.js";
 import type { CheckStatus } from "../../src/engine/types.js";
 
 // Integration tests run against the COMMITTED snapshot (bundle.appstore.json,
-// version 2.0.2 after the omitted-vs-null contract fix wave), imported
-// directly - never via the network loader.
+// version 2.1.0 after the content expansion wave: 30 rules, 118 registry
+// entries), imported directly - never via the network loader.
 const bundle = loadSnapshotBundle();
 
 function runFixture(fixture: string): StaticEngineResult {
@@ -39,8 +39,8 @@ function statusMap(result: StaticEngineResult): Record<string, CheckStatus> {
   return map;
 }
 
-it("snapshot is the 2.0.2 rulepack (omitted-vs-null contract fix synced)", () => {
-  expect(bundle.version).toBe("2.0.2");
+it("snapshot is the 2.1.0 rulepack (content expansion: 30 rules / 118 SDKs synced)", () => {
+  expect(bundle.version).toBe("2.1.0");
 });
 
 // ===========================================================================
@@ -73,6 +73,18 @@ describe("swift-app integration", () => {
 
   it("healthkit-with-ads -> na (no health capability)", () => {
     expect(status["appstore.healthkit-with-ads"]).toBe("na");
+  });
+
+  it("privacy-policy-link-missing -> fail (ads/attribution SDKs present, no privacy-policy string in scanned source) [new in 2.1.0]", () => {
+    expect(status["appstore.privacy-policy-link-missing"]).toBe("fail");
+  });
+
+  it("skadnetwork-missing-with-ads -> pass (Info.plist carries SKAdNetworkItems entries) [new in 2.1.0]", () => {
+    expect(status["appstore.skadnetwork-missing-with-ads"]).toBe("pass");
+  });
+
+  it("background-audio-unjustified -> unverified (UIBackgroundModes=[audio] declared; playback is behavioral) [new in 2.1.0]", () => {
+    expect(status["appstore.background-audio-unjustified"]).toBe("unverified");
   });
 
   it("admob-app-id-missing -> fail (GAD key genuinely absent -> property omitted -> MISSING -> absent true)", () => {
@@ -178,6 +190,15 @@ describe("flutter-app integration", () => {
   it("admob-app-id-missing -> fail (GAD key genuinely absent from the flutter Info.plist)", () => {
     expect(status["appstore.admob-app-id-missing"]).toBe("fail");
   });
+
+  it("healthkit matched via the pub 'health' plugin; template fails the missing NSHealthUpdateUsageDescription while the present Share key passes [new in 2.1.0]", () => {
+    expect(status["appstore.sdk-plist.healthkit.NSHealthUpdateUsageDescription"]).toBe("fail");
+    expect(status["appstore.sdk-plist.healthkit.NSHealthShareUsageDescription"]).toBe("pass");
+  });
+
+  it("health-privacy-policy-missing -> fail (health capability, no privacy-policy string in scanned source) [new in 2.1.0]", () => {
+    expect(status["appstore.health-privacy-policy-missing"]).toBe("fail");
+  });
 });
 
 // ===========================================================================
@@ -213,6 +234,16 @@ describe("objc-app integration", () => {
   it("account-deletion-missing -> fail (createAccount present in AppDelegate.m, no deletion signal)", () => {
     expect(status["appstore.account-deletion-missing"]).toBe("fail");
   });
+
+  it("firebase-core matched via '@import FirebaseCore;' (T4 gap closed in registry 2.1.0)", () => {
+    expect(result.profile.sdks.map((s) => s.id)).toContain("firebase-core");
+  });
+
+  it("skadnetwork-missing-with-ads -> fail, info severity (ads SDK present, plist has no SKAdNetworkItems) [new in 2.1.0]", () => {
+    expect(status["appstore.skadnetwork-missing-with-ads"]).toBe("fail");
+    const check = result.checks.find((c) => c.rule_id === "appstore.skadnetwork-missing-with-ads");
+    expect(check?.severity).toBe("info");
+  });
 });
 
 // ===========================================================================
@@ -225,6 +256,18 @@ describe("unity-app integration", () => {
 
   it("att-usage-description-missing -> unverified (unity-ads att_required matched via upm, but ios.plist stays null - no pre-build iOS artifacts)", () => {
     expect(status["appstore.att-usage-description-missing"]).toBe("unverified");
+  });
+
+  it("applovin-max matched via the vendored AAR basename against the 'applovin-sdk*' gradle prefix pattern (T4 gap closed in registry 2.1.0)", () => {
+    const applovin = result.profile.sdks.find((s) => s.id === "applovin-max");
+    expect(applovin?.matched_coordinates).toEqual(["gradle:applovin-sdk-12.1.0"]);
+    // The ATT rule already applied via unity-ads; applovin joining the
+    // att_required set must not change the (plist-null) unverified outcome.
+    expect(status["appstore.att-usage-description-missing"]).toBe("unverified");
+  });
+
+  it("unity-iap matched via upm com.unity.purchasing [new in 2.1.0]", () => {
+    expect(result.profile.sdks.map((s) => s.id)).toContain("unity-iap");
   });
 
   it("encryption-declaration-missing -> unverified (ios.plist null)", () => {

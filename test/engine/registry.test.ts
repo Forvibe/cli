@@ -139,6 +139,37 @@ describe("matchSDKs", () => {
 
       expect(matchSDKs(deps, registry)).toEqual([]);
     });
+
+    it("a bare '*' prefix pattern matches a versioned Unity AAR basename (T4 gap: applovin-sdk-12.1.0)", () => {
+      const deps = emptyDeps({ gradle: ["applovin-sdk-12.1.0"] });
+      const registry = [makeEntry("applovin-max", { gradle: ["applovin-sdk*"] })];
+
+      const result = matchSDKs(deps, registry);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].matched_coordinates).toEqual(["gradle:applovin-sdk-12.1.0"]);
+    });
+
+    it("a bare '*' prefix pattern also matches the artifact segment of a 'group:artifact' dep", () => {
+      const deps = emptyDeps({ gradle: ["com.applovin:applovin-sdk-12.1.0"] });
+      const registry = [makeEntry("applovin-max", { gradle: ["applovin-sdk*"] })];
+
+      expect(matchSDKs(deps, registry)).toHaveLength(1);
+    });
+
+    it("a 'group:prefix*' pattern prefix-matches full coordinates within that group", () => {
+      const deps = emptyDeps({ gradle: ["com.google.mlkit:face-detection"] });
+      const registry = [makeEntry("mlkit", { gradle: ["com.google.mlkit:*"] })];
+
+      expect(matchSDKs(deps, registry)).toHaveLength(1);
+    });
+
+    it("a bare '*' prefix pattern does NOT match an unrelated dep", () => {
+      const deps = emptyDeps({ gradle: ["applovin", "com.other:applovin"] });
+      const registry = [makeEntry("applovin-max", { gradle: ["applovin-sdk*"] })];
+
+      expect(matchSDKs(deps, registry)).toEqual([]);
+    });
   });
 
   describe("ios_imports / android_imports segment-boundary prefix matching", () => {
