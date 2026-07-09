@@ -195,6 +195,144 @@ describe("kotlin-app integration", () => {
 });
 
 // ===========================================================================
+// objc-app (stack "swift" - ObjC-only project, new label)
+// ===========================================================================
+
+describe("objc-app integration", () => {
+  const result = runFixture("objc-app");
+  const status = statusMap(result);
+
+  it("admob-app-id-missing -> fail (GoogleMobileAds .m import matched, plist present without GAD)", () => {
+    expect(status["appstore.admob-app-id-missing"]).toBe("fail");
+  });
+
+  it("att-usage-description-missing -> fail (google-mobile-ads att_required, plist present, no key)", () => {
+    expect(status["appstore.att-usage-description-missing"]).toBe("fail");
+  });
+
+  it("account-deletion-missing -> fail (createAccount present in AppDelegate.m, no deletion signal)", () => {
+    expect(status["appstore.account-deletion-missing"]).toBe("fail");
+  });
+});
+
+// ===========================================================================
+// unity-app
+// ===========================================================================
+
+describe("unity-app integration", () => {
+  const result = runFixture("unity-app");
+  const status = statusMap(result);
+
+  it("att-usage-description-missing -> unverified (unity-ads att_required matched via upm, but ios.plist stays null - no pre-build iOS artifacts)", () => {
+    expect(status["appstore.att-usage-description-missing"]).toBe("unverified");
+  });
+
+  it("encryption-declaration-missing -> unverified (ios.plist null)", () => {
+    expect(status["appstore.encryption-declaration-missing"]).toBe("unverified");
+  });
+
+  it("profile.app.bundle_id resolves to the ProjectSettings.asset value end-to-end (via parseConfig's own unity case)", () => {
+    expect(result.profile.app.bundle_id).toBe("com.forvibe.fixture.unity");
+  });
+
+  it("profile.platforms includes both ios and android", () => {
+    expect(result.profile.platforms).toEqual(["ios", "android"]);
+  });
+
+  // The test above goes through parseConfig() first, which (via its own new
+  // unity case) already fills appConfig.bundle_id/app_name/version before
+  // runStaticEngine ever sees it - so it never actually exercises the
+  // orchestrator's OWN "fill profile.app when the caller's appConfig lacks
+  // them" fallback (extractUnityProjectSettings called directly inside
+  // index.ts). Prove that path independently by calling runStaticEngine with
+  // a deliberately empty appConfig, simulating a caller that never ran
+  // parseConfig.
+  it("orchestrator's own appConfig-fallback fills app_name/bundle_id/version when the caller supplies nulls", () => {
+    const rootDir = fixturePath("unity-app");
+    const stackResult = detectTechStack(rootDir);
+    const result = runStaticEngine({
+      rootDir,
+      stackResult,
+      appConfig: { app_name: null, bundle_id: null, version: null },
+      bundle,
+      generatedAt: "2026-07-09T00:00:00.000Z",
+    });
+
+    expect(result.profile.app.bundle_id).toBe("com.forvibe.fixture.unity");
+    expect(result.profile.app.name).toBe("FixtureUnity");
+    expect(result.profile.app.version).toBe("0.3.0");
+  });
+
+  it("orchestrator's appConfig-fallback does NOT override an explicit caller-supplied value", () => {
+    const rootDir = fixturePath("unity-app");
+    const stackResult = detectTechStack(rootDir);
+    const result = runStaticEngine({
+      rootDir,
+      stackResult,
+      appConfig: { app_name: "CallerName", bundle_id: "com.caller.explicit", version: "9.9.9" },
+      bundle,
+      generatedAt: "2026-07-09T00:00:00.000Z",
+    });
+
+    expect(result.profile.app.bundle_id).toBe("com.caller.explicit");
+    expect(result.profile.app.name).toBe("CallerName");
+    expect(result.profile.app.version).toBe("9.9.9");
+  });
+});
+
+// ===========================================================================
+// kmp-app
+// ===========================================================================
+
+describe("kmp-app integration", () => {
+  const result = runFixture("kmp-app");
+  const status = statusMap(result);
+
+  it("camera capability present (from iosApp/iosApp/Info.plist NSCameraUsageDescription)", () => {
+    expect(result.profile.capabilities).toContain("camera");
+  });
+
+  it("att-usage-description-missing -> fail (play-services-ads att_required + iosApp plist present without the key)", () => {
+    expect(status["appstore.att-usage-description-missing"]).toBe("fail");
+  });
+
+  it("profile.platforms == ['ios', 'android']", () => {
+    expect(result.profile.platforms).toEqual(["ios", "android"]);
+  });
+
+  it("android manifest was read from the androidApp/ module dir (not rootDir)", () => {
+    expect(result.profile.android?.manifest_found).toBe(true);
+    expect(result.profile.android?.permissions).toContain("android.permission.INTERNET");
+    expect(result.profile.android?.permissions).toContain("android.permission.CAMERA");
+  });
+
+  it("gradle targets were read from the androidApp/ module's own build.gradle.kts", () => {
+    expect(result.profile.app.min_android_sdk).toBe(24);
+    expect(result.profile.app.target_android_sdk).toBe(34);
+  });
+
+  // The evidence file paths are relative to the root each extractor was
+  // actually called with. A bare "src/main/AndroidManifest.xml" /
+  // "build.gradle.kts" / single-segment "iosApp/Info.plist" is only possible
+  // when the orchestrator passed the resolved module dir (androidModuleDir /
+  // iosAppDir) as that root - if it had fallen back to plain rootDir instead,
+  // these paths would carry an extra "androidApp/" or "iosApp/" prefix (or,
+  // for the plist, a doubled "iosApp/iosApp/"). This is a stronger proof of
+  // the module-scoped wiring than the value-only assertions above, which a
+  // recursive-fallback scan could satisfy by coincidence even with the wrong
+  // root.
+  it("evidence file paths confirm the shared extractors ran against the resolved module dirs, not rootDir", () => {
+    expect(result.profile.evidence["android.manifest"]?.file).toBe("src/main/AndroidManifest.xml");
+    expect(result.profile.evidence["android.gradle"]?.file).toBe("build.gradle.kts");
+    expect(result.profile.evidence["ios.plist.plist_file"]?.file).toBe("iosApp/Info.plist");
+  });
+
+  it("account_creation capability detected from shared/ Kotlin source (signUp() in commonMain)", () => {
+    expect(result.profile.capabilities).toContain("account_creation");
+  });
+});
+
+// ===========================================================================
 // Ordering + determinism
 // ===========================================================================
 
@@ -218,6 +356,12 @@ describe("ordering + determinism", () => {
   it("is deterministic: two runs on swift-app deep-equal", () => {
     const a = runFixture("swift-app");
     const b = runFixture("swift-app");
+    expect(a).toEqual(b);
+  });
+
+  it("is deterministic: two runs on unity-app deep-equal", () => {
+    const a = runFixture("unity-app");
+    const b = runFixture("unity-app");
     expect(a).toEqual(b);
   });
 });

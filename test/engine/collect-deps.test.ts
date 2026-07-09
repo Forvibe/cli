@@ -117,6 +117,45 @@ describe("collectRawDependencies", () => {
     expect(deps.gradle).toEqual([]);
   });
 
+  it("unity-app: upm contains the Packages/manifest.json dependency keys", () => {
+    const deps = collectRawDependencies(fixturePath("unity-app"), "unity");
+
+    expect(deps.upm).toContain("com.unity.ads");
+    expect(deps.upm).toContain("com.google.ads.mobile");
+    expect(deps.upm).toContain("com.unity.purchasing");
+  });
+
+  it("unity-app: gradle contains the Assets/Plugins/Android AAR basename (extension stripped)", () => {
+    const deps = collectRawDependencies(fixturePath("unity-app"), "unity");
+
+    expect(deps.gradle).toContain("applovin-sdk-12.1.0");
+  });
+
+  it("unity-app: pods is empty - fixture has no Assets/Plugins/iOS/", () => {
+    const deps = collectRawDependencies(fixturePath("unity-app"), "unity");
+
+    expect(deps.pods).toEqual([]);
+  });
+
+  it("kmp-app: gradle contains the androidApp module's play-services-ads coordinate (full 'group:artifact' form, reached across modules from rootDir)", () => {
+    const deps = collectRawDependencies(fixturePath("kmp-app"), "kmp");
+
+    expect(deps.gradle).toContain("com.google.android.gms:play-services-ads");
+  });
+
+  it("kmp-app: ios_imports contains SwiftUI (scanned from iosApp/**/*.swift)", () => {
+    const deps = collectRawDependencies(fixturePath("kmp-app"), "kmp");
+
+    expect(deps.ios_imports).toContain("SwiftUI");
+  });
+
+  it("objc-app (stack swift): ios_imports contains GoogleMobileAds AND FirebaseCore from the .m source (ObjC import scanning)", () => {
+    const deps = collectRawDependencies(fixturePath("objc-app"), "swift");
+
+    expect(deps.ios_imports).toContain("GoogleMobileAds");
+    expect(deps.ios_imports).toContain("FirebaseCore");
+  });
+
   it("an unknown stack returns all-empty buckets without crashing", () => {
     const deps = collectRawDependencies(fixturePath("swift-app"), "unknown");
 

@@ -12,6 +12,8 @@ import { extractIosEntitlements } from "./extractors/ios-entitlements.js";
 import { extractIosPrivacyManifest } from "./extractors/ios-privacy-manifest.js";
 import { extractAndroidManifest } from "./extractors/android-manifest.js";
 import { extractGradleTargets } from "./extractors/gradle-targets.js";
+import { extractUnityProjectSettings } from "./extractors/unity.js";
+import { findKmpLayout } from "./extractors/kmp.js";
 import {
   buildAppProfile,
   scanSourceSignals,
@@ -53,7 +55,7 @@ function extensionsForStack(stack: TechStack): string[] {
     case "flutter":
       return [".dart"];
     case "swift":
-      return [".swift"];
+      return [".swift", ".m", ".mm", ".h"];
     case "kotlin":
       return [".kt", ".kts"];
     case "expo":
@@ -62,6 +64,10 @@ function extensionsForStack(stack: TechStack): string[] {
       return [".ts", ".tsx", ".js", ".jsx"];
     case "dotnet-maui":
       return [".cs", ".xaml"];
+    case "unity":
+      return [".cs"];
+    case "kmp":
+      return [".kt", ".kts", ".swift"];
     default:
       return [".ts", ".js", ".swift", ".dart", ".kt"];
   }
@@ -110,11 +116,47 @@ export function runStaticEngine(input: StaticEngineInput): StaticEngineResult {
   const isIos = platforms.includes("ios");
   const isAndroid = platforms.includes("android");
 
-  const ios = isIos ? extractIosPlist(rootDir) : null;
-  const entitlements = isIos ? extractIosEntitlements(rootDir) : null;
-  const privacyManifest = isIos ? extractIosPrivacyManifest(rootDir) : null;
-  const android = isAndroid ? extractAndroidManifest(rootDir) : null;
-  const gradleTargets = isAndroid ? extractGradleTargets(rootDir) : null;
+  // KMP: the real iOS/Android artifacts live in dedicated module
+  // directories, not at rootDir - locate them once and point the shared
+  // extractors there. Falling back to rootDir when a module isn't found
+  // keeps behavior sane for a malformed/partial KMP layout (the same
+  // best-effort default every other stack already gets). Every other stack
+  // leaves kmpLayout null, so iosRoot/androidRoot both equal rootDir and
+  // behavior is byte-identical to before this change.
+  const kmpLayout = stack === "kmp" ? findKmpLayout(rootDir) : null;
+  const iosRoot = kmpLayout?.iosAppDir ?? rootDir;
+  const androidRoot = kmpLayout?.androidModuleDir ?? rootDir;
+
+  const ios = isIos ? extractIosPlist(iosRoot) : null;
+  const entitlements = isIos ? extractIosEntitlements(iosRoot) : null;
+  const privacyManifest = isIos ? extractIosPrivacyManifest(iosRoot) : null;
+  const android = isAndroid ? extractAndroidManifest(androidRoot) : null;
+  // gradle-targets: KMP needs the android module's OWN build.gradle(.kts)
+  // for min/targetSdk, same reasoning as androidRoot above.
+  const gradleTargets = isAndroid ? extractGradleTargets(androidRoot) : null;
+
+  // Unity: ProjectSettings/ProjectSettings.asset (PlayerSettings) is the
+  // only pre-build source of app identity - there is no Info.plist /
+  // AndroidManifest.xml until the platform build actually runs, which is
+  // exactly why the shared iOS/Android extractors above are expected to
+  // find nothing for a Unity project (ios.plist / android stay null ->
+  // rules correctly resolve "unverified" rather than a false pass/fail).
+  // This only fills app-identity gaps the caller's appConfig left null; it
+  // never overrides an explicit value the caller already supplied.
+  let appConfig = input.appConfig;
+  let extraEvidence: Record<string, { file: string; detail?: string }> | null = null;
+  if (stack === "unity") {
+    const unityExtraction = extractUnityProjectSettings(rootDir);
+    if (unityExtraction) {
+      appConfig = {
+        ...appConfig,
+        app_name: appConfig.app_name ?? unityExtraction.product_name,
+        bundle_id: appConfig.bundle_id ?? unityExtraction.bundle_id,
+        version: appConfig.version ?? unityExtraction.app_version,
+      };
+      extraEvidence = unityExtraction.evidence;
+    }
+  }
 
   // Signals: caller-provided files win; otherwise self-scan. A self-scan that
   // finds no source at all -> null signals (honest "we didn't see any source").
@@ -129,7 +171,7 @@ export function runStaticEngine(input: StaticEngineInput): StaticEngineResult {
   const profile = buildAppProfile({
     rootDir,
     stackResult,
-    appConfig: input.appConfig,
+    appConfig,
     deps,
     sdks,
     registry: bundle.sdk_registry,
@@ -141,6 +183,10 @@ export function runStaticEngine(input: StaticEngineInput): StaticEngineResult {
     signals,
     generatedAt: input.generatedAt ?? new Date().toISOString(),
   });
+
+  if (extraEvidence) {
+    profile.evidence = { ...profile.evidence, ...extraEvidence };
+  }
 
   const { checks, findings } = evaluateRules(profile, bundle);
 

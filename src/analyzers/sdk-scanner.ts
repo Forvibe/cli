@@ -773,24 +773,34 @@ function collectSpmSlugs(rootDir: string): string[] {
 }
 
 /**
- * Raw (unfiltered) Swift module-import scan: every `import X` / `@import X;`
- * module name found in the project's .swift files (depth 6, capped at the
- * first 100 files found - mirrors the legacy scan's own limits above),
- * deduped. Unlike the legacy native-import scan in getDependencies() above,
- * this is NOT gated by SDK_MAP - the registry matcher needs to see every
- * import (e.g. "UIKit"), not just ones this file's hardcoded map happens to
- * recognize.
+ * Raw (unfiltered) Swift + Objective-C module-import scan: every
+ * `import X` / `@import X;` (Swift/ObjC) and `#import <Module/Header.h>`
+ * (ObjC, angle-bracket form only) module name found in the project's
+ * .swift/.m/.mm files (depth 6, capped at the first 100 files found -
+ * mirrors the legacy scan's own limits above), deduped. Unlike the legacy
+ * native-import scan in getDependencies() above, this is NOT gated by
+ * SDK_MAP - the registry matcher needs to see every import (e.g. "UIKit"),
+ * not just ones this file's hardcoded map happens to recognize.
+ *
+ * `#import "LocalHeader.h"` (quoted) is deliberately NOT matched: that's a
+ * same-project header, not an external SDK, so it carries no SDK identity.
  */
 function collectSwiftImports(rootDir: string): string[] {
-  const swiftFiles = findFiles(rootDir, [".swift"], 6);
+  const sourceFiles = findFiles(rootDir, [".swift", ".m", ".mm"], 6);
   const imports = new Set<string>();
-  for (const file of swiftFiles.slice(0, 100)) {
+  for (const file of sourceFiles.slice(0, 100)) {
     const content = readFileSafe(file);
     if (!content) continue;
     for (const m of content.matchAll(/^\s*import\s+(\w+)/gm)) {
       imports.add(m[1]);
     }
     for (const m of content.matchAll(/@import\s+(\w+)\s*;/g)) {
+      imports.add(m[1]);
+    }
+    // ObjC: `#import <Module/Header.h>` or `#import <Module.h>` - the
+    // captured module segment is everything up to the first "/" (a
+    // vendored SDK's umbrella header path) or the closing ">".
+    for (const m of content.matchAll(/#import\s*<([^\/>]+)(?:\/[^>]*)?>/g)) {
       imports.add(m[1]);
     }
   }
@@ -940,10 +950,74 @@ export function collectRawDependencies(rootDir: string, stack: TechStack): Ecosy
       break;
     }
 
-    // "unknown" today; "unity" / "kmp" aren't valid TechStack members yet -
-    // rsv2-task-4-brief.md's Deliverable 1 adds them to the TechStack union
-    // (src/types/report.ts) and, per that brief, gives them explicit cases
-    // here. Until then, every bucket stays empty for both.
+    case "unity": {
+      // upm: dependency keys from Packages/manifest.json (Unity Package
+      // Manager manifest) - this is Unity's equivalent of package.json.
+      const manifestContent = readFileSafe(join(rootDir, "Packages", "manifest.json"));
+      if (manifestContent) {
+        try {
+          const manifest = JSON.parse(manifestContent);
+          if (manifest?.dependencies && typeof manifest.dependencies === "object") {
+            deps.upm = dedupeSorted(Object.keys(manifest.dependencies));
+          }
+        } catch {
+          /* malformed manifest.json - leave upm empty */
+        }
+      }
+
+      // Unity plugin binaries vendored under Assets/Plugins/ (native SDKs
+      // dropped in as raw .aar/.jar/.framework/.xcframework, since Unity has
+      // no package-manifest entry for them) carry SDK identity in their bare
+      // file/dir name alone. There is no build.gradle/Podfile to read at
+      // this stage (the native Android/Xcode projects are generated at
+      // build time), so the registry can only match these as bare
+      // artifact/pod names - append them to the same buckets the
+      // gradle/pods ecosystems already use for bare-name matching.
+      const gradleFromPlugins: string[] = [];
+      try {
+        for (const entry of readdirSync(join(rootDir, "Assets", "Plugins", "Android"))) {
+          if (entry.endsWith(".aar")) gradleFromPlugins.push(entry.slice(0, -".aar".length));
+          else if (entry.endsWith(".jar")) gradleFromPlugins.push(entry.slice(0, -".jar".length));
+        }
+      } catch {
+        /* Assets/Plugins/Android/ absent - most Unity apps don't have it */
+      }
+      deps.gradle = dedupeSorted(gradleFromPlugins);
+
+      const podsFromPlugins: string[] = [];
+      try {
+        for (const entry of readdirSync(join(rootDir, "Assets", "Plugins", "iOS"))) {
+          if (entry.endsWith(".xcframework")) podsFromPlugins.push(entry.slice(0, -".xcframework".length));
+          else if (entry.endsWith(".framework")) podsFromPlugins.push(entry.slice(0, -".framework".length));
+        }
+      } catch {
+        /* Assets/Plugins/iOS/ absent */
+      }
+      deps.pods = dedupeSorted(podsFromPlugins);
+      break;
+    }
+
+    case "kmp": {
+      // gradle: the existing multi-module coordinate collector already
+      // walks the whole tree (gradleCandidateFiles + collectGradleCoordinates
+      // recurse to depth 5), so it reaches both shared/build.gradle.kts and
+      // androidApp/build.gradle.kts from rootDir directly.
+      deps.gradle = collectGradleCoordinates(rootDir, gradleCandidateFiles(rootDir));
+
+      // iOS side lives under iosApp/ in the conventional KMP project layout.
+      const iosAppDir = join(rootDir, "iosApp");
+      deps.ios_imports = collectSwiftImports(iosAppDir);
+      deps.pods = collectPodfilePods(join(iosAppDir, "Podfile"));
+      deps.spm = collectSpmSlugs(iosAppDir);
+
+      // Android + shared Kotlin sources: collectAndroidImports already
+      // sweeps rootDir (depth 6) plus app/src (depth 8), which covers every
+      // KMP module (shared/, androidApp/) from a single rootDir-wide call.
+      deps.android_imports = collectAndroidImports(rootDir);
+      break;
+    }
+
+    // "unknown" only.
     default:
       break;
   }

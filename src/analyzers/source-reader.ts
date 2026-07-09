@@ -87,7 +87,10 @@ function getExtensionsForStack(techStack: TechStack): string[] {
     case "flutter":
       return [".dart"];
     case "swift":
-      return [".swift"];
+      // .m/.mm (Objective-C) + .h added alongside .swift: the "swift" stack
+      // now also covers ObjC-only iOS projects (see tech-detector.ts's
+      // relabel to "iOS Native (Swift/Objective-C)").
+      return [".swift", ".m", ".mm", ".h"];
     case "kotlin":
       return [".kt", ".kts"];
     case "expo":
@@ -96,6 +99,12 @@ function getExtensionsForStack(techStack: TechStack): string[] {
       return [".ts", ".tsx", ".js", ".jsx"];
     case "dotnet-maui":
       return [".cs", ".xaml"];
+    case "unity":
+      return [".cs"];
+    case "kmp":
+      // Kotlin (shared/androidApp) + Swift (iosApp) - a KMP project's source
+      // is split across both languages.
+      return [".kt", ".kts", ".swift"];
     default:
       return [".ts", ".js", ".swift", ".dart", ".kt"];
   }
@@ -141,6 +150,10 @@ function getPriorityPatternsForStack(techStack: TechStack): string[] {
       return [...common, "screen", "component", "hook", "context", "store", "slice"];
     case "dotnet-maui":
       return [...common, "page", "view", "viewmodel", "service", "mauiprogram", "appshell"];
+    case "unity":
+      return [...common, "gamemanager", "main", "controller", "manager"];
+    case "kmp":
+      return [...common, "app", "mainactivity", "contentview", "viewmodel"];
     default:
       return common;
   }
