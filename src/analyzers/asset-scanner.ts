@@ -2,8 +2,7 @@ import { readFileSync, existsSync, readdirSync, statSync } from "fs";
 import { join, extname, relative, basename } from "path";
 import type { TechStack, CLIAppAsset, CLIAssetType } from "../types/report.js";
 
-const MAX_ASSET_SIZE = 1 * 1024 * 1024; // 1MB per asset (keeps total under Vercel's 4.5MB body limit)
-const MAX_TOTAL_BASE64_SIZE = 3 * 1024 * 1024; // 3MB total base64 budget (leaves room for report JSON)
+const MAX_ASSET_SIZE = 5 * 1024 * 1024; // 5MB per asset (uploaded direct to Supabase Storage)
 const MAX_TOTAL_ASSETS = 10;
 const MAX_SCREENSHOTS = 5;
 const MIN_ASSET_SIZE = 500; // Skip tiny placeholders
@@ -171,6 +170,18 @@ function getScreenshotDirs(rootDir: string, techStack: TechStack): ScreenshotDir
       );
       break;
 
+    case "expo":
+      dirs.push(
+        ss(join(rootDir, "assets/screenshots")),
+        ss(join(rootDir, "src/assets/screenshots")),
+        ss(join(rootDir, "docs/screenshots")),
+        gen(join(rootDir, "assets/images")),
+        gen(join(rootDir, "assets")),
+        gen(join(rootDir, "src/assets/images")),
+        gen(join(rootDir, "src/assets")),
+      );
+      break;
+
     case "react-native":
     case "capacitor":
       dirs.push(
@@ -193,10 +204,19 @@ function getScreenshotDirs(rootDir: string, techStack: TechStack): ScreenshotDir
       break;
 
     case "kotlin":
-    case "java":
       dirs.push(
         ss(join(rootDir, "fastlane/metadata/android/en-US/images/phoneScreenshots")),
         gen(join(rootDir, "metadata/android/en-US/images")),
+        gen(join(rootDir, "marketing")),
+        gen(join(rootDir, "Marketing")),
+      );
+      break;
+
+    case "dotnet-maui":
+      dirs.push(
+        ss(join(rootDir, "Resources/Images/screenshots")),
+        ss(join(rootDir, "Resources/Screenshots")),
+        gen(join(rootDir, "Resources/Images")),
         gen(join(rootDir, "marketing")),
         gen(join(rootDir, "Marketing")),
       );
@@ -236,6 +256,32 @@ function getSplashPaths(rootDir: string, techStack: TechStack): string[] {
       }
       break;
 
+    case "expo":
+      paths.push(
+        join(rootDir, "assets/splash.png"),
+        join(rootDir, "assets/splash-icon.png"),
+        join(rootDir, "assets/images/splash.png"),
+        join(rootDir, "assets/images/splash-icon.png"),
+        join(rootDir, "src/assets/splash.png"),
+      );
+      // app.json expo.splash.image
+      const expoSplashContent = readFileSafe(join(rootDir, "app.json"));
+      if (expoSplashContent) {
+        try {
+          const data = JSON.parse(expoSplashContent);
+          const expo = data.expo || data;
+          const candidates = [
+            expo.splash?.image,
+            expo.android?.splash?.image,
+            expo.ios?.splash?.image,
+          ].filter((v): v is string => typeof v === "string");
+          for (const rel of candidates) {
+            paths.push(join(rootDir, rel.replace(/^\.?\//, "")));
+          }
+        } catch { /* ignore */ }
+      }
+      break;
+
     case "react-native":
     case "capacitor":
       paths.push(
@@ -247,7 +293,6 @@ function getSplashPaths(rootDir: string, techStack: TechStack): string[] {
       break;
 
     case "kotlin":
-    case "java":
       // Check drawable directories for splash images
       for (const density of ["xxxhdpi", "xxhdpi", "xhdpi"]) {
         paths.push(
@@ -255,6 +300,15 @@ function getSplashPaths(rootDir: string, techStack: TechStack): string[] {
           join(rootDir, `app/src/main/res/drawable-${density}/launch_screen.png`),
         );
       }
+      break;
+
+    case "dotnet-maui":
+      paths.push(
+        join(rootDir, "Resources/Splash/splash.png"),
+        join(rootDir, "Resources/Splash/splashscreen.png"),
+        join(rootDir, "Resources/Splash/splash.svg"),
+        join(rootDir, "Resources/Images/splash.png"),
+      );
       break;
   }
 
@@ -277,18 +331,26 @@ function getFeatureGraphicPaths(rootDir: string, techStack: TechStack): string[]
 
   switch (techStack) {
     case "flutter":
+    case "expo":
     case "react-native":
     case "capacitor":
       paths.push(
         join(rootDir, "assets/feature_graphic.png"),
         join(rootDir, "assets/feature-graphic.png"),
+        join(rootDir, "assets/images/feature_graphic.png"),
       );
       break;
 
     case "kotlin":
-    case "java":
       paths.push(
         join(rootDir, "app/src/main/feature_graphic.png"),
+      );
+      break;
+
+    case "dotnet-maui":
+      paths.push(
+        join(rootDir, "Resources/Images/feature_graphic.png"),
+        join(rootDir, "Resources/Images/feature-graphic.png"),
       );
       break;
   }
@@ -328,14 +390,6 @@ function getPromotionalPaths(rootDir: string, techStack: TechStack): string[] {
  * feature graphics, and promotional images.
  * Note: App icon is handled separately by branding.ts
  */
-function totalBase64Size(assets: CLIAppAsset[]): number {
-  return assets.reduce((sum, a) => sum + a.base64_data.length, 0);
-}
-
-function wouldExceedBudget(assets: CLIAppAsset[], candidate: CLIAppAsset): boolean {
-  return totalBase64Size(assets) + candidate.base64_data.length > MAX_TOTAL_BASE64_SIZE;
-}
-
 export function scanAppAssets(
   rootDir: string,
   techStack: TechStack
@@ -386,18 +440,5 @@ export function scanAppAssets(
     }
   }
 
-  // Enforce total base64 budget — drop largest assets until under limit
-  const result = assets.slice(0, MAX_TOTAL_ASSETS);
-  while (result.length > 0 && totalBase64Size(result) > MAX_TOTAL_BASE64_SIZE) {
-    // Remove the largest asset
-    let largestIdx = 0;
-    for (let i = 1; i < result.length; i++) {
-      if (result[i].base64_data.length > result[largestIdx].base64_data.length) {
-        largestIdx = i;
-      }
-    }
-    result.splice(largestIdx, 1);
-  }
-
-  return result;
+  return assets.slice(0, MAX_TOTAL_ASSETS);
 }

@@ -1,11 +1,32 @@
-import type { CLIProjectReport } from "../types/report.js";
+import type { CLIProjectReport, CLIAssetType } from "../types/report.js";
 import type { CodeReviewReport } from "../types/review.js";
 
+export interface AssetUploadRequest {
+  asset_type: CLIAssetType;
+  file_name: string;
+  mime_type: string;
+}
+
+export interface AssetUploadSlot {
+  asset_type: CLIAssetType;
+  file_name: string;
+  bucket: string;
+  storage_path: string;
+  signed_url: string;
+  token: string;
+}
+
 const DEFAULT_API_URL = "https://forvibe.app";
+
+export interface StoreConfig {
+  stores: string[];
+  languages: string[];
+}
 
 interface ValidateOTCResponse {
   session_id: string;
   session_token: string;
+  store_config?: StoreConfig | null;
 }
 
 interface SubmitReportResponse {
@@ -47,6 +68,7 @@ export class ForvibeClient {
   private baseUrl: string;
   private sessionToken: string | null = null;
   public sessionId: string | null = null;
+  public storeConfig: StoreConfig | null = null;
 
   constructor(baseUrl?: string) {
     this.baseUrl = (baseUrl || process.env.FORVIBE_API_URL || DEFAULT_API_URL).replace(/\/$/, "");
@@ -83,6 +105,7 @@ export class ForvibeClient {
     const data = (await response.json()) as ValidateOTCResponse;
     this.sessionToken = data.session_token;
     this.sessionId = data.session_id;
+    this.storeConfig = data.store_config || null;
     return data;
   }
 
@@ -135,6 +158,73 @@ export class ForvibeClient {
     }
 
     return (await response.json()) as SubmitReportResponse;
+  }
+
+  /**
+   * Request signed upload URLs for app assets. CLI uploads the binaries
+   * directly to Supabase Storage, avoiding Vercel's 4.5MB body limit on
+   * the report endpoint.
+   */
+  async getAssetUploadUrls(
+    assets: AssetUploadRequest[]
+  ): Promise<{ uploads: AssetUploadSlot[] }> {
+    if (!this.sessionToken) {
+      throw new Error("Not connected. Please validate OTC code first.");
+    }
+
+    const response = await fetchWithAuth(
+      `${this.baseUrl}/api/agent/assets/presign`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.sessionToken}`,
+        },
+        body: JSON.stringify({ assets }),
+      }
+    );
+
+    if (!response.ok) {
+      const bodyText = await response.text().catch(() => "");
+      let errorMessage: string | undefined;
+      try {
+        errorMessage = JSON.parse(bodyText).error;
+      } catch {
+        // non-JSON response
+      }
+      throw new Error(
+        errorMessage ||
+          `Failed to get upload URLs (HTTP ${response.status}: ${bodyText.substring(0, 200)})`
+      );
+    }
+
+    return (await response.json()) as { uploads: AssetUploadSlot[] };
+  }
+
+  /**
+   * PUT a binary asset directly to a Supabase Storage signed upload URL.
+   * Do NOT send our Bearer token — the signed URL carries its own auth.
+   */
+  async uploadAssetToSignedUrl(
+    signedUrl: string,
+    buffer: Buffer,
+    mimeType: string
+  ): Promise<void> {
+    const response = await fetch(signedUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": mimeType,
+        "x-upsert": "true",
+      },
+      body: new Uint8Array(buffer),
+    });
+
+    if (!response.ok) {
+      const bodyText = await response.text().catch(() => "");
+      throw new Error(
+        `Supabase Storage upload failed (HTTP ${response.status}: ${bodyText.substring(0, 200)})`
+      );
+    }
   }
 
   /**

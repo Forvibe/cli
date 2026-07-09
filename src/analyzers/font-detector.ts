@@ -308,6 +308,133 @@ function detectAndroidFonts(rootDir: string): string[] {
 }
 
 // =============================================
+// Expo
+// =============================================
+
+function detectExpoFonts(rootDir: string): string[] {
+  const fonts: string[] = [];
+
+  // 1. assets/fonts directory (most common)
+  const fontDirs = [
+    join(rootDir, "assets/fonts"),
+    join(rootDir, "src/assets/fonts"),
+    join(rootDir, "assets"),
+  ];
+  for (const dir of fontDirs) {
+    const fontFiles = scanForFontFiles(dir, 2);
+    for (const f of fontFiles) {
+      fonts.push(fontNameFromFile(f));
+    }
+  }
+
+  // 2. expo-font useFonts({ "Name": require(...) })
+  const jsFiles = findFiles(rootDir, [".ts", ".tsx", ".js", ".jsx"], 6);
+  for (const file of jsFiles.slice(0, 100)) {
+    const content = readFileSafe(file);
+    if (!content) continue;
+
+    // useFonts({ key: require(...) })
+    const useFontsMatch = content.match(/useFonts\s*\(\s*\{([\s\S]*?)\}\s*\)/);
+    if (useFontsMatch) {
+      const block = useFontsMatch[1];
+      const keyMatches = block.matchAll(/['"`]([^'"`]+)['"`]\s*:/g);
+      for (const m of keyMatches) {
+        fonts.push(m[1]);
+      }
+    }
+
+    // Font.loadAsync({ "Name": require(...) })
+    const loadAsyncMatch = content.match(/Font\.loadAsync\s*\(\s*\{([\s\S]*?)\}\s*\)/);
+    if (loadAsyncMatch) {
+      const block = loadAsyncMatch[1];
+      const keyMatches = block.matchAll(/['"`]([^'"`]+)['"`]\s*:/g);
+      for (const m of keyMatches) {
+        fonts.push(m[1]);
+      }
+    }
+
+    // fontFamily: "Name"
+    const familyMatches = content.matchAll(/fontFamily\s*:\s*['"]([^'"]+)['"]/g);
+    for (const m of familyMatches) {
+      fonts.push(m[1]);
+    }
+  }
+
+  // 3. app.json expo.fonts (some templates declare it)
+  const appJsonContent = readFileSafe(join(rootDir, "app.json"));
+  if (appJsonContent) {
+    try {
+      const data = JSON.parse(appJsonContent);
+      const expoFonts = data.expo?.fonts || data.fonts;
+      if (Array.isArray(expoFonts)) {
+        for (const entry of expoFonts) {
+          if (typeof entry === "string") {
+            fonts.push(fontNameFromFile(entry));
+          } else if (entry?.name) {
+            fonts.push(entry.name);
+          } else if (entry?.path) {
+            fonts.push(fontNameFromFile(entry.path));
+          }
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
+  return fonts;
+}
+
+// =============================================
+// .NET MAUI
+// =============================================
+
+function detectMauiFonts(rootDir: string): string[] {
+  const fonts: string[] = [];
+
+  // 1. Resources/Fonts directory
+  const fontDirs = [
+    join(rootDir, "Resources/Fonts"),
+    join(rootDir, "Resources/Font"),
+  ];
+  for (const dir of fontDirs) {
+    const fontFiles = scanForFontFiles(dir, 2);
+    for (const f of fontFiles) {
+      fonts.push(fontNameFromFile(f));
+    }
+  }
+
+  // 2. MauiProgram.cs — fonts.AddFont("File.ttf", "Alias")
+  const csFiles = findFiles(rootDir, [".cs"], 4);
+  for (const file of csFiles.slice(0, 30)) {
+    const content = readFileSafe(file);
+    if (!content) continue;
+    if (!content.includes("AddFont")) continue;
+    const matches = content.matchAll(
+      /\.AddFont\s*\(\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\)/g
+    );
+    for (const match of matches) {
+      // Prefer alias (second arg) — that's what XAML uses
+      fonts.push(match[2]);
+    }
+  }
+
+  // 3. XAML FontFamily="Alias" references
+  const xamlFiles = findFiles(rootDir, [".xaml"], 5);
+  for (const file of xamlFiles.slice(0, 50)) {
+    const content = readFileSafe(file);
+    if (!content) continue;
+    const matches = content.matchAll(/FontFamily\s*=\s*"([^"]+)"/g);
+    for (const match of matches) {
+      // Skip {StaticResource} and OnPlatform refs
+      const v = match[1];
+      if (v.startsWith("{") || v.includes(",")) continue;
+      fonts.push(v);
+    }
+  }
+
+  return fonts;
+}
+
+// =============================================
 // Main Export
 // =============================================
 
@@ -318,6 +445,9 @@ export function detectFonts(rootDir: string, techStack: TechStack): string[] {
     case "flutter":
       rawFonts = detectFlutterFonts(rootDir);
       break;
+    case "expo":
+      rawFonts = detectExpoFonts(rootDir);
+      break;
     case "react-native":
     case "capacitor":
       rawFonts = detectJSFonts(rootDir);
@@ -326,8 +456,10 @@ export function detectFonts(rootDir: string, techStack: TechStack): string[] {
       rawFonts = detectSwiftFonts(rootDir);
       break;
     case "kotlin":
-    case "java":
       rawFonts = detectAndroidFonts(rootDir);
+      break;
+    case "dotnet-maui":
+      rawFonts = detectMauiFonts(rootDir);
       break;
     default:
       rawFonts = [];

@@ -3,7 +3,7 @@ import { join } from "path";
 import plist from "plist";
 import YAML from "yaml";
 import type { TechStack, ParsedConfig } from "../types/report.js";
-import { readFileSafe, findFile, findAllFiles } from "../utils/file-scanner.js";
+import { readFileSafe, findFile, findFiles, findAllFiles } from "../utils/file-scanner.js";
 
 /**
  * Parse project configuration based on detected tech stack
@@ -15,12 +15,13 @@ export function parseConfig(
   switch (techStack) {
     case "flutter":
       return parseFlutterConfig(rootDir);
+    case "expo":
+      return parseExpoConfig(rootDir);
     case "react-native":
       return parseReactNativeConfig(rootDir);
     case "swift":
       return parseSwiftConfig(rootDir);
     case "kotlin":
-    case "java":
       return parseAndroidConfig(rootDir);
     case "capacitor":
       return parseCapacitorConfig(rootDir);
@@ -108,6 +109,103 @@ function parseFlutterConfig(rootDir: string): ParsedConfig {
 }
 
 // =============================================
+// Expo
+// =============================================
+
+function parseExpoConfig(rootDir: string): ParsedConfig {
+  const config = emptyConfig();
+
+  // 1. app.json (static config) — preferred when expo block exists
+  const appJsonContent = readFileSafe(join(rootDir, "app.json"));
+  if (appJsonContent) {
+    try {
+      const appJson = JSON.parse(appJsonContent);
+      const expo = appJson.expo || appJson;
+      config.app_name = expo.name || appJson.displayName || appJson.name || null;
+      config.version = expo.version || null;
+      config.bundle_id =
+        expo.ios?.bundleIdentifier ||
+        expo.android?.package ||
+        null;
+      config.description = expo.description || null;
+      config.min_ios_version = expo.ios?.deploymentTarget || null;
+    } catch { /* ignore */ }
+  }
+
+  // 2. app.config.js / app.config.ts — regex fallback (no eval)
+  if (!config.app_name || !config.bundle_id || !config.version) {
+    for (const name of ["app.config.ts", "app.config.js"]) {
+      const content = readFileSafe(join(rootDir, name));
+      if (!content) continue;
+      if (!config.app_name) {
+        const m = content.match(/name\s*:\s*['"]([^'"]+)['"]/);
+        if (m) config.app_name = m[1];
+      }
+      if (!config.version) {
+        const m = content.match(/version\s*:\s*['"]([^'"]+)['"]/);
+        if (m) config.version = m[1];
+      }
+      if (!config.bundle_id) {
+        const m =
+          content.match(/bundleIdentifier\s*:\s*['"]([^'"]+)['"]/) ||
+          content.match(/package\s*:\s*['"]([^'"]+)['"]/);
+        if (m) config.bundle_id = m[1];
+      }
+      if (!config.description) {
+        const m = content.match(/description\s*:\s*['"]([^'"]+)['"]/);
+        if (m) config.description = m[1];
+      }
+    }
+  }
+
+  // 3. package.json fallbacks
+  const pkgContent = readFileSafe(join(rootDir, "package.json"));
+  if (pkgContent) {
+    try {
+      const pkg = JSON.parse(pkgContent);
+      if (!config.version) config.version = pkg.version || null;
+      if (!config.description) config.description = pkg.description || null;
+      if (!config.app_name) config.app_name = pkg.name || null;
+    } catch { /* ignore */ }
+  }
+
+  // 4. If user ejected to bare workflow, fall back to native sources
+  if (!config.bundle_id || !config.app_name) {
+    const infoPlistPath = findFile(join(rootDir, "ios"), "Info.plist", 4);
+    if (infoPlistPath) {
+      const plistData = parsePlist(infoPlistPath);
+      if (plistData) {
+        if (!config.bundle_id) {
+          const id = plistData.CFBundleIdentifier as string | undefined;
+          if (id && !isXcodeVariable(id)) config.bundle_id = id;
+        }
+        if (!config.app_name) {
+          const display =
+            (plistData.CFBundleDisplayName as string | undefined) ||
+            (plistData.CFBundleName as string | undefined);
+          if (display && !isXcodeVariable(display)) config.app_name = display;
+        }
+      }
+    }
+  }
+  if (!config.bundle_id) {
+    const buildGradlePath =
+      findFile(join(rootDir, "android/app"), "build.gradle", 2) ||
+      findFile(join(rootDir, "android/app"), "build.gradle.kts", 2);
+    if (buildGradlePath) {
+      const gradleConfig = parseGradle(buildGradlePath);
+      if (gradleConfig.applicationId) config.bundle_id = gradleConfig.applicationId;
+      if (!config.min_android_sdk) config.min_android_sdk = gradleConfig.minSdk || null;
+    }
+  }
+  if (!config.app_name) {
+    config.app_name = readAndroidAppName(join(rootDir, "android"));
+  }
+
+  return config;
+}
+
+// =============================================
 // React Native
 // =============================================
 
@@ -121,6 +219,18 @@ function parseReactNativeConfig(rootDir: string): ParsedConfig {
       const appJson = JSON.parse(appJsonContent);
       config.app_name = appJson.displayName || appJson.name || null;
     } catch { /* ignore */ }
+  }
+
+  // app.config.ts/js — regex fallback (matches string-literal name only).
+  // Covers projects that were detected as bare RN but actually ship an
+  // Expo-style dynamic config, or RN projects using a shared config helper.
+  if (!config.app_name) {
+    for (const name of ["app.config.ts", "app.config.js"]) {
+      const content = readFileSafe(join(rootDir, name));
+      if (!content) continue;
+      const m = content.match(/name\s*:\s*['"]([^'"]+)['"]/);
+      if (m) { config.app_name = m[1]; break; }
+    }
   }
 
   // package.json
@@ -143,6 +253,14 @@ function parseReactNativeConfig(rootDir: string): ParsedConfig {
         (plistData.CFBundleIdentifier as string) || null;
       config.min_ios_version =
         (plistData.MinimumOSVersion as string) || null;
+      if (!config.app_name) {
+        const display =
+          (plistData.CFBundleDisplayName as string) ||
+          (plistData.CFBundleName as string);
+        if (display && !isXcodeVariable(display)) {
+          config.app_name = display;
+        }
+      }
     }
   }
 
@@ -172,6 +290,11 @@ function parseReactNativeConfig(rootDir: string): ParsedConfig {
       config.bundle_id = gradleConfig.applicationId;
     }
     config.min_android_sdk = gradleConfig.minSdk || null;
+  }
+
+  // Android native fallback for app_name (AndroidManifest label / strings.xml)
+  if (!config.app_name) {
+    config.app_name = readAndroidAppName(join(rootDir, "android"));
   }
 
   return config;
@@ -356,44 +479,30 @@ function parseSwiftConfig(rootDir: string): ParsedConfig {
 function parseAndroidConfig(rootDir: string): ParsedConfig {
   const config = emptyConfig();
 
-  // build.gradle
-  const buildGradlePath =
-    findFile(join(rootDir, "app"), "build.gradle", 2) ||
-    findFile(join(rootDir, "app"), "build.gradle.kts", 2) ||
-    findFile(rootDir, "build.gradle", 1) ||
-    findFile(rootDir, "build.gradle.kts", 1);
-
-  if (buildGradlePath) {
-    const gradleConfig = parseGradle(buildGradlePath);
-    config.bundle_id = gradleConfig.applicationId || null;
-    config.version = gradleConfig.versionName || null;
-    config.min_android_sdk = gradleConfig.minSdk || null;
+  // build.gradle — try well-known module locations first, then fall back
+  // to any build.gradle[.kts] in the tree (multi-module projects with
+  // feature/ or core/ modules often place applicationId outside app/).
+  const candidates: string[] = [];
+  const addCandidate = (p: string | null) => { if (p) candidates.push(p); };
+  addCandidate(findFile(join(rootDir, "app"), "build.gradle", 2));
+  addCandidate(findFile(join(rootDir, "app"), "build.gradle.kts", 2));
+  addCandidate(findFile(rootDir, "build.gradle", 1));
+  addCandidate(findFile(rootDir, "build.gradle.kts", 1));
+  for (const f of findFiles(rootDir, ["build.gradle", "build.gradle.kts"], 4)) {
+    if (!candidates.includes(f)) candidates.push(f);
   }
 
-  // AndroidManifest.xml for app name
-  const manifestPath = findFile(rootDir, "AndroidManifest.xml", 6);
-  if (manifestPath) {
-    const content = readFileSafe(manifestPath);
-    if (content) {
-      const labelMatch = content.match(/android:label="([^"]+)"/);
-      if (labelMatch && !labelMatch[1].startsWith("@")) {
-        config.app_name = labelMatch[1];
-      }
-    }
+  for (const path of candidates) {
+    const g = parseGradle(path);
+    if (!config.bundle_id && g.applicationId) config.bundle_id = g.applicationId;
+    if (!config.version && g.versionName) config.version = g.versionName;
+    if (!config.min_android_sdk && g.minSdk) config.min_android_sdk = g.minSdk;
+    if (config.bundle_id && config.version && config.min_android_sdk) break;
   }
 
-  // strings.xml for app name
+  // App name from AndroidManifest.xml (@string resolution) + strings.xml fallback
   if (!config.app_name) {
-    const stringsPath = findFile(rootDir, "strings.xml", 8);
-    if (stringsPath) {
-      const content = readFileSafe(stringsPath);
-      if (content) {
-        const nameMatch = content.match(
-          /<string name="app_name">(.*?)<\/string>/
-        );
-        if (nameMatch) config.app_name = nameMatch[1];
-      }
-    }
+    config.app_name = readAndroidAppName(rootDir);
   }
 
   return config;
@@ -501,6 +610,55 @@ interface GradleConfig {
   applicationId: string | null;
   versionName: string | null;
   minSdk: string | null;
+}
+
+/**
+ * Look up a <string name="…"> value in any strings.xml under `searchDir`.
+ * Used to resolve `@string/foo` references from AndroidManifest.
+ */
+function lookupAndroidString(
+  searchDir: string,
+  stringName: string
+): string | null {
+  const stringsPath = findFile(searchDir, "strings.xml", 8);
+  if (!stringsPath) return null;
+  const content = readFileSafe(stringsPath);
+  if (!content) return null;
+  const escaped = stringName.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+  const pattern = new RegExp(
+    `<string\\s+name="${escaped}"[^>]*>([\\s\\S]*?)<\\/string>`
+  );
+  const m = content.match(pattern);
+  return m ? m[1].trim() : null;
+}
+
+/**
+ * Best-effort app display name lookup from Android native sources.
+ * Reads AndroidManifest.xml `android:label`, resolving `@string/…` refs
+ * against strings.xml. Used both for pure Kotlin projects (searchDir = rootDir)
+ * and for RN/Expo ejected projects (searchDir = rootDir/android).
+ */
+function readAndroidAppName(searchDir: string): string | null {
+  const manifestPath = findFile(searchDir, "AndroidManifest.xml", 6);
+  if (manifestPath) {
+    const content = readFileSafe(manifestPath);
+    if (content) {
+      const labelMatch = content.match(/android:label\s*=\s*"([^"]+)"/);
+      if (labelMatch) {
+        const label = labelMatch[1];
+        const stringRef = label.match(/^@string\/(.+)$/);
+        if (stringRef) {
+          const resolved = lookupAndroidString(searchDir, stringRef[1]);
+          if (resolved) return resolved;
+        } else if (!label.startsWith("@")) {
+          return label;
+        }
+      }
+    }
+  }
+
+  // Fallback: conventional "app_name" string when manifest has no label
+  return lookupAndroidString(searchDir, "app_name");
 }
 
 function parseGradle(filePath: string): GradleConfig {

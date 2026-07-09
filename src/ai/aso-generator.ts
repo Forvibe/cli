@@ -29,7 +29,7 @@ Your task is to generate a complete, ASO-optimized store listing for a mobile ap
 
 Respond ONLY with a valid JSON object, no markdown, no explanation.`;
 
-function buildASOPrompt(report: CLIProjectReport): string {
+function buildASOPrompt(report: CLIProjectReport, selectedStores: string[]): string {
   const parts: string[] = [];
 
   parts.push(`## App Information
@@ -60,27 +60,37 @@ ${report.unique_selling_points.map((u) => `- ${u}`).join("\n")}`);
 ${report.readme_content.substring(0, 3000)}`);
   }
 
-  const includePlayStore = report.platforms.includes("android");
+  const includePlayStore = selectedStores.length > 0
+    ? selectedStores.includes("playstore")
+    : report.platforms.includes("android");
 
-  parts.push(`## Required JSON Response Format
-{
-  "appstore": {
+  const includeAppStore = selectedStores.length > 0
+    ? selectedStores.includes("appstore")
+    : true;
+
+  const jsonParts: string[] = [];
+  if (includeAppStore) {
+    jsonParts.push(`  "appstore": {
     "app_name": "max 30 chars, keyword-rich app name",
     "subtitle": "max 30 chars, complementary keywords",
     "description": "max 4000 chars, ASO-optimized with bullets and line breaks",
     "keywords": "keyword1,keyword2,keyword3 (max 100 chars, NO spaces after commas)",
     "promotional_text": "max 170 chars, engaging hook",
     "whats_new": "max 170 chars, launch highlights"
-  }${
-    includePlayStore
-      ? `,
-  "playstore": {
+  }`);
+  }
+  if (includePlayStore) {
+    jsonParts.push(`  "playstore": {
     "title": "max 30 chars, Play Store optimized title",
     "short_description": "max 80 chars, concise value proposition",
     "description": "max 4000 chars, HTML formatting allowed",
     "whats_new": "max 500 chars, launch release notes"
-  }`
-      : ""
+  }`);
+  }
+
+  parts.push(`## Required JSON Response Format
+{
+${jsonParts.join(",\n")}
   }
 }`);
 
@@ -120,16 +130,18 @@ function truncateKeywords(keywords: string, maxLength: number): string {
 }
 
 function enforceCharLimits(raw: RawASOResponse): ASOContent {
-  const result: ASOContent = {
-    appstore: {
+  const result: ASOContent = {} as ASOContent;
+
+  if (raw.appstore) {
+    result.appstore = {
       app_name: (raw.appstore.app_name || "").substring(0, 30),
       subtitle: (raw.appstore.subtitle || "").substring(0, 30),
       description: (raw.appstore.description || "").substring(0, 4000),
       keywords: truncateKeywords(raw.appstore.keywords || "", 100),
       promotional_text: (raw.appstore.promotional_text || "").substring(0, 170),
       whats_new: (raw.appstore.whats_new || "").substring(0, 170),
-    },
-  };
+    };
+  }
 
   if (raw.playstore) {
     result.playstore = {
@@ -148,9 +160,10 @@ function enforceCharLimits(raw: RawASOResponse): ASOContent {
  */
 export async function generateASOContent(
   report: CLIProjectReport,
-  provider: AIProvider
+  provider: AIProvider,
+  selectedStores: string[] = []
 ): Promise<ASOContent> {
-  const userPrompt = buildASOPrompt(report);
+  const userPrompt = buildASOPrompt(report, selectedStores);
 
   const responseText = await provider.generateJSON(ASO_SYSTEM_PROMPT, userPrompt, 0.5);
   let parsed: RawASOResponse;
@@ -174,8 +187,14 @@ export async function generateASOContent(
     }
   }
 
-  if (!parsed.appstore) {
+  const wantsAppStore = selectedStores.length === 0 || selectedStores.includes("appstore");
+  if (wantsAppStore && !parsed.appstore) {
     throw new Error("AI response missing appstore field");
+  }
+  const wantsPlayStore = selectedStores.includes("playstore") || (selectedStores.length === 0 && report.platforms.includes("android"));
+  if (wantsPlayStore && !parsed.playstore) {
+    // Play Store content missing — not fatal, will be generated server-side
+    console.warn("AI response missing playstore field — will be generated server-side");
   }
 
   return enforceCharLimits(parsed);

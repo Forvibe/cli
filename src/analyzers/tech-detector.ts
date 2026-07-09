@@ -25,6 +25,49 @@ const DETECTION_RULES: DetectionRule[] = [
     },
   },
   {
+    stack: "expo",
+    label: "Expo (React Native)",
+    platforms: ["ios", "android"],
+    detect: (dir) => {
+      const files: string[] = [];
+      const pkgPath = join(dir, "package.json");
+      const pkgContent = existsSync(pkgPath) ? readFileSafe(pkgPath) : null;
+      let hasExpoDep = false;
+      if (pkgContent) {
+        try {
+          const pkg = JSON.parse(pkgContent);
+          const allDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+          if ("expo" in allDeps) {
+            hasExpoDep = true;
+          }
+        } catch { /* ignore */ }
+      }
+
+      let hasExpoBlock = false;
+      const appJsonPath = join(dir, "app.json");
+      if (existsSync(appJsonPath)) {
+        const appJson = readFileSafe(appJsonPath);
+        if (appJson && /"expo"\s*:\s*\{/.test(appJson)) {
+          hasExpoBlock = true;
+        }
+      }
+
+      const hasAppConfig =
+        existsSync(join(dir, "app.config.js")) ||
+        existsSync(join(dir, "app.config.ts"));
+      const hasEas = existsSync(join(dir, "eas.json"));
+
+      if (hasExpoDep || hasExpoBlock || hasEas) {
+        if (pkgContent) files.push("package.json");
+        if (hasExpoBlock) files.push("app.json");
+        if (hasAppConfig) files.push(existsSync(join(dir, "app.config.ts")) ? "app.config.ts" : "app.config.js");
+        if (hasEas) files.push("eas.json");
+        if (existsSync(join(dir, "app"))) files.push("app/"); // expo-router
+      }
+      return files;
+    },
+  },
+  {
     stack: "react-native",
     label: "React Native",
     platforms: ["ios", "android"],
@@ -137,13 +180,20 @@ const DETECTION_RULES: DetectionRule[] = [
         for (const entry of entries) {
           if (entry.endsWith(".csproj")) {
             const content = readFileSafe(join(dir, entry));
-            if (content && (content.includes("Maui") || content.includes("MAUI"))) {
+            if (!content) continue;
+            const isMaui =
+              /<UseMaui>\s*true\s*<\/UseMaui>/i.test(content) ||
+              /Microsoft\.Maui\.Controls/.test(content) ||
+              /Microsoft\.Maui\.Sdk/.test(content) ||
+              /-android|-ios|-maccatalyst/.test(content);
+            if (isMaui) {
               files.push(entry);
             }
           }
         }
       } catch { /* ignore */ }
       if (existsSync(join(dir, "Platforms"))) files.push("Platforms/");
+      if (existsSync(join(dir, "Resources"))) files.push("Resources/");
       return files.length >= 1 ? files : [];
     },
   },

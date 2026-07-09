@@ -90,8 +90,7 @@ function getExtensionsForStack(techStack: TechStack): string[] {
       return [".swift"];
     case "kotlin":
       return [".kt", ".kts"];
-    case "java":
-      return [".java"];
+    case "expo":
     case "react-native":
     case "capacitor":
       return [".ts", ".tsx", ".js", ".jsx"];
@@ -127,11 +126,21 @@ function getPriorityPatternsForStack(techStack: TechStack): string[] {
     case "swift":
       return [...common, "view", "controller", "manager", "delegate", "contentview"];
     case "kotlin":
-    case "java":
-      return [...common, "activity", "fragment", "viewmodel", "repository"];
+      return [
+        ...common,
+        "activity", "fragment", "viewmodel", "repository",
+        // Jetpack Compose deyimleri — Compose-first projelerde UI kodları
+        // bunlar olmadan priority listesinde aşağı sıralanıyordu
+        "composable", "screen", "theme", "navigation", "navgraph",
+        "scaffold", "compose", "material",
+      ];
+    case "expo":
+      return [...common, "screen", "component", "hook", "context", "store", "slice", "_layout", "tabs"];
     case "react-native":
     case "capacitor":
       return [...common, "screen", "component", "hook", "context", "store", "slice"];
+    case "dotnet-maui":
+      return [...common, "page", "view", "viewmodel", "service", "mauiprogram", "appshell"];
     default:
       return common;
   }
@@ -163,13 +172,22 @@ function sortByPriority(files: string[], patterns: string[]): string[] {
 
 function isTestFile(file: string): boolean {
   const lower = file.toLowerCase();
-  return (
-    lower.includes("test") ||
-    lower.includes("spec") ||
-    lower.includes("mock") ||
-    lower.includes("fixture") ||
-    lower.includes("__tests__")
-  );
+  // Standard test directory segments (JVM: src/test/, src/androidTest/; JS: __tests__; general: tests/, spec/)
+  if (
+    /(?:^|[/\\])(?:test|tests|__tests__|spec|specs|androidtest|mocks?|fixtures?)[/\\]/.test(
+      lower
+    )
+  ) {
+    return true;
+  }
+  // File naming conventions:
+  //   JS/TS: foo.test.ts, foo.spec.ts, foo.mock.ts, foo.fixture.ts
+  //   JVM/Swift: FooTest.kt, FooTests.kt, FooSpec.kt
+  // Avoids false positives on names that merely contain "test" as a substring
+  // (LatestActivity.kt, ManifestLoader.kt, RequestHandler.kt).
+  if (/\.(?:test|spec|mock|fixture)\.[a-z]+$/.test(lower)) return true;
+  if (/(?:test|tests|spec|specs)\.[a-z]+$/.test(lower)) return true;
+  return false;
 }
 
 function isGeneratedFile(file: string, content: string): boolean {

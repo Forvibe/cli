@@ -1,7 +1,7 @@
 import { readFileSync, existsSync, readdirSync, statSync } from "fs";
 import { join, extname } from "path";
 import type { TechStack, BrandingResult } from "../types/report.js";
-import { readFileSafe, findFiles } from "../utils/file-scanner.js";
+import { readFileSafe, findFiles, findAllFiles } from "../utils/file-scanner.js";
 
 /**
  * Extract branding information (colors and app icon) from the project
@@ -45,17 +45,141 @@ function extractColors(
   switch (techStack) {
     case "flutter":
       return extractFlutterColors(rootDir);
+    case "expo":
+      return extractExpoColors(rootDir);
     case "react-native":
     case "capacitor":
       return extractJSColors(rootDir);
     case "swift":
       return extractSwiftColors(rootDir);
     case "kotlin":
-    case "java":
       return extractAndroidColors(rootDir);
+    case "dotnet-maui":
+      return extractMauiColors(rootDir);
     default:
       return { primary: null, secondary: null, allColors: [] };
   }
+}
+
+function extractExpoColors(rootDir: string): ColorResult {
+  const hexColors: string[] = [];
+  let primary: string | null = null;
+  let secondary: string | null = null;
+
+  const HEX = /^#[0-9a-fA-F]{6}$/;
+  const normalize = (raw: string): string | null => {
+    if (!raw) return null;
+    const v = raw.trim();
+    if (HEX.test(v)) return v.toLowerCase();
+    if (/^#[0-9a-fA-F]{8}$/.test(v)) return `#${v.slice(3).toLowerCase()}`; // strip alpha
+    return null;
+  };
+
+  // 1. app.json expo block
+  const appJsonContent = readFileSafe(join(rootDir, "app.json"));
+  if (appJsonContent) {
+    try {
+      const data = JSON.parse(appJsonContent);
+      const expo = data.expo || data;
+      const candidates: Array<string | undefined> = [
+        expo.primaryColor,
+        expo.splash?.backgroundColor,
+        expo.android?.adaptiveIcon?.backgroundColor,
+        expo.android?.splash?.backgroundColor,
+        expo.ios?.splash?.backgroundColor,
+      ];
+      for (const c of candidates) {
+        const n = normalize(c || "");
+        if (n) hexColors.push(n);
+      }
+      primary = normalize(expo.primaryColor || "") || null;
+    } catch { /* ignore */ }
+  }
+
+  // 2. JS theme/colors fallback
+  const jsResult = extractJSColors(rootDir);
+  if (!primary) primary = jsResult.primary;
+  if (!secondary) secondary = jsResult.secondary;
+  hexColors.push(...jsResult.allColors);
+
+  return {
+    primary: primary || (hexColors[0] ?? null),
+    secondary: secondary || (hexColors[1] ?? null),
+    allColors: hexColors,
+  };
+}
+
+function extractMauiColors(rootDir: string): ColorResult {
+  const hexColors: string[] = [];
+
+  // 1. Resources/Styles/Colors.xaml — definitive design system source
+  const xamlPaths = [
+    join(rootDir, "Resources/Styles/Colors.xaml"),
+    join(rootDir, "Resources/Styles/Styles.xaml"),
+  ];
+  // Also locate via deep find (in case nested project structure)
+  const allXaml = findFiles(rootDir, [".xaml"], 5);
+  for (const p of allXaml) {
+    if (/Colors\.xaml$/i.test(p) && !xamlPaths.includes(p)) xamlPaths.push(p);
+  }
+
+  for (const path of xamlPaths) {
+    const content = readFileSafe(path);
+    if (!content) continue;
+    const colorMatches = content.matchAll(
+      /<Color\s+x:Key="([^"]+)"\s*>\s*#([0-9a-fA-F]{6,8})\s*<\/Color>/g
+    );
+    for (const match of colorMatches) {
+      const name = match[1].toLowerCase();
+      let hex = match[2];
+      if (hex.length === 8) hex = hex.substring(2); // strip alpha
+      const color = `#${hex.toLowerCase()}`;
+      if (name.includes("primary") && !name.includes("dark") && !name.includes("light")) {
+        hexColors.unshift(color);
+      } else {
+        hexColors.push(color);
+      }
+    }
+    // Also <SolidColorBrush x:Key="..." Color="#RRGGBB" />
+    const brushMatches = content.matchAll(
+      /<SolidColorBrush\s+[^>]*Color\s*=\s*"#([0-9a-fA-F]{6,8})"/g
+    );
+    for (const match of brushMatches) {
+      let hex = match[1];
+      if (hex.length === 8) hex = hex.substring(2);
+      hexColors.push(`#${hex.toLowerCase()}`);
+    }
+  }
+
+  // 2. C# source: Color.FromArgb("#RRGGBB") or Color.FromRgb(r,g,b)
+  const csFiles = findFiles(rootDir, [".cs"], 5);
+  for (const file of csFiles.slice(0, 50)) {
+    const content = readFileSafe(file);
+    if (!content) continue;
+    const argbMatches = content.matchAll(
+      /Color\.FromArgb\s*\(\s*"#?([0-9a-fA-F]{6,8})"/g
+    );
+    for (const match of argbMatches) {
+      let hex = match[1];
+      if (hex.length === 8) hex = hex.substring(2);
+      hexColors.push(`#${hex.toLowerCase()}`);
+    }
+    const rgbMatches = content.matchAll(
+      /Color\.FromRgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/g
+    );
+    for (const match of rgbMatches) {
+      const r = parseInt(match[1]).toString(16).padStart(2, "0");
+      const g = parseInt(match[2]).toString(16).padStart(2, "0");
+      const b = parseInt(match[3]).toString(16).padStart(2, "0");
+      hexColors.push(`#${r}${g}${b}`);
+    }
+  }
+
+  return {
+    primary: hexColors[0] ?? null,
+    secondary: hexColors[1] ?? null,
+    allColors: hexColors,
+  };
 }
 
 function isIrrelevantColor(hex: string): boolean {
@@ -265,67 +389,134 @@ function extractSwiftColors(rootDir: string): ColorResult {
 
 function extractAndroidColors(rootDir: string): ColorResult {
   const hexColors: string[] = [];
+  let primary: string | null = null;
+  let secondary: string | null = null;
 
-  // Check colors.xml and themes.xml
-  const colorFiles = ["colors.xml", "themes.xml", "styles.xml"];
-  for (const fileName of colorFiles) {
-    // Search in res/values directories
-    for (const resDir of ["app/src/main/res/values", "src/main/res/values"]) {
-      const filePath = join(rootDir, resDir, fileName);
-      const content = readFileSafe(filePath);
-      if (!content) continue;
+  const normalize = (hexDigits: string): string => {
+    // Accepts RRGGBB or AARRGGBB, strips alpha.
+    const h = hexDigits.length === 8 ? hexDigits.slice(2) : hexDigits;
+    return `#${h.toLowerCase()}`;
+  };
 
-      // Extract named colors: <color name="primary">#FF6200EE</color>
-      const colorMatches = content.matchAll(
-        /<color\s+name="([^"]*)">\s*#([0-9a-fA-F]{6,8})\s*<\/color>/g
-      );
-      for (const match of colorMatches) {
-        const name = match[1].toLowerCase();
-        let hex = match[2];
-        // If ARGB (8 chars), strip alpha prefix
-        if (hex.length === 8) hex = hex.substring(2);
-        const color = `#${hex}`;
+  // 1. Build color_name → hex map from every colors.xml in the project
+  //    (multi-module: e.g. design-system/src/main/res/values/colors.xml).
+  const colorMap = new Map<string, string>();
+  const colorsFiles = findAllFiles(rootDir, "colors.xml", 8);
+  for (const path of colorsFiles) {
+    const content = readFileSafe(path);
+    if (!content) continue;
+    const matches = content.matchAll(
+      /<color\s+name="([^"]+)"[^>]*>\s*#([0-9a-fA-F]{6,8})\s*<\/color>/g
+    );
+    for (const m of matches) {
+      const hex = normalize(m[2]);
+      colorMap.set(m[1], hex);
+      hexColors.push(hex);
 
-        if (name.includes("primary") && !name.includes("variant") && !name.includes("dark")) {
-          hexColors.unshift(color); // prioritize primary
-        } else if (name.includes("secondary") || name.includes("accent")) {
-          hexColors.push(color);
-        } else {
-          hexColors.push(color);
-        }
-      }
-
-      // Jetpack Compose: colorScheme primary/secondary from theme items
-      const themeColorMatches = content.matchAll(
-        /<item\s+name="(?:color|android:color)([^"]*)">\s*@color\/([^<]+)\s*<\/item>/g
-      );
-      for (const match of themeColorMatches) {
-        if (match[1].toLowerCase().includes("primary")) {
-          // Reference to another color — we already parsed those above
-        }
+      const name = m[1].toLowerCase();
+      if (
+        name.includes("primary") &&
+        !name.includes("variant") &&
+        !name.includes("dark") &&
+        !name.includes("container") &&
+        !primary
+      ) {
+        primary = hex;
+      } else if ((name.includes("secondary") || name.includes("accent")) && !secondary) {
+        secondary = hex;
       }
     }
   }
 
-  // Jetpack Compose: Check Kotlin theme files for Color() declarations
+  // 2. Resolve <item name="colorPrimary">@color/…</item> refs in themes/styles.
+  //    This is how Material theme overrides declare primary/secondary colors.
+  const themeFiles = [
+    ...findAllFiles(rootDir, "themes.xml", 8),
+    ...findAllFiles(rootDir, "styles.xml", 8),
+  ];
+  for (const path of themeFiles) {
+    const content = readFileSafe(path);
+    if (!content) continue;
+    const itemMatches = content.matchAll(
+      /<item\s+name="(?:android:)?([A-Za-z]+)"[^>]*>\s*(?:@color\/([A-Za-z0-9_]+)|#([0-9a-fA-F]{6,8}))\s*<\/item>/g
+    );
+    for (const m of itemMatches) {
+      const itemName = m[1].toLowerCase();
+      if (!itemName.startsWith("color")) continue;
+      let hex: string | null = null;
+      if (m[2]) hex = colorMap.get(m[2]) || null;
+      else if (m[3]) hex = normalize(m[3]);
+      if (!hex) continue;
+
+      if (itemName === "colorprimary" || itemName === "colorprimarydark") {
+        if (!primary) primary = hex;
+      } else if (
+        itemName === "colorsecondary" ||
+        itemName === "colortertiary" ||
+        itemName === "coloraccent"
+      ) {
+        if (!secondary) secondary = hex;
+      }
+      hexColors.push(hex);
+    }
+  }
+
+  // 3. Jetpack Compose: scan *.kt theme/color files.
+  //    Builds a `val Foo = Color(0xFFxxxxxx)` symbol table, then resolves
+  //    refs inside `lightColorScheme(primary = Foo, secondary = Bar, ...)`.
   const ktFiles = findFiles(rootDir, [".kt"], 6);
-  for (const file of ktFiles.slice(0, 50)) {
+  for (const file of ktFiles.slice(0, 80)) {
     const fileName = file.toLowerCase();
     if (!fileName.includes("color") && !fileName.includes("theme")) continue;
 
     const content = readFileSafe(file);
     if (!content) continue;
 
-    // Color(0xFF6200EE) pattern
-    const colorMatches = content.matchAll(/Color\s*\(\s*0[xX]([0-9a-fA-F]{8})\s*\)/g);
-    for (const match of colorMatches) {
-      hexColors.push(`#${match[1].substring(2)}`); // Strip alpha
+    const valMap = new Map<string, string>();
+    const valMatches = content.matchAll(
+      /val\s+(\w+)\s*(?::\s*Color\s*)?=\s*Color\s*\(\s*0[xX]([0-9a-fA-F]{8})\s*\)/g
+    );
+    for (const m of valMatches) {
+      const hex = normalize(m[2]);
+      valMap.set(m[1], hex);
+      hexColors.push(hex);
+    }
+
+    // Plain Color(0xFF…) literals anywhere in the file
+    const literalMatches = content.matchAll(/Color\s*\(\s*0[xX]([0-9a-fA-F]{8})\s*\)/g);
+    for (const m of literalMatches) {
+      hexColors.push(normalize(m[1]));
+    }
+
+    // lightColorScheme/darkColorScheme primary/secondary resolution
+    const schemeMatch = content.match(
+      /(?:light|dark)ColorScheme\s*\(\s*([\s\S]*?)\n\s*\)/
+    );
+    if (schemeMatch) {
+      const body = schemeMatch[1];
+      const resolve = (key: string): string | null => {
+        const re = new RegExp(
+          `\\b${key}\\s*=\\s*(?:Color\\s*\\(\\s*0[xX]([0-9a-fA-F]{8})\\s*\\)|(\\w+))`
+        );
+        const m = body.match(re);
+        if (!m) return null;
+        if (m[1]) return normalize(m[1]);
+        return valMap.get(m[2]) || null;
+      };
+      if (!primary) {
+        const p = resolve("primary");
+        if (p) primary = p;
+      }
+      if (!secondary) {
+        const s = resolve("secondary") || resolve("tertiary");
+        if (s) secondary = s;
+      }
     }
   }
 
   return {
-    primary: hexColors.length > 0 ? hexColors[0] : null,
-    secondary: hexColors.length > 1 ? hexColors[1] : null,
+    primary: primary || hexColors[0] || null,
+    secondary: secondary || hexColors[1] || null,
     allColors: hexColors,
   };
 }
@@ -435,6 +626,21 @@ function findAppIcon(
       );
       break;
 
+    case "expo":
+      iconPaths.push(
+        // Resolve from app.json expo block first
+        ...resolveExpoIconPaths(rootDir),
+        // Common Expo defaults
+        join(rootDir, "assets/icon.png"),
+        join(rootDir, "assets/adaptive-icon.png"),
+        join(rootDir, "assets/images/icon.png"),
+        join(rootDir, "assets/images/adaptive-icon.png"),
+        // Bare workflow fallback
+        ...findIconsInAppIconSet(join(rootDir, "ios")),
+        join(rootDir, "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png"),
+      );
+      break;
+
     case "react-native":
     case "capacitor":
       iconPaths.push(
@@ -452,13 +658,56 @@ function findAppIcon(
       );
       break;
 
-    case "kotlin":
-    case "java":
+    case "kotlin": {
+      // Common module names — Android projects don't always use "app" as the
+      // application module name (e.g. :mobile, :androidApp, :presentation).
+      const modules = ["app", "mobile", "androidApp", "presentation", ""];
+      const densities = ["xxxhdpi", "xxhdpi", "xhdpi"];
+
+      // Priority 1: Play Store icon (512×512 — highest quality, perfect for landing pages)
+      for (const mod of modules) {
+        const prefix = mod ? `${mod}/` : "";
+        iconPaths.push(
+          join(rootDir, `${prefix}src/main/ic_launcher-playstore.png`),
+          join(rootDir, `${prefix}ic_launcher-playstore.png`),
+        );
+      }
+
+      // Priority 2: Adaptive icon foreground (API 26+ — modern Android apps)
+      for (const mod of modules) {
+        const prefix = mod ? `${mod}/` : "";
+        for (const d of densities) {
+          iconPaths.push(
+            join(rootDir, `${prefix}src/main/res/mipmap-${d}/ic_launcher_foreground.png`),
+            join(rootDir, `${prefix}src/main/res/mipmap-${d}/ic_launcher_foreground.webp`),
+          );
+        }
+      }
+
+      // Priority 3: Legacy launcher icons (.png / .webp / round variant)
+      for (const mod of modules) {
+        const prefix = mod ? `${mod}/` : "";
+        for (const d of densities) {
+          iconPaths.push(
+            join(rootDir, `${prefix}src/main/res/mipmap-${d}/ic_launcher.png`),
+            join(rootDir, `${prefix}src/main/res/mipmap-${d}/ic_launcher.webp`),
+            join(rootDir, `${prefix}src/main/res/mipmap-${d}/ic_launcher_round.png`),
+            join(rootDir, `${prefix}src/main/res/mipmap-${d}/ic_launcher_round.webp`),
+          );
+        }
+      }
+      break;
+    }
+
+    case "dotnet-maui":
       iconPaths.push(
-        join(rootDir, "app/src/main/res/mipmap-xxxhdpi/ic_launcher.png"),
-        join(rootDir, "app/src/main/res/mipmap-xxhdpi/ic_launcher.png"),
-        join(rootDir, "app/src/main/res/mipmap-xhdpi/ic_launcher.png"),
-        join(rootDir, "app/src/main/ic_launcher-playstore.png"),
+        join(rootDir, "Resources/AppIcon/appicon.png"),
+        join(rootDir, "Resources/AppIcon/appiconfg.png"),
+        join(rootDir, "Resources/Images/icon.png"),
+        join(rootDir, "Resources/Images/appicon.png"),
+        // SVG fallback (MAUI default is SVG appicon.svg)
+        join(rootDir, "Resources/AppIcon/appicon.svg"),
+        join(rootDir, "Resources/AppIcon/appiconfg.svg"),
       );
       break;
   }
@@ -480,7 +729,11 @@ function findAppIcon(
             ? "image/png"
             : ext === ".jpg" || ext === ".jpeg"
               ? "image/jpeg"
-              : "image/png";
+              : ext === ".svg"
+                ? "image/svg+xml"
+                : ext === ".webp"
+                  ? "image/webp"
+                  : "image/png";
         const base64 = `data:${mime};base64,${buffer.toString("base64")}`;
         return { base64, path: iconPath };
       } catch {
@@ -490,6 +743,27 @@ function findAppIcon(
   }
 
   return { base64: null, path: null };
+}
+
+function resolveExpoIconPaths(rootDir: string): string[] {
+  const paths: string[] = [];
+  const appJsonContent = readFileSafe(join(rootDir, "app.json"));
+  if (!appJsonContent) return paths;
+  try {
+    const data = JSON.parse(appJsonContent);
+    const expo = data.expo || data;
+    const candidates = [
+      expo.icon,
+      expo.android?.icon,
+      expo.android?.adaptiveIcon?.foregroundImage,
+      expo.ios?.icon,
+    ].filter((v) => typeof v === "string");
+    for (const rel of candidates) {
+      const cleaned = rel.replace(/^\.?\//, "");
+      paths.push(join(rootDir, cleaned));
+    }
+  } catch { /* ignore */ }
+  return paths;
 }
 
 function findIconsInAppIconSet(searchDir: string): string[] {

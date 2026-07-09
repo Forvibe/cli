@@ -1,4 +1,5 @@
 import { join } from "path";
+import { readdirSync } from "fs";
 import YAML from "yaml";
 import type {
   DataCollectedType,
@@ -132,6 +133,47 @@ const SDK_MAP: Record<string, SDKMapping> = {
   RealityKit: { category: "other", collects: [] },
   EventKit: { category: "other", collects: [] },
 
+  // --- Expo SDK packages ---
+  "expo-notifications": { category: "other", collects: ["device_info"] },
+  "expo-tracking-transparency": { category: "ads", collects: ["device_info"], advertising: "personalized" },
+  "expo-location": { category: "other", collects: ["location"] },
+  "expo-contacts": { category: "other", collects: ["contacts"] },
+  "expo-camera": { category: "other", collects: ["photos_media"] },
+  "expo-image-picker": { category: "other", collects: ["photos_media"] },
+  "expo-media-library": { category: "other", collects: ["photos_media"] },
+  "expo-auth-session": { category: "auth", collects: ["name_email"] },
+  "expo-apple-authentication": { category: "auth", collects: ["name_email"] },
+  "expo-google-sign-in": { category: "auth", collects: ["name_email", "profile_photo"] },
+  "expo-in-app-purchases": { category: "payment", collects: ["financial_info"] },
+  "expo-ads-admob": { category: "ads", collects: ["device_info"], advertising: "personalized" },
+  "expo-firebase-analytics": { category: "analytics", collects: ["usage_analytics", "device_info"] },
+  "expo-local-authentication": { category: "auth", collects: ["biometric_data"] },
+  "expo-health-connect": { category: "other", collects: ["health_data"] },
+  "expo-sensors": { category: "other", collects: ["device_info"] },
+  "expo-device": { category: "other", collects: ["device_info"] },
+
+  // --- .NET MAUI packages ---
+  "Microsoft.AppCenter.Analytics": { category: "analytics", collects: ["usage_analytics", "device_info"] },
+  "Microsoft.AppCenter.Crashes": { category: "analytics", collects: ["device_info"] },
+  "Sentry.Maui": { category: "analytics", collects: ["device_info"] },
+  "Plugin.Firebase": { category: "analytics", collects: ["usage_analytics", "device_info"] },
+  "Plugin.Firebase.Analytics": { category: "analytics", collects: ["usage_analytics", "device_info"] },
+  "Plugin.Firebase.Auth": { category: "auth", collects: ["name_email"] },
+  "Plugin.Firebase.CloudMessaging": { category: "other", collects: ["device_info"] },
+  "Plugin.GoogleClient": { category: "auth", collects: ["name_email", "profile_photo"] },
+  "Plugin.SignInWithApple": { category: "auth", collects: ["name_email"] },
+  "Plugin.InAppBilling": { category: "payment", collects: ["financial_info"] },
+  "CommunityToolkit.Maui": { category: "other", collects: [] },
+  "CommunityToolkit.Maui.MediaElement": { category: "other", collects: ["photos_media"] },
+  "Plugin.Maui.Audio": { category: "other", collects: ["photos_media"] },
+  "Xamarin.Google.Android.Play.Review": { category: "other", collects: [] },
+  "Plugin.LocalNotification": { category: "other", collects: [] },
+  "Plugin.Maui.Biometric": { category: "auth", collects: ["biometric_data"] },
+  "Plugin.Permissions": { category: "other", collects: [] },
+  "Mapsui.Maui": { category: "other", collects: ["location"] },
+  "Plugin.Maui.AppRating": { category: "other", collects: [] },
+  "Plugin.Geolocator": { category: "other", collects: ["location"] },
+
   // --- Native Android frameworks (detected via `import` in Kotlin/Java source) ---
   "com.google.android.gms.ads": { category: "ads", collects: ["device_info"], advertising: "personalized" },
   "com.google.android.gms.maps": { category: "other", collects: ["location"] },
@@ -141,7 +183,141 @@ const SDK_MAP: Record<string, SDKMapping> = {
   "androidx.health": { category: "other", collects: ["health_data"] },
   "androidx.biometric": { category: "auth", collects: ["biometric_data"] },
   "androidx.camera": { category: "other", collects: ["photos_media"] },
+  "androidx.compose": { category: "other", collects: [] },
+  "androidx.navigation.compose": { category: "other", collects: [] },
+
+  // --- Android artifact-name keys (unique enough that bare artifact name is safe) ---
+  "play-services-ads": { category: "ads", collects: ["device_info"], advertising: "personalized" },
+  "play-services-ads-lite": { category: "ads", collects: ["device_info"], advertising: "personalized" },
+  "play-services-maps": { category: "other", collects: ["location"] },
+  "play-services-location": { category: "other", collects: ["location"] },
+  "play-services-auth": { category: "auth", collects: ["name_email", "profile_photo"] },
+  "play-services-auth-api-phone": { category: "auth", collects: ["name_email"] },
+  billing: { category: "payment", collects: ["financial_info"] },
+  "billing-ktx": { category: "payment", collects: ["financial_info"] },
+  biometric: { category: "auth", collects: ["biometric_data"] },
+  "biometric-ktx": { category: "auth", collects: ["biometric_data"] },
+  "health-connect-client": { category: "other", collects: ["health_data"] },
+  "camera-core": { category: "other", collects: ["photos_media"] },
+  "camera-camera2": { category: "other", collects: ["photos_media"] },
+  "camera-lifecycle": { category: "other", collects: ["photos_media"] },
+  "camera-view": { category: "other", collects: ["photos_media"] },
+  "camera-extensions": { category: "other", collects: ["photos_media"] },
+  // firebase-analytics / firebase-auth already declared above (Flutter dep names)
+  "firebase-analytics-ktx": { category: "analytics", collects: ["usage_analytics", "device_info"] },
+  "firebase-auth-ktx": { category: "auth", collects: ["name_email"] },
+  "firebase-crashlytics": { category: "analytics", collects: ["device_info"] },
+  "firebase-crashlytics-ktx": { category: "analytics", collects: ["device_info"] },
+  "firebase-messaging": { category: "other", collects: ["device_info"] },
+  "firebase-messaging-ktx": { category: "other", collects: ["device_info"] },
+  "firebase-firestore": { category: "cloud", collects: [] },
+  "firebase-firestore-ktx": { category: "cloud", collects: [] },
+  "firebase-storage": { category: "cloud", collects: [] },
+  "firebase-storage-ktx": { category: "cloud", collects: [] },
+  "firebase-database": { category: "cloud", collects: [] },
+  "firebase-database-ktx": { category: "cloud", collects: [] },
+  "firebase-config": { category: "cloud", collects: [] },
+  "firebase-config-ktx": { category: "cloud", collects: [] },
+  "firebase-functions": { category: "cloud", collects: [] },
+  "firebase-functions-ktx": { category: "cloud", collects: [] },
+  "hilt-android": { category: "other", collects: [] },
+  "hilt-navigation-compose": { category: "other", collects: [] },
+  "koin-android": { category: "other", collects: [] },
+  "koin-androidx-compose": { category: "other", collects: [] },
+  "room-runtime": { category: "other", collects: [] },
+  "room-ktx": { category: "other", collects: [] },
+  "room-compiler": { category: "other", collects: [] },
+  retrofit: { category: "other", collects: [] },
+  "retrofit-converter-gson": { category: "other", collects: [] },
+  "retrofit-converter-moshi": { category: "other", collects: [] },
+  okhttp: { category: "other", collects: [] },
+  "okhttp-logging-interceptor": { category: "other", collects: [] },
+  "coil-compose": { category: "other", collects: [] },
+  coil: { category: "other", collects: [] },
+  glide: { category: "other", collects: [] },
+  "navigation-compose": { category: "other", collects: [] },
+  "activity-compose": { category: "other", collects: [] },
+  "lifecycle-viewmodel-compose": { category: "other", collects: [] },
+  "lifecycle-runtime-compose": { category: "other", collects: [] },
+  "work-runtime": { category: "other", collects: [] },
+  "work-runtime-ktx": { category: "other", collects: [] },
+  "datastore-preferences": { category: "other", collects: [] },
+  "kotlinx-coroutines-android": { category: "other", collects: [] },
+
+  // --- group:artifact keys for Compose (artifact names alone are ambiguous: "ui", "material3") ---
+  "androidx.compose.ui:ui": { category: "other", collects: [] },
+  "androidx.compose.ui:ui-tooling": { category: "other", collects: [] },
+  "androidx.compose.ui:ui-tooling-preview": { category: "other", collects: [] },
+  "androidx.compose.material3:material3": { category: "other", collects: [] },
+  "androidx.compose.material:material": { category: "other", collects: [] },
+  "androidx.compose.material:material-icons-extended": { category: "other", collects: [] },
+  "androidx.compose.foundation:foundation": { category: "other", collects: [] },
+  "androidx.compose.runtime:runtime": { category: "other", collects: [] },
+  "androidx.compose.animation:animation": { category: "other", collects: [] },
+
+  // --- Popular third-party Android SDKs (group:artifact keys) ---
+  "com.revenuecat.purchases:purchases": { category: "payment", collects: ["financial_info"] },
+  "com.adjust.sdk:adjust-android": { category: "analytics", collects: ["usage_analytics", "device_info"] },
+  "com.appsflyer:af-android-sdk": { category: "analytics", collects: ["usage_analytics", "device_info"] },
+  "io.sentry:sentry-android": { category: "analytics", collects: ["device_info"] },
+  "com.amplitude:android-sdk": { category: "analytics", collects: ["usage_analytics"] },
+  "com.mixpanel.android:mixpanel-android": { category: "analytics", collects: ["usage_analytics"] },
+  "com.posthog:posthog-android": { category: "analytics", collects: ["usage_analytics"] },
+  "com.stripe:stripe-android": { category: "payment", collects: ["financial_info"] },
 };
+
+/**
+ * Parse the [libraries] section of a Gradle Version Catalog (libs.versions.toml).
+ * Fills `catalog` with `alias → "group:artifact"` entries, supporting:
+ *   - shorthand:    alias = "group:artifact:version"
+ *   - inline table: alias = { module = "group:artifact", version.ref = "…" }
+ *   - inline table: alias = { group = "…", name = "…", version = "…" }
+ */
+function parseVersionCatalog(content: string, catalog: Map<string, string>): void {
+  const idx = content.indexOf("[libraries]");
+  if (idx < 0) return;
+  const after = content.slice(idx + "[libraries]".length);
+  const nextSection = after.search(/\n\s*\[[^\]]+\]/);
+  const block = nextSection >= 0 ? after.slice(0, nextSection) : after;
+
+  for (const rawLine of block.split("\n")) {
+    const line = rawLine.replace(/#.*$/, "").trim();
+    if (!line || line.startsWith("[")) continue;
+    const eq = line.indexOf("=");
+    if (eq < 0) continue;
+
+    const alias = line.slice(0, eq).trim();
+    const value = line.slice(eq + 1).trim();
+    if (!alias) continue;
+
+    // Shorthand: "group:artifact[:version]"
+    const shorthand = value.match(/^"([^"]+)"$/);
+    if (shorthand) {
+      const parts = shorthand[1].split(":");
+      if (parts.length >= 2 && parts[0] && parts[1]) {
+        catalog.set(alias, `${parts[0]}:${parts[1]}`);
+      }
+      continue;
+    }
+
+    // Inline table — try `module = "group:artifact"` first
+    const moduleMatch = value.match(/module\s*=\s*"([^"]+)"/);
+    if (moduleMatch) {
+      const parts = moduleMatch[1].split(":");
+      if (parts.length >= 2 && parts[0] && parts[1]) {
+        catalog.set(alias, `${parts[0]}:${parts[1]}`);
+      }
+      continue;
+    }
+
+    // Fallback: `group = "…", name = "…"`
+    const groupMatch = value.match(/group\s*=\s*"([^"]+)"/);
+    const nameMatch = value.match(/name\s*=\s*"([^"]+)"/);
+    if (groupMatch && nameMatch) {
+      catalog.set(alias, `${groupMatch[1]}:${nameMatch[1]}`);
+    }
+  }
+}
 
 /**
  * Scan project dependencies for known SDKs
@@ -231,6 +407,7 @@ function getDependencies(rootDir: string, techStack: TechStack): string[] {
       break;
     }
 
+    case "expo":
     case "react-native":
     case "capacitor": {
       const pkgContent = readFileSafe(join(rootDir, "package.json"));
@@ -240,6 +417,33 @@ function getDependencies(rootDir: string, techStack: TechStack): string[] {
           if (pkg.dependencies) deps.push(...Object.keys(pkg.dependencies));
           if (pkg.devDependencies) deps.push(...Object.keys(pkg.devDependencies));
         } catch { /* ignore */ }
+      }
+      break;
+    }
+
+    case "dotnet-maui": {
+      // Find all .csproj files at root and one level deep
+      const csprojFiles: string[] = [];
+      try {
+        for (const entry of readdirSync(rootDir)) {
+          if (entry.endsWith(".csproj")) csprojFiles.push(join(rootDir, entry));
+        }
+      } catch { /* ignore */ }
+      // Also nested csproj (e.g. src/MyApp/MyApp.csproj)
+      const nested = findFiles(rootDir, [".csproj"], 3);
+      for (const f of nested) {
+        if (!csprojFiles.includes(f)) csprojFiles.push(f);
+      }
+
+      for (const path of csprojFiles) {
+        const content = readFileSafe(path);
+        if (!content) continue;
+        const pkgMatches = content.matchAll(
+          /<PackageReference\s+[^>]*Include\s*=\s*"([^"]+)"/g
+        );
+        for (const match of pkgMatches) {
+          if (!deps.includes(match[1])) deps.push(match[1]);
+        }
       }
       break;
     }
@@ -298,30 +502,70 @@ function getDependencies(rootDir: string, techStack: TechStack): string[] {
       break;
     }
 
-    case "kotlin":
-    case "java": {
-      const gradlePaths = [
+    case "kotlin": {
+      // 1. Parse Gradle Version Catalog (libs.versions.toml) — modern Compose projects
+      //    use `implementation(libs.androidx.compose.ui)` instead of string coords.
+      const catalog = new Map<string, string>(); // alias → "group:artifact"
+      for (const p of [
+        join(rootDir, "gradle/libs.versions.toml"),
+        join(rootDir, "libs.versions.toml"),
+      ]) {
+        const content = readFileSafe(p);
+        if (content) parseVersionCatalog(content, catalog);
+      }
+
+      // 2. Collect all build.gradle[.kts] files — supports multi-module projects
+      //    (feature modules, core modules, etc. — not just app/).
+      const gradleFiles = new Set<string>([
         join(rootDir, "app/build.gradle"),
         join(rootDir, "app/build.gradle.kts"),
         join(rootDir, "build.gradle"),
         join(rootDir, "build.gradle.kts"),
-      ];
-      for (const path of gradlePaths) {
+      ]);
+      for (const f of findFiles(rootDir, ["build.gradle", "build.gradle.kts"], 5)) {
+        gradleFiles.add(f);
+      }
+
+      const addCoord = (coord: string) => {
+        const parts = coord.split(":");
+        if (parts.length < 2) return;
+        const [group, artifact] = parts;
+        if (!group || !artifact) return;
+        // Keep both forms so SDK_MAP can match either artifact-only or fully-qualified keys.
+        if (!deps.includes(artifact)) deps.push(artifact);
+        const gav = `${group}:${artifact}`;
+        if (!deps.includes(gav)) deps.push(gav);
+      };
+
+      // Dependency coordinate pattern: matches "group:artifact" or "group:artifact:version"
+      // inside any string literal — robust to multi-line function calls and platform(...)/
+      // enforcedPlatform(...) BOM wrappers.
+      const coordRegex =
+        /['"]([a-zA-Z][\w.-]*\.[a-zA-Z][\w.-]*:[a-zA-Z][\w.-]*(?::[^'"\s]+)?)['"]/g;
+      // Version catalog reference: libs.foo.bar → alias "foo-bar"
+      const libsRefRegex = /\blibs\.([a-zA-Z][\w.]*)/g;
+
+      for (const path of gradleFiles) {
         const content = readFileSafe(path);
-        if (content) {
-          const implMatches = content.matchAll(
-            /implementation\s*\(?['"]([^'"]+)['"]\)?/g
-          );
-          for (const match of implMatches) {
-            const parts = match[1].split(":");
-            if (parts.length >= 2) {
-              deps.push(parts[1]); // artifact name
-            }
-          }
+        if (!content) continue;
+
+        for (const m of content.matchAll(coordRegex)) {
+          addCoord(m[1]);
+        }
+        for (const m of content.matchAll(libsRefRegex)) {
+          const ref = m[1];
+          const resolved =
+            catalog.get(ref) || catalog.get(ref.replace(/\./g, "-"));
+          if (resolved) addCoord(resolved);
         }
       }
-      // Native Android framework imports from Kotlin/Java source files
-      const androidFiles = findFiles(join(rootDir, "app/src"), [".kt", ".java"], 8);
+
+      // 3. Native Android framework imports from Kotlin/Java sources
+      //    (covers multi-module layouts: scan all module src/ dirs, not just app/src/)
+      const androidFiles = [
+        ...findFiles(join(rootDir, "app/src"), [".kt", ".java"], 8),
+        ...findFiles(rootDir, [".kt", ".java"], 6),
+      ];
       const androidNativeImports = new Set<string>();
       const androidFrameworkPrefixes = [
         "com.google.android.gms.ads",
@@ -332,15 +576,19 @@ function getDependencies(rootDir: string, techStack: TechStack): string[] {
         "androidx.health",
         "androidx.biometric",
         "androidx.camera",
+        "androidx.compose",
+        "androidx.navigation.compose",
       ];
-      for (const file of androidFiles.slice(0, 100)) {
+      const seen = new Set<string>();
+      for (const file of androidFiles) {
+        if (seen.has(file)) continue;
+        seen.add(file);
+        if (seen.size > 200) break;
         const content = readFileSafe(file);
         if (!content) continue;
         for (const prefix of androidFrameworkPrefixes) {
-          if (content.includes(`import ${prefix}`)) {
-            if (!androidNativeImports.has(prefix)) {
-              androidNativeImports.add(prefix);
-            }
+          if (content.includes(`import ${prefix}`) && !androidNativeImports.has(prefix)) {
+            androidNativeImports.add(prefix);
           }
         }
       }

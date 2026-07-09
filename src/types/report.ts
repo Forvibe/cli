@@ -69,7 +69,7 @@ export interface ASOPlayStoreContent {
 }
 
 export interface ASOContent {
-  appstore: ASOStoreContent;
+  appstore?: ASOStoreContent;
   playstore?: ASOPlayStoreContent;
 }
 
@@ -84,11 +84,39 @@ export type CLIAssetType =
 export interface CLIAppAsset {
   asset_type: CLIAssetType;
   file_name: string;
-  mime_type: string;        // "image/png" | "image/jpeg"
-  base64_data: string;      // Raw base64 (NO data: URI prefix)
+  mime_type: string;        // "image/png" | "image/jpeg" | "image/webp"
+  // Either base64_data (legacy) OR storage_bucket+storage_path (new, direct upload).
+  base64_data?: string;
+  storage_bucket?: string;
+  storage_path?: string;
   width: number | null;
   height: number | null;
-  source_path: string;      // Relative path in the project
+  source_path: string;
+}
+
+// Play Store content declarations (for Play Console setup)
+export interface PlayStoreDeclarations {
+  // App Access: does the app require login or special access?
+  app_access: "unrestricted" | "restricted_login" | "restricted_other";
+  app_access_instructions?: string; // How to access restricted features
+
+  // Ads: does the app contain ads?
+  contains_ads: boolean;
+
+  // Target Audience: age groups the app targets
+  target_age_group: "all_ages" | "older_users_only" | "mixed";
+  is_appeal_to_children: boolean; // Does the app appeal to children even if not targeted?
+
+  // Government Apps
+  is_government_app: boolean;
+
+  // Financial Features
+  has_financial_features: boolean;
+  financial_features_details?: string; // e.g., "In-app purchases, digital wallet"
+
+  // Health Apps (HCSA - Health Claims & Safety Apps)
+  is_health_app: boolean;
+  health_app_details?: string; // e.g., "Fitness tracking, calorie counter"
 }
 
 export interface CLIProjectReport {
@@ -134,6 +162,9 @@ export interface CLIProjectReport {
   review_contact?: { first_name: string; last_name: string; email: string; phone: string };
   review_notes?: string;
 
+  // Play Store Declarations (for Play Console content setup)
+  play_store_declarations?: PlayStoreDeclarations;
+
   // Raw data
   detected_sdks: DetectedSDK[];
   readme_content: string | null;
@@ -145,8 +176,8 @@ export type TechStack =
   | "swift"
   | "flutter"
   | "react-native"
+  | "expo"
   | "kotlin"
-  | "java"
   | "capacitor"
   | "dotnet-maui"
   | "unknown";
