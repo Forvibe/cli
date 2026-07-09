@@ -1,13 +1,13 @@
 {
   "name": "@forvibe/cli",
-  "version": "1.1.1",
+  "version": "2.0.0",
   "description": "Forvibe CLI - AI-powered project analyzer for App Store automation",
   "type": "module",
   "bin": {
     "forvibe": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --clean && mkdir -p dist/review && cp -r src/review/rag-data dist/review/ && mkdir -p dist/engine && cp -r src/engine/data dist/engine/",
+    "build": "tsup src/index.ts --format esm --dts --clean && mkdir -p dist/engine && cp -r src/engine/data dist/engine/",
     "dev": "tsup src/index.ts --format esm --watch",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",

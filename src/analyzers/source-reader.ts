@@ -34,15 +34,24 @@ export function readReadme(rootDir: string): string | null {
   return null;
 }
 
+export interface SourceFile {
+  /** Path relative to the scanned root directory. */
+  path: string;
+  /** File content, truncated to the per-file cap. */
+  content: string;
+}
+
 /**
- * Read relevant source code files for AI analysis
- * Returns a curated set of source code content, limited in size
+ * Reads the curated, budgeted source corpus as individual files. This is the
+ * primitive behind readSourceCode(); the review command uses it directly so
+ * the static engine's signal scan and the AI prompt operate on the exact same
+ * corpus (same priority order, same per-file and total budgets).
  */
-export function readSourceCode(
+export function readSourceFiles(
   rootDir: string,
   techStack: TechStack,
   maxTotalChars = 50000
-): string {
+): SourceFile[] {
   const extensions = getExtensionsForStack(techStack);
   const priorityPatterns = getPriorityPatternsForStack(techStack);
 
@@ -57,7 +66,7 @@ export function readSourceCode(
   const sorted = sortByPriority(allFiles, priorityPatterns);
 
   // Read files until we hit the char limit
-  const parts: string[] = [];
+  const files: SourceFile[] = [];
   let totalChars = 0;
 
   for (const file of sorted) {
@@ -72,11 +81,32 @@ export function readSourceCode(
     if (isGeneratedFile(file, content)) continue;
 
     const truncated = content.substring(0, 15000); // Max 15k per file for thorough AI analysis
-    parts.push(`--- ${file} ---\n${truncated}`);
+    files.push({ path: file, content: truncated });
     totalChars += truncated.length;
   }
 
-  return parts.join("\n\n");
+  return files;
+}
+
+/**
+ * Joins a SourceFile corpus into the single `--- path ---` delimited string
+ * shape the AI prompts consume.
+ */
+export function joinSourceFiles(files: SourceFile[]): string {
+  return files.map((f) => `--- ${f.path} ---\n${f.content}`).join("\n\n");
+}
+
+/**
+ * Read relevant source code files for AI analysis
+ * Returns a curated set of source code content, limited in size
+ * (Byte-identical to the pre-v2 implementation: readSourceFiles + join.)
+ */
+export function readSourceCode(
+  rootDir: string,
+  techStack: TechStack,
+  maxTotalChars = 50000
+): string {
+  return joinSourceFiles(readSourceFiles(rootDir, techStack, maxTotalChars));
 }
 
 /**

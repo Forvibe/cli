@@ -1,5 +1,12 @@
+// Report formatters, v2: terminal/markdown render the hybrid report's
+// compliance checks, per-finding detection badges, rulepack/engine footer, and
+// the static-only banner. Every v2 field is optional on CodeReviewReport, so
+// a v1-shaped report (no checks/app_profile/ai_review_ran) renders exactly as
+// before - v2 sections are simply omitted. formatJSON stays a raw serialize.
+
 import chalk from "chalk";
 import type { CodeReviewReport, ReviewFinding, ReviewRiskLevel } from "../types/review.js";
+import type { ReviewCheck } from "../engine/types.js";
 
 const RISK_ICONS: Record<ReviewRiskLevel, string> = {
   high: "🔴",
@@ -21,6 +28,8 @@ const RISK_COLORS: Record<ReviewRiskLevel, (text: string) => string> = {
   low: chalk.blue,
   info: chalk.gray,
 };
+
+const STATIC_ONLY_BANNER = "AI behavioral review skipped. Static rule results only.";
 
 function outcomeDisplay(outcome: string): string {
   switch (outcome) {
@@ -46,6 +55,41 @@ function approvalBar(chance: number): string {
   else color = chalk.red;
 
   return color("█".repeat(filled)) + chalk.gray("░".repeat(empty)) + ` ${chance}%`;
+}
+
+interface CheckCounts {
+  failed: ReviewCheck[];
+  unverified: ReviewCheck[];
+  passed: ReviewCheck[];
+  na: ReviewCheck[];
+}
+
+function groupChecks(checks: ReviewCheck[]): CheckCounts {
+  return {
+    failed: checks.filter((c) => c.status === "fail"),
+    unverified: checks.filter((c) => c.status === "unverified"),
+    passed: checks.filter((c) => c.status === "pass"),
+    na: checks.filter((c) => c.status === "na"),
+  };
+}
+
+function detectionBadge(finding: ReviewFinding): string {
+  if (finding.detection === "static") return chalk.dim("[static]") + " ";
+  if (finding.detection === "ai") return chalk.cyan("[AI]") + " ";
+  return "";
+}
+
+/** `Rulepack v2.0.2 (bundled) · Engine v2.0.0` (parts included as available). */
+function versionFooter(report: CodeReviewReport): string | null {
+  const parts: string[] = [];
+  if (report.rulepack_version) {
+    const source = report.rulepack_source ? ` (${report.rulepack_source})` : "";
+    parts.push(`Rulepack v${report.rulepack_version}${source}`);
+  }
+  if (report.engine_version) {
+    parts.push(`Engine v${report.engine_version}`);
+  }
+  return parts.length > 0 ? parts.join(" · ") : null;
 }
 
 export function formatTerminal(report: CodeReviewReport): string {
@@ -77,7 +121,10 @@ export function formatTerminal(report: CodeReviewReport): string {
     report.summary.info > 0 && chalk.gray(`${report.summary.info} info`),
   ].filter(Boolean);
 
-  lines.push(`  Findings:    ${chalk.bold(String(report.summary.total_findings))} total — ${counts.join(" · ")}`);
+  lines.push(
+    `  Findings:    ${chalk.bold(String(report.summary.total_findings))} total` +
+      (counts.length > 0 ? ` (${counts.join(" · ")})` : "")
+  );
   lines.push("");
 
   if (report.features_detected.length > 0) {
@@ -90,6 +137,36 @@ export function formatTerminal(report: CodeReviewReport): string {
     lines.push(chalk.gray("  ─────────────────────────────────────────────────"));
     lines.push(`  ${chalk.italic(report.summary.ai_assessment)}`);
     lines.push(chalk.gray("  ─────────────────────────────────────────────────"));
+    lines.push("");
+  }
+
+  // Compliance checks (v2 reports only; v1 reports have no checks field)
+  if (report.checks && report.checks.length > 0) {
+    const groups = groupChecks(report.checks);
+    lines.push(chalk.bold("  COMPLIANCE CHECKS"));
+    lines.push(
+      `  ${chalk.red(`${groups.failed.length} failed`)}, ` +
+        `${chalk.yellow(`${groups.unverified.length} verify manually`)}, ` +
+        `${chalk.green(`${groups.passed.length} passed`)}, ` +
+        `${chalk.gray(`${groups.na.length} not applicable`)}`
+    );
+    lines.push("");
+
+    for (const check of groups.failed) {
+      lines.push(`  ${chalk.red(`✗ [${check.guideline_number}] ${check.title}`)}`);
+    }
+    for (const check of groups.unverified) {
+      lines.push(`  ${chalk.yellow(`VERIFY: [${check.guideline_number}] ${check.title}`)}`);
+    }
+    if (groups.passed.length > 0) {
+      const noun = groups.passed.length === 1 ? "check" : "checks";
+      lines.push(
+        chalk.gray(
+          `  ${groups.passed.length} ${noun} passed (run with --format json for the full list)`
+        )
+      );
+    }
+    // n/a checks are intentionally omitted from terminal output.
     lines.push("");
   }
 
@@ -115,10 +192,10 @@ export function formatTerminal(report: CodeReviewReport): string {
       const color = RISK_COLORS[level];
 
       lines.push(chalk.gray("  ─────────────────────────────────────────────────"));
-      lines.push(`  ${icon} ${color(label)}  Guideline ${finding.guideline_number} — ${finding.guideline_name}`);
+      lines.push(`  ${icon} ${color(label)}  Guideline ${finding.guideline_number} - ${finding.guideline_name}`);
       lines.push(chalk.gray("  ─────────────────────────────────────────────────"));
       lines.push("");
-      lines.push(`  ${chalk.bold(finding.title)}`);
+      lines.push(`  ${detectionBadge(finding)}${chalk.bold(finding.title)}`);
       lines.push(`  ${finding.description}`);
       lines.push("");
       lines.push(`  ${chalk.cyan("User Impact:")} ${finding.user_impact}`);
@@ -143,7 +220,14 @@ export function formatTerminal(report: CodeReviewReport): string {
   }
 
   lines.push(chalk.gray("  ═══════════════════════════════════════════════════"));
-  lines.push(chalk.gray("  Powered by Forvibe CLI — forvibe.app"));
+  if (report.ai_review_ran === false) {
+    lines.push(chalk.yellow(`  ${STATIC_ONLY_BANNER}`));
+  }
+  const footer = versionFooter(report);
+  if (footer) {
+    lines.push(chalk.gray(`  ${footer}`));
+  }
+  lines.push(chalk.gray("  Powered by Forvibe CLI (forvibe.app)"));
   lines.push("");
 
   return lines.join("\n");
@@ -167,6 +251,11 @@ export function formatMarkdown(report: CodeReviewReport): string {
   lines.push(`**Scan Duration:** ${(report.scan_duration_ms / 1000).toFixed(1)}s`);
   lines.push("");
 
+  if (report.ai_review_ran === false) {
+    lines.push(`> ${STATIC_ONLY_BANNER}`);
+    lines.push("");
+  }
+
   lines.push("## Result");
   lines.push("");
   lines.push(`**Outcome:** ${report.summary.outcome.replace(/-/g, " ").toUpperCase()}`);
@@ -187,6 +276,29 @@ export function formatMarkdown(report: CodeReviewReport): string {
     lines.push("");
   }
 
+  // Compliance checks (v2 reports only)
+  if (report.checks && report.checks.length > 0) {
+    const groups = groupChecks(report.checks);
+    lines.push("## Compliance Checks");
+    lines.push("");
+    lines.push(
+      `${groups.failed.length} failed, ${groups.unverified.length} verify manually, ` +
+        `${groups.passed.length} passed, ${groups.na.length} not applicable`
+    );
+    lines.push("");
+    for (const check of groups.failed) {
+      lines.push(`- FAILED: [${check.guideline_number}] ${check.title}`);
+    }
+    for (const check of groups.unverified) {
+      lines.push(`- VERIFY: [${check.guideline_number}] ${check.title}`);
+    }
+    if (groups.passed.length > 0) {
+      const noun = groups.passed.length === 1 ? "check" : "checks";
+      lines.push(`- ${groups.passed.length} ${noun} passed (run with \`--format json\` for the full list)`);
+    }
+    lines.push("");
+  }
+
   if (report.features_detected.length > 0) {
     lines.push("## Detected Features");
     lines.push("");
@@ -202,14 +314,16 @@ export function formatMarkdown(report: CodeReviewReport): string {
   if (report.findings.length === 0) {
     lines.push("No significant issues found. Your app looks ready for review!");
     lines.push("");
+    appendMarkdownFooter(lines, report);
     return lines.join("\n");
   }
 
   for (const finding of report.findings) {
     const riskEmoji = RISK_ICONS[finding.risk_level];
-    lines.push(`### ${riskEmoji} ${finding.title}`);
+    const badge = finding.detection === "static" ? "[static] " : finding.detection === "ai" ? "[AI] " : "";
+    lines.push(`### ${riskEmoji} ${badge}${finding.title}`);
     lines.push("");
-    lines.push(`**Guideline:** ${finding.guideline_number} — ${finding.guideline_name}`);
+    lines.push(`**Guideline:** ${finding.guideline_number} - ${finding.guideline_name}`);
     lines.push(`**Risk Level:** ${finding.risk_level}`);
     lines.push(`**Category:** ${finding.category}`);
     lines.push("");
@@ -227,8 +341,17 @@ export function formatMarkdown(report: CodeReviewReport): string {
     lines.push("");
   }
 
-  lines.push("*Powered by Forvibe CLI — forvibe.app*");
-  lines.push("");
+  appendMarkdownFooter(lines, report);
 
   return lines.join("\n");
+}
+
+function appendMarkdownFooter(lines: string[], report: CodeReviewReport): void {
+  const footer = versionFooter(report);
+  if (footer) {
+    lines.push(`*${footer}*`);
+    lines.push("");
+  }
+  lines.push("*Powered by Forvibe CLI (forvibe.app)*");
+  lines.push("");
 }

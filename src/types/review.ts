@@ -102,6 +102,10 @@ export interface ReviewSummary {
 // Codebase Review Report (CLI output)
 // =============================================
 
+// Engine types are type-only imports (erased at compile time); engine/types.ts
+// imports nothing from this file, so there is no import cycle at runtime.
+import type { AppProfile, ReviewCheck } from "../engine/types.js";
+
 export interface CodeReviewReport {
   features_detected: string[];
   source_files_analyzed: number;
@@ -111,6 +115,26 @@ export interface CodeReviewReport {
   summary: ReviewSummary;
   rag_stories_used: number;
   scan_duration_ms: number;
+  // =============================================
+  // ADDITIVE v2 fields (hybrid static + AI pipeline). Every field is optional
+  // so existing v1 report consumers (the forvibeapp server's
+  // /api/review/codebase endpoint and stored v1 reports) remain valid.
+  // =============================================
+  /** Report shape marker: present (=2) only on reports from the v2 pipeline. */
+  report_schema_version?: 2;
+  /** CLI package version that produced this report. */
+  engine_version?: string;
+  /** Version of the rulepack bundle the static engine evaluated. */
+  rulepack_version?: string;
+  rulepack_store?: "appstore" | "play";
+  /** Where the rulepack came from at run time (freshness telemetry; also rendered in the formatter footer). */
+  rulepack_source?: "remote" | "cache" | "bundled";
+  /** Static-engine app profile (raw_dependencies buckets capped for payload size). */
+  app_profile?: AppProfile;
+  /** Full tri-state compliance check list (pass/fail/unverified/na). */
+  checks?: ReviewCheck[];
+  /** False when the AI behavioral pass was skipped (--static-only or no API key). */
+  ai_review_ran?: boolean;
 }
 
 export type ReviewFormat = "terminal" | "json" | "markdown";

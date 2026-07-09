@@ -1,86 +1,56 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
-import type {
-  RejectionStory,
-  AppFeatureSignal,
-  ReviewCategory,
-} from "../types/review.js";
+// RAG story selector, v2: stories are injected from the loaded RulepackBundle
+// (remote -> cache -> bundled ladder in src/engine/remote.ts) instead of being
+// read from a package-local rag-data directory. The old disk loader
+// (getDataDir/loadAllStories) and src/review/rag-data/ are gone; the bundle is
+// now the single source of truth for the rejection-story corpus.
 
-const DATA_FILES = [
-  "safety.json",
-  "performance.json",
-  "business.json",
-  "design.json",
-  "legal.json",
-  "common-pitfalls.json",
-];
+import type { RejectionStory } from "../engine/types.js";
+import type { AppFeatureSignal } from "../types/review.js";
 
-let cachedStories: RejectionStory[] | null = null;
+/**
+ * A search signal is either a full feature signal from the AI feature
+ * discovery pass, or a plain string (SDK id or capability name from the
+ * static engine's AppProfile, e.g. "google-mobile-ads", "subscriptions").
+ */
+export type StorySignal = AppFeatureSignal | string;
 
-function getDataDir(): string {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-  // Try multiple possible locations:
-  // 1. src/review/rag-data (dev, running from source)
-  // 2. dist/review/rag-data (bundled, __dirname = dist/)
-  // 3. rag-data (if running directly from review/ dir)
-  const candidates = [
-    path.join(__dirname, "rag-data"),
-    path.join(__dirname, "review", "rag-data"),
-    path.join(__dirname, "..", "review", "rag-data"),
-    path.join(__dirname, "..", "src", "review", "rag-data"),
-  ];
-  for (const dir of candidates) {
-    try {
-      readFileSync(path.join(dir, "safety.json"));
-      return dir;
-    } catch {
-      // Try next
-    }
-  }
-  return candidates[0]; // Fallback
-}
-
-export function loadAllStories(): RejectionStory[] {
-  if (cachedStories) return cachedStories;
-
-  const dataDir = getDataDir();
-  const stories: RejectionStory[] = [];
-
-  for (const file of DATA_FILES) {
-    try {
-      const content = readFileSync(path.join(dataDir, file), "utf-8");
-      const parsed = JSON.parse(content) as RejectionStory[];
-      stories.push(...parsed);
-    } catch {
-      // Skip missing files
-    }
-  }
-
-  cachedStories = stories;
-  return stories;
-}
-
+/**
+ * Ranks `stories` against `signals` and returns the top `maxResults`.
+ * Scoring (identical to v1):
+ *   +3 when a story behavioralSignal matches a detected feature (substring
+ *      either way, first word for the reverse direction)
+ *   +2 per story keyword present in the signal keyword set
+ *   +1 when the story category matches a signal category
+ * Plain string signals contribute to both the feature set and the keyword set
+ * (they carry no category).
+ */
 export function searchStories(
-  signals: AppFeatureSignal[],
+  stories: RejectionStory[],
+  signals: StorySignal[],
   maxResults: number = 20
 ): RejectionStory[] {
-  const allStories = loadAllStories();
-  if (signals.length === 0) return allStories.slice(0, maxResults);
+  if (signals.length === 0) return stories.slice(0, maxResults);
 
-  const signalKeywords = new Set(
-    signals.flatMap((s) => s.keywords.map((k) => k.toLowerCase()))
-  );
-  const signalFeatures = new Set(
-    signals.map((s) => s.feature.toLowerCase())
-  );
-  const signalCategories = new Set(signals.map((s) => s.category));
+  const signalKeywords = new Set<string>();
+  const signalFeatures = new Set<string>();
+  const signalCategories = new Set<string>();
 
-  const scored = allStories.map((story) => {
+  for (const signal of signals) {
+    if (typeof signal === "string") {
+      const value = signal.toLowerCase();
+      signalFeatures.add(value);
+      signalKeywords.add(value);
+    } else {
+      signalFeatures.add(signal.feature.toLowerCase());
+      for (const keyword of signal.keywords) signalKeywords.add(keyword.toLowerCase());
+      signalCategories.add(signal.category);
+    }
+  }
+
+  const scored = stories.map((story) => {
     let score = 0;
 
-    // +3 for behavioral signal matching a detected feature
+    // +3 for each behavioral signal matching a detected feature
     for (const signal of story.behavioralSignals) {
       const signalLower = signal.toLowerCase();
       for (const feature of signalFeatures) {
