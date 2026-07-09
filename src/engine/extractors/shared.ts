@@ -53,6 +53,23 @@ export function normalizeStringValue(value: unknown): string | null {
   return value;
 }
 
+/**
+ * Normalizes a boolean-typed plist fact that may arrive either as a real
+ * boolean (plist.parse of <true/>/<false/>, or JSON from an Expo config) or
+ * as a raw pbxproj build-setting string ("YES"/"NO"/"true"/"false"/"1"/"0",
+ * any casing). Anything unrecognized -> null (unknown fact), never a guessed
+ * boolean: Boolean("NO") === true is exactly the inversion this prevents.
+ */
+export function parsePlistBoolean(value: unknown): boolean | null {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "yes" || normalized === "true" || normalized === "1") return true;
+    if (normalized === "no" || normalized === "false" || normalized === "0") return false;
+  }
+  return null;
+}
+
 /** Number of path segments in `relPath` - used to prefer shallower (closer to root) files. */
 export function pathDepth(relPath: string): number {
   return relPath.split(/[\\/]/).length;

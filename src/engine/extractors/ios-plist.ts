@@ -5,6 +5,7 @@ import type { AppProfile } from "../types.js";
 import {
   isExtensionPath,
   normalizeStringValue,
+  parsePlistBoolean,
   pathDepth,
   type EvidenceMap,
 } from "./shared.js";
@@ -101,12 +102,16 @@ function extractPlistFields(merged: Record<string, unknown>): PlistFieldValue {
     ? merged.UIBackgroundModes.filter((v): v is string => typeof v === "string")
     : [];
 
+  // ATS is a nested dict, so it cannot arrive from the pbxproj source
+  // (INFOPLIST_KEY_* values are flat strings; a string never passes the
+  // typeof-object guard below). parsePlistBoolean is still used for the
+  // inner flag to tolerate stringly-typed values from Expo configs.
   let atsAllowsArbitraryLoads: boolean | null = null;
   const ats = merged.NSAppTransportSecurity;
   if (ats && typeof ats === "object" && !Array.isArray(ats)) {
     const atsDict = ats as Record<string, unknown>;
     if ("NSAllowsArbitraryLoads" in atsDict) {
-      atsAllowsArbitraryLoads = Boolean(atsDict.NSAllowsArbitraryLoads);
+      atsAllowsArbitraryLoads = parsePlistBoolean(atsDict.NSAllowsArbitraryLoads);
     }
   }
 
@@ -116,9 +121,12 @@ function extractPlistFields(merged: Record<string, unknown>): PlistFieldValue {
     ? merged.SKAdNetworkItems.length
     : 0;
 
+  // Key absent -> null (schema semantics). Key present -> parsePlistBoolean,
+  // because from the pbxproj source this value is a raw string ("NO" must
+  // map to false, not Boolean("NO") === true); unparseable -> null (unknown).
   let nonExemptEncryption: boolean | null = null;
   if ("ITSAppUsesNonExemptEncryption" in merged) {
-    nonExemptEncryption = Boolean(merged.ITSAppUsesNonExemptEncryption);
+    nonExemptEncryption = parsePlistBoolean(merged.ITSAppUsesNonExemptEncryption);
   }
 
   const requiredDeviceCapabilities = Array.isArray(merged.UIRequiredDeviceCapabilities)

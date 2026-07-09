@@ -41,7 +41,61 @@ describe("extractIosPlist", () => {
     expect(result.plist!.usage_descriptions.NSCameraUsageDescription).toBe(
       "Camera for scanning documents"
     );
-    expect(result.plist!.non_exempt_encryption).toBeNull();
+  });
+
+  it("swift-modern-app: pbxproj INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO maps to false (regression: Boolean(\"NO\") inversion)", () => {
+    const result = extractIosPlist(fixturePath("swift-modern-app"));
+
+    expect(result.plist!.non_exempt_encryption).toBe(false);
+  });
+
+  describe("pbxproj boolean-string normalization", () => {
+    // Minimal generated-Info.plist project: only a pbxproj, no Info.plist
+    // file, so the string-valued INFOPLIST_KEY_* path is the ONLY source.
+    function writePbxprojOnlyProject(dir: string, encryptionValue: string): void {
+      writeFileSync(
+        path.join(dir, "project.pbxproj"),
+        `// !$*UTF8*$!
+{
+	objects = {
+		D1000021 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = ${encryptionValue};
+				PRODUCT_BUNDLE_IDENTIFIER = com.forvibe.fixture.synthetic;
+			};
+			name = Release;
+		};
+	};
+}
+`,
+        "utf-8"
+      );
+    }
+
+    it("INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = YES maps to true", () => {
+      const dir = mkdtempSync(path.join(tmpdir(), "rsv2-ios-plist-encryption-yes-"));
+      try {
+        writePbxprojOnlyProject(dir, "YES");
+        const result = extractIosPlist(dir);
+        expect(result.plist_source).toBe("pbxproj_infoplist_keys");
+        expect(result.plist!.non_exempt_encryption).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it("an unrecognized value maps to null (unknown), never a guessed boolean", () => {
+      const dir = mkdtempSync(path.join(tmpdir(), "rsv2-ios-plist-encryption-junk-"));
+      try {
+        writePbxprojOnlyProject(dir, '"$(SOME_FLAG)"');
+        const result = extractIosPlist(dir);
+        expect(result.plist!.non_exempt_encryption).toBeNull();
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
   });
 
   it("expo-app: derives plist from app.json expo.ios.infoPlist", () => {
