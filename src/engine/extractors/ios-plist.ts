@@ -77,6 +77,54 @@ function readPbxprojInfoplistKeys(
   return { keys, generatesInfoPlist };
 }
 
+/**
+ * Expo/React Native AdMob app IDs commonly live OUTSIDE the expo.ios.infoPlist
+ * block. Doc-verified app.json locations, checked in priority order (all give
+ * way to an explicit infoPlist.GADApplicationIdentifier):
+ *   1. expo.ios.config.googleMobileAdsAppId - the classic Expo / expo-ads-admob
+ *      location (Expo docs, sdk/admob.md; also named by the admob rule's fix text).
+ *   2. top-level "react-native-google-mobile-ads": { "ios_app_id": ... } -
+ *      bare-RN form, snake_case per the library docs
+ *      (https://docs.page/invertase/react-native-google-mobile-ads); older
+ *      library versions read this block for Expo builds too (invertase
+ *      issues #547/#581/#597, expo/expo#18501).
+ *   3. expo.plugins entry ["react-native-google-mobile-ads", { "iosAppId": ... }] -
+ *      the current Expo config-plugin form, camelCase per the same docs; the
+ *      snake_case "ios_app_id" spelling is accepted as a legacy variant.
+ * Returns the first non-empty string found, else null.
+ */
+function findExpoGadAppId(appJson: unknown): string | null {
+  const asRecord = (v: unknown): Record<string, unknown> | null =>
+    v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+  const asId = (v: unknown): string | null =>
+    typeof v === "string" && v.length > 0 ? v : null;
+
+  const root = asRecord(appJson);
+  if (!root) return null;
+  const expo = asRecord(root.expo);
+
+  // 1. expo.ios.config.googleMobileAdsAppId
+  const legacy = asId(asRecord(asRecord(expo?.ios)?.config)?.googleMobileAdsAppId);
+  if (legacy) return legacy;
+
+  // 2. top-level react-native-google-mobile-ads block (snake_case)
+  const rnTop = asId(asRecord(root["react-native-google-mobile-ads"])?.ios_app_id);
+  if (rnTop) return rnTop;
+
+  // 3. expo.plugins config-plugin entry
+  const plugins = expo?.plugins;
+  if (Array.isArray(plugins)) {
+    for (const entry of plugins) {
+      if (!Array.isArray(entry) || entry[0] !== "react-native-google-mobile-ads") continue;
+      const props = asRecord(entry[1]);
+      const id = asId(props?.iosAppId) ?? asId(props?.ios_app_id);
+      if (id) return id;
+    }
+  }
+
+  return null;
+}
+
 /** Best-effort extraction from a non-JSON Expo config (app.config.js/app.config.ts). */
 function readExpoConfigFallback(content: string): Record<string, string> {
   const found: Record<string, string> = {};
@@ -203,7 +251,20 @@ export function extractIosPlist(rootDir: string): IosPlistExtraction {
       const appJson = JSON.parse(appJsonContent);
       const infoPlist = appJson?.expo?.ios?.infoPlist;
       if (infoPlist && typeof infoPlist === "object" && !Array.isArray(infoPlist)) {
-        expoData = infoPlist as Record<string, unknown>;
+        expoData = { ...(infoPlist as Record<string, unknown>) };
+        // AdMob app IDs commonly live outside the infoPlist block (see
+        // findExpoGadAppId). Injecting into expoData keeps precedence intact:
+        // the expo source stays lowest overall, and within it an explicit
+        // infoPlist.GADApplicationIdentifier wins over the config locations.
+        // Deliberately gated on the infoPlist block existing: synthesizing a
+        // plist from plugin config alone would flip ios.plist from null
+        // (unknown -> unverified paths) to present, newly exposing
+        // MISSING-based fails (e.g. the encryption rule) for facts the scan
+        // never actually saw.
+        if (!("GADApplicationIdentifier" in expoData)) {
+          const gadId = findExpoGadAppId(appJson);
+          if (gadId !== null) expoData.GADApplicationIdentifier = gadId;
+        }
         evidence["ios.plist.expo_config"] = { file: "app.json" };
       }
     } catch {

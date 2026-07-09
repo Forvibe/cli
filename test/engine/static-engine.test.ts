@@ -1,4 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { runStaticEngine, type StaticEngineResult } from "../../src/engine/index.js";
 import { detectTechStack } from "../../src/analyzers/tech-detector.js";
 import { parseConfig } from "../../src/analyzers/config-parser.js";
@@ -216,5 +219,61 @@ describe("ordering + determinism", () => {
     const a = runFixture("swift-app");
     const b = runFixture("swift-app");
     expect(a).toEqual(b);
+  });
+});
+
+// ===========================================================================
+// End-to-end pin: $(VAR)-valued GAD id -> NULLVALUE -> unverified
+// ===========================================================================
+
+describe("build-variable GAD id end-to-end", () => {
+  it("AdMob pod + GADApplicationIdentifier = $(GAD_APP_ID) -> admob check unverified (not fail)", () => {
+    // Pins the two-link chain in one end-to-end test: the extractor keeps a
+    // $(VAR)-valued key PRESENT with null, and the evaluator resolves
+    // NULLVALUE under op `absent` to unknown -> unverified. A false fail here
+    // would punish apps that inject the AdMob id via build settings.
+    const dir = mkdtempSync(path.join(tmpdir(), "rsv2-e2e-gad-var-"));
+    try {
+      writeFileSync(
+        path.join(dir, "Podfile"),
+        "platform :ios, '15.0'\n\ntarget 'VarApp' do\n  pod 'Google-Mobile-Ads-SDK'\nend\n",
+        "utf-8"
+      );
+      writeFileSync(
+        path.join(dir, "Info.plist"),
+        `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>VarApp</string>
+	<key>GADApplicationIdentifier</key>
+	<string>$(GAD_APP_ID)</string>
+</dict>
+</plist>
+`,
+        "utf-8"
+      );
+
+      const stackResult = detectTechStack(dir);
+      expect(stackResult.stack).toBe("swift"); // Podfile marks it as an iOS project
+      const cfg = parseConfig(dir, stackResult.stack);
+      const result = runStaticEngine({
+        rootDir: dir,
+        stackResult,
+        appConfig: { app_name: cfg.app_name, bundle_id: cfg.bundle_id },
+        bundle,
+        generatedAt: "2026-07-09T00:00:00.000Z",
+      });
+
+      const admob = result.checks.find((c) => c.rule_id === "appstore.admob-app-id-missing");
+      expect(admob?.status).toBe("unverified");
+      // And no finding is emitted for an unverified check.
+      expect(
+        result.findings.some((f) => f.rule_id === "appstore.admob-app-id-missing")
+      ).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

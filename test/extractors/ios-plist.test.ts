@@ -149,6 +149,91 @@ describe("extractIosPlist", () => {
     );
   });
 
+  describe("expo alternate GAD app-id sources (app.json outside infoPlist)", () => {
+    // Synthetic app.json temp-dir cases (the committed expo-app fixture's
+    // planted facts stay untouched). All cases include an expo.ios.infoPlist
+    // block: the alternate-source lookup is deliberately gated on it (see
+    // extractor comment).
+    function writeAppJson(dir: string, appJson: unknown): void {
+      writeFileSync(path.join(dir, "app.json"), JSON.stringify(appJson, null, 2), "utf-8");
+    }
+
+    function extractFromAppJson(name: string, appJson: unknown) {
+      const dir = mkdtempSync(path.join(tmpdir(), `rsv2-ios-plist-gad-${name}-`));
+      try {
+        writeAppJson(dir, appJson);
+        return extractIosPlist(dir);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    }
+
+    const infoPlistBlock = { NSCameraUsageDescription: "Scan things." };
+
+    it("reads the classic expo.ios.config.googleMobileAdsAppId location", () => {
+      const result = extractFromAppJson("legacy-config", {
+        expo: {
+          ios: {
+            infoPlist: infoPlistBlock,
+            config: { googleMobileAdsAppId: "ca-app-pub-111~111" },
+          },
+        },
+      });
+      expect(result.plist!.gad_application_identifier).toBe("ca-app-pub-111~111");
+    });
+
+    it("reads the top-level react-native-google-mobile-ads block (snake_case ios_app_id)", () => {
+      const result = extractFromAppJson("rn-top-level", {
+        expo: { ios: { infoPlist: infoPlistBlock } },
+        "react-native-google-mobile-ads": { ios_app_id: "ca-app-pub-222~222" },
+      });
+      expect(result.plist!.gad_application_identifier).toBe("ca-app-pub-222~222");
+    });
+
+    it("reads the expo.plugins config-plugin entry (camelCase iosAppId)", () => {
+      const result = extractFromAppJson("plugin-camel", {
+        expo: {
+          ios: { infoPlist: infoPlistBlock },
+          plugins: [
+            "expo-camera",
+            ["react-native-google-mobile-ads", { iosAppId: "ca-app-pub-333~333" }],
+          ],
+        },
+      });
+      expect(result.plist!.gad_application_identifier).toBe("ca-app-pub-333~333");
+    });
+
+    it("accepts the legacy snake_case ios_app_id spelling in the plugin entry", () => {
+      const result = extractFromAppJson("plugin-snake", {
+        expo: {
+          ios: { infoPlist: infoPlistBlock },
+          plugins: [["react-native-google-mobile-ads", { ios_app_id: "ca-app-pub-444~444" }]],
+        },
+      });
+      expect(result.plist!.gad_application_identifier).toBe("ca-app-pub-444~444");
+    });
+
+    it("an explicit infoPlist.GADApplicationIdentifier wins over the config locations", () => {
+      const result = extractFromAppJson("infoplist-wins", {
+        expo: {
+          ios: {
+            infoPlist: { ...infoPlistBlock, GADApplicationIdentifier: "ca-app-pub-999~999" },
+            config: { googleMobileAdsAppId: "ca-app-pub-111~111" },
+          },
+        },
+      });
+      expect(result.plist!.gad_application_identifier).toBe("ca-app-pub-999~999");
+    });
+
+    it("no GAD source anywhere + infoPlist block present -> property omitted (MISSING preserved)", () => {
+      const result = extractFromAppJson("none", {
+        expo: { ios: { infoPlist: infoPlistBlock } },
+      });
+      expect(result.plist).not.toBeNull();
+      expect("gad_application_identifier" in result.plist!).toBe(false);
+    });
+  });
+
   describe("absence behavior", () => {
     const emptyDir = mkdtempSync(path.join(tmpdir(), "rsv2-ios-plist-empty-"));
     // Vitest's afterAll inside a nested describe only runs after this
