@@ -10,6 +10,7 @@ import type {
   TechStack,
 } from "../types/report.js";
 import { readFileSafe, findFile, findFiles } from "../utils/file-scanner.js";
+import type { EcosystemDeps } from "../engine/types.js";
 
 interface SDKMapping {
   category: keyof ThirdPartyServices;
@@ -595,6 +596,356 @@ function getDependencies(rootDir: string, techStack: TechStack): string[] {
       deps.push(...androidNativeImports);
       break;
     }
+  }
+
+  return deps;
+}
+
+// =============================================================================
+// Raw dependency collection (review-engine v2 / Task 3b) - ADDITIVE.
+//
+// Everything below is new. scanSDKs()/getDependencies() above are UNTOUCHED -
+// the `analyze` command depends on their exact current behavior (locked in by
+// test/analyzers/sdk-scanner-compat.test.ts). This section builds a separate,
+// UNFILTERED ("raw") view of a project's dependencies for the new
+// registry-driven SDK matcher (src/engine/registry.ts) to consume, replacing
+// the SDK_MAP allowlist approach above for the review-engine's purposes.
+//
+// Where reuse is safe and side-effect-free, existing helpers are called
+// directly (parseVersionCatalog). The gradle-coordinate extraction is a
+// fresh, lightly duplicated implementation (see collectGradleCoordinates)
+// rather than a shared refactor of the legacy scan, because it needs one
+// deliberate behavioral difference: `classpath` (buildscript/plugin-tooling)
+// declarations are excluded, since those are build tooling, not shipped app
+// SDKs. The legacy scan above doesn't care about this distinction because its
+// output is filtered again downstream through SDK_MAP; this collector's
+// output is consumed directly by the registry matcher with no such net (see
+// collectGradleCoordinates for the concrete case this matters for: a bare
+// Flutter/Android project's own `android/build.gradle` buildscript block
+// would otherwise leak a "com.android.tools.build:gradle" non-SDK coordinate
+// into the raw dependency set).
+//
+// Similarly, the native-import scanners below (collectSwiftImports,
+// collectAndroidImports) are NOT gated by SDK_MAP or the small curated
+// android-framework-prefix allowlist the legacy scan uses - they return every
+// import found, unfiltered. The registry matcher needs to see imports this
+// file's hardcoded lists don't know about (e.g. "UIKit", which isn't an
+// SDK_MAP key at all).
+// =============================================================================
+
+function dedupeSorted(values: string[]): string[] {
+  return Array.from(new Set(values)).sort();
+}
+
+/**
+ * Candidate gradle build files under `baseDir` - a project root for the
+ * "kotlin" stack, or the nested "android/" directory for flutter /
+ * react-native / expo / capacitor stacks. Mirrors the file-discovery shape of
+ * the legacy kotlin-case scan above (app module first, then the project
+ * root, then a depth-5 recursive sweep for multi-module layouts).
+ */
+function gradleCandidateFiles(baseDir: string): string[] {
+  const candidates = new Set<string>([
+    join(baseDir, "app/build.gradle"),
+    join(baseDir, "app/build.gradle.kts"),
+    join(baseDir, "build.gradle"),
+    join(baseDir, "build.gradle.kts"),
+  ]);
+  for (const f of findFiles(baseDir, ["build.gradle", "build.gradle.kts"], 5)) {
+    candidates.add(f);
+  }
+  return Array.from(candidates);
+}
+
+/**
+ * Extracts Gradle dependency coordinates in canonical "group:artifact" form
+ * (ONE entry per dependency - unlike the legacy addCoord above, this does
+ * NOT also push the bare artifact name; see the note below for why) from
+ * `gradleFiles`. Reuses parseVersionCatalog() as-is for libs.versions.toml
+ * resolution (`androidRoot` locates the catalog file:
+ * "<androidRoot>/gradle/libs.versions.toml" or "<androidRoot>/libs.versions.toml").
+ *
+ * Deliberately SKIPS `classpath` lines (buildscript/plugin tooling versions
+ * such as the Android Gradle Plugin or Kotlin compiler, not application
+ * SDKs) - see the section banner comment above for why this collector can't
+ * just reuse the legacy scan unmodified.
+ *
+ * Single-form note: the legacy addCoord above pushes BOTH the bare artifact
+ * name and the full coordinate, because getDependencies() feeds a flat
+ * SDK_MAP lookup that needs to try both shapes. The registry matcher
+ * (src/engine/registry.ts) instead bridges a bare PATTERN to the artifact
+ * segment of a full-coordinate DEP itself (see matchGradle there), so
+ * emitting both forms here would make a single real dependency match twice
+ * under a bare pattern (once as "artifact", once as the artifact segment of
+ * "group:artifact") and produce two redundant matched_coordinates entries
+ * for what is one SDK. Emitting only the full form keeps one dependency ->
+ * one coordinate, with no loss of matching recall.
+ */
+function collectGradleCoordinates(androidRoot: string, gradleFiles: string[]): string[] {
+  const catalog = new Map<string, string>();
+  for (const p of [
+    join(androidRoot, "gradle/libs.versions.toml"),
+    join(androidRoot, "libs.versions.toml"),
+  ]) {
+    const content = readFileSafe(p);
+    if (content) parseVersionCatalog(content, catalog);
+  }
+
+  const coordRegex =
+    /['"]([a-zA-Z][\w.-]*\.[a-zA-Z][\w.-]*:[a-zA-Z][\w.-]*(?::[^'"\s]+)?)['"]/g;
+  const libsRefRegex = /\blibs\.([a-zA-Z][\w.]*)/g;
+
+  const deps: string[] = [];
+  const addCoord = (coord: string) => {
+    const parts = coord.split(":");
+    if (parts.length < 2) return;
+    const [group, artifact] = parts;
+    if (!group || !artifact) return;
+    deps.push(`${group}:${artifact}`);
+  };
+
+  for (const path of gradleFiles) {
+    const content = readFileSafe(path);
+    if (!content) continue;
+
+    // Drop `classpath '...'` lines before scanning - see banner comment.
+    const filtered = content
+      .split("\n")
+      .filter((line) => !/^\s*classpath\b/.test(line))
+      .join("\n");
+
+    for (const m of filtered.matchAll(coordRegex)) {
+      addCoord(m[1]);
+    }
+    for (const m of filtered.matchAll(libsRefRegex)) {
+      const ref = m[1];
+      const resolved = catalog.get(ref) || catalog.get(ref.replace(/\./g, "-"));
+      if (resolved) addCoord(resolved);
+    }
+  }
+
+  return dedupeSorted(deps);
+}
+
+/** Extracts CocoaPods pod names from a Podfile at `podfilePath`, if present. */
+function collectPodfilePods(podfilePath: string): string[] {
+  const content = readFileSafe(podfilePath);
+  if (!content) return [];
+  const deps: string[] = [];
+  for (const m of content.matchAll(/pod\s+['"]([^'"]+)['"]/g)) {
+    deps.push(m[1]);
+  }
+  return dedupeSorted(deps);
+}
+
+/**
+ * Extracts SPM package repo slugs from a standalone Package.swift
+ * (`.package(url:...)`) and any project.pbxproj's XCRemoteSwiftPackageReference
+ * `repositoryURL` entries, normalized to the repo SLUG: last URL path
+ * component, ".git" suffix stripped, lowercased (per the registry matcher's
+ * spm comparison contract - see src/engine/registry.ts).
+ */
+function collectSpmSlugs(rootDir: string): string[] {
+  const deps: string[] = [];
+
+  const packageSwift = readFileSafe(join(rootDir, "Package.swift"));
+  if (packageSwift) {
+    for (const m of packageSwift.matchAll(
+      /\.package\([^)]*url:\s*"[^"]*\/([^/"]+?)(?:\.git)?"/g
+    )) {
+      deps.push(m[1].toLowerCase());
+    }
+  }
+
+  const pbxprojPath = findFile(rootDir, "project.pbxproj", 5);
+  if (pbxprojPath) {
+    const pbxContent = readFileSafe(pbxprojPath);
+    if (pbxContent) {
+      for (const m of pbxContent.matchAll(
+        /repositoryURL\s*=\s*"[^"]*\/([^/"]+?)(?:\.git)?"/g
+      )) {
+        deps.push(m[1].toLowerCase());
+      }
+    }
+  }
+
+  return dedupeSorted(deps);
+}
+
+/**
+ * Raw (unfiltered) Swift module-import scan: every `import X` / `@import X;`
+ * module name found in the project's .swift files (depth 6, capped at the
+ * first 100 files found - mirrors the legacy scan's own limits above),
+ * deduped. Unlike the legacy native-import scan in getDependencies() above,
+ * this is NOT gated by SDK_MAP - the registry matcher needs to see every
+ * import (e.g. "UIKit"), not just ones this file's hardcoded map happens to
+ * recognize.
+ */
+function collectSwiftImports(rootDir: string): string[] {
+  const swiftFiles = findFiles(rootDir, [".swift"], 6);
+  const imports = new Set<string>();
+  for (const file of swiftFiles.slice(0, 100)) {
+    const content = readFileSafe(file);
+    if (!content) continue;
+    for (const m of content.matchAll(/^\s*import\s+(\w+)/gm)) {
+      imports.add(m[1]);
+    }
+    for (const m of content.matchAll(/@import\s+(\w+)\s*;/g)) {
+      imports.add(m[1]);
+    }
+  }
+  return dedupeSorted(Array.from(imports));
+}
+
+/**
+ * Raw (unfiltered) Android import scan: every fully-qualified `import a.b.C`
+ * target found in the project's .kt/.java files (multi-module: app/src at
+ * depth 8 plus a project-wide depth-6 sweep, capped at 200 files - mirrors
+ * the legacy scan's own limits above), deduped. Unlike the legacy scan above
+ * (gated to a small curated prefix allowlist), this keeps the full imported
+ * symbol (e.g. "com.google.android.gms.ads.AdView") so the registry
+ * matcher's segment-boundary prefix matching can match it against any
+ * package-prefix pattern, not just the handful this file already knows.
+ */
+function collectAndroidImports(rootDir: string): string[] {
+  const files = [
+    ...findFiles(join(rootDir, "app/src"), [".kt", ".java"], 8),
+    ...findFiles(rootDir, [".kt", ".java"], 6),
+  ];
+  const seen = new Set<string>();
+  const imports = new Set<string>();
+  for (const file of files) {
+    if (seen.has(file)) continue;
+    seen.add(file);
+    if (seen.size > 200) break;
+    const content = readFileSafe(file);
+    if (!content) continue;
+    for (const m of content.matchAll(/^\s*import\s+([\w.]+)/gm)) {
+      imports.add(m[1].replace(/\.$/, ""));
+    }
+  }
+  return dedupeSorted(Array.from(imports));
+}
+
+/** Extracts pubspec.yaml `dependencies` + `dev_dependencies` package names. */
+function collectPubspecDeps(pubspecPath: string): string[] {
+  const content = readFileSafe(pubspecPath);
+  if (!content) return [];
+  const deps: string[] = [];
+  try {
+    const pubspec = YAML.parse(content);
+    if (pubspec?.dependencies) deps.push(...Object.keys(pubspec.dependencies));
+    if (pubspec?.dev_dependencies) deps.push(...Object.keys(pubspec.dev_dependencies));
+  } catch {
+    /* ignore */
+  }
+  return dedupeSorted(deps);
+}
+
+/** Extracts package.json `dependencies` + `devDependencies` package names. */
+function collectPackageJsonDeps(pkgPath: string): string[] {
+  const content = readFileSafe(pkgPath);
+  if (!content) return [];
+  const deps: string[] = [];
+  try {
+    const pkg = JSON.parse(content);
+    if (pkg.dependencies) deps.push(...Object.keys(pkg.dependencies));
+    if (pkg.devDependencies) deps.push(...Object.keys(pkg.devDependencies));
+  } catch {
+    /* ignore */
+  }
+  return dedupeSorted(deps);
+}
+
+/** Extracts .csproj `<PackageReference Include="...">` ids (root + depth-3 nested). */
+function collectCsprojPackageRefs(rootDir: string): string[] {
+  const csprojFiles: string[] = [];
+  try {
+    for (const entry of readdirSync(rootDir)) {
+      if (entry.endsWith(".csproj")) csprojFiles.push(join(rootDir, entry));
+    }
+  } catch {
+    /* ignore */
+  }
+  for (const f of findFiles(rootDir, [".csproj"], 3)) {
+    if (!csprojFiles.includes(f)) csprojFiles.push(f);
+  }
+
+  const deps: string[] = [];
+  for (const path of csprojFiles) {
+    const content = readFileSafe(path);
+    if (!content) continue;
+    for (const m of content.matchAll(/<PackageReference\s+[^>]*Include\s*=\s*"([^"]+)"/g)) {
+      deps.push(m[1]);
+    }
+  }
+  return dedupeSorted(deps);
+}
+
+/**
+ * Collects a project's RAW (unfiltered) dependency surface for the
+ * review-engine's registry-driven SDK matcher (src/engine/registry.ts).
+ * Unlike scanSDKs()/getDependencies() above, nothing here is filtered
+ * through SDK_MAP - every bucket always exists (possibly empty), deduped and
+ * sorted, so matchSDKs() can compare it against arbitrary registry patterns.
+ */
+export function collectRawDependencies(rootDir: string, stack: TechStack): EcosystemDeps {
+  const deps: EcosystemDeps = {
+    npm: [],
+    pub: [],
+    pods: [],
+    spm: [],
+    gradle: [],
+    nuget: [],
+    upm: [],
+    ios_imports: [],
+    android_imports: [],
+  };
+
+  switch (stack) {
+    case "flutter": {
+      deps.pub = collectPubspecDeps(join(rootDir, "pubspec.yaml"));
+      deps.pods = collectPodfilePods(join(rootDir, "ios", "Podfile"));
+      const androidRoot = join(rootDir, "android");
+      deps.gradle = collectGradleCoordinates(androidRoot, gradleCandidateFiles(androidRoot));
+      // ios_imports/android_imports: none - Dart source, no native Swift/Kotlin scan here.
+      break;
+    }
+
+    case "react-native":
+    case "expo":
+    case "capacitor": {
+      deps.npm = collectPackageJsonDeps(join(rootDir, "package.json"));
+      deps.pods = collectPodfilePods(join(rootDir, "ios", "Podfile"));
+      const androidRoot = join(rootDir, "android");
+      deps.gradle = collectGradleCoordinates(androidRoot, gradleCandidateFiles(androidRoot));
+      break;
+    }
+
+    case "swift": {
+      deps.pods = collectPodfilePods(join(rootDir, "Podfile"));
+      deps.spm = collectSpmSlugs(rootDir);
+      deps.ios_imports = collectSwiftImports(rootDir);
+      break;
+    }
+
+    case "kotlin": {
+      deps.gradle = collectGradleCoordinates(rootDir, gradleCandidateFiles(rootDir));
+      deps.android_imports = collectAndroidImports(rootDir);
+      break;
+    }
+
+    case "dotnet-maui": {
+      deps.nuget = collectCsprojPackageRefs(rootDir);
+      break;
+    }
+
+    // "unknown" today; "unity" / "kmp" aren't valid TechStack members yet -
+    // rsv2-task-4-brief.md's Deliverable 1 adds them to the TechStack union
+    // (src/types/report.ts) and, per that brief, gives them explicit cases
+    // here. Until then, every bucket stays empty for both.
+    default:
+      break;
   }
 
   return deps;

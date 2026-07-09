@@ -1,0 +1,124 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`scanSDKs compat snapshot (pre-refactor lock) > flutter-app: detected SDKs unchanged 1`] = `
+{
+  "advertising_type": "personalized",
+  "data_collected": [
+    "device_info",
+    "health_data",
+    "financial_info",
+  ],
+  "detected_sdks": [
+    {
+      "category": "ads",
+      "collects": [
+        "device_info",
+      ],
+      "name": "google_mobile_ads",
+    },
+    {
+      "category": "other",
+      "collects": [
+        "health_data",
+      ],
+      "name": "health",
+    },
+    {
+      "category": "payment",
+      "collects": [
+        "financial_info",
+      ],
+      "name": "in_app_purchase",
+    },
+  ],
+  "has_iap": true,
+  "third_party_services": {
+    "ads": [
+      "google_mobile_ads",
+    ],
+    "ai": [],
+    "analytics": [],
+    "auth": [],
+    "cloud": [],
+    "other": [
+      "health",
+    ],
+    "payment": [
+      "in_app_purchase",
+    ],
+    "social": [],
+  },
+}
+`;
+
+exports[`scanSDKs compat snapshot (pre-refactor lock) > kotlin-app: detected SDKs unchanged 1`] = `
+{
+  "advertising_type": "personalized",
+  "data_collected": [
+    "device_info",
+    "financial_info",
+  ],
+  "detected_sdks": [
+    {
+      "category": "ads",
+      "collects": [
+        "device_info",
+      ],
+      "name": "play-services-ads",
+    },
+    {
+      "category": "payment",
+      "collects": [
+        "financial_info",
+      ],
+      "name": "billing",
+    },
+  ],
+  "has_iap": true,
+  "third_party_services": {
+    "ads": [
+      "play-services-ads",
+    ],
+    "ai": [],
+    "analytics": [],
+    "auth": [],
+    "cloud": [],
+    "other": [],
+    "payment": [
+      "billing",
+    ],
+    "social": [],
+  },
+}
+`;
+
+exports[`scanSDKs compat snapshot (pre-refactor lock) > swift-app: detected SDKs unchanged 1`] = `
+{
+  "advertising_type": "none",
+  "data_collected": [
+    "financial_info",
+  ],
+  "detected_sdks": [
+    {
+      "category": "payment",
+      "collects": [
+        "financial_info",
+      ],
+      "name": "StoreKit",
+    },
+  ],
+  "has_iap": true,
+  "third_party_services": {
+    "ads": [],
+    "ai": [],
+    "analytics": [],
+    "auth": [],
+    "cloud": [],
+    "other": [],
+    "payment": [
+      "StoreKit",
+    ],
+    "social": [],
+  },
+}
+`;
