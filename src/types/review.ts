@@ -77,6 +77,13 @@ export interface ReviewFinding {
   file?: string;
   line?: number;
   related_story_id?: string;
+  // ADDITIVE (review-engine v2 / static engine): how this finding was produced.
+  // "static" = deterministic rule engine (no AI). Optional so existing AI/RAG
+  // producers that don't set it remain valid.
+  detection?: "static" | "ai";
+  // ADDITIVE: the rulepack rule id that produced this finding (mirrors `id`
+  // for static findings; absent for AI findings that have no backing rule).
+  rule_id?: string;
 }
 
 export interface ReviewSummary {

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "store": "appstore",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "updated_at": "2026-07-09",
   "rules": [
     {
@@ -467,8 +467,18 @@
         "op": "absent"
       },
       "fail_if": {
-        "fact": "ios.plist.non_exempt_encryption",
-        "op": "absent"
+        "all": [
+          {
+            "fact": "ios.plist.non_exempt_encryption",
+            "op": "neq",
+            "value": true
+          },
+          {
+            "fact": "ios.plist.non_exempt_encryption",
+            "op": "neq",
+            "value": false
+          }
+        ]
       },
       "evidence_facts": [
         "ios.plist.non_exempt_encryption"
