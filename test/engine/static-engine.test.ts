@@ -7,8 +7,8 @@ import { loadSnapshotBundle } from "../helpers/load-bundle.js";
 import type { CheckStatus } from "../../src/engine/types.js";
 
 // Integration tests run against the COMMITTED snapshot (bundle.appstore.json,
-// version 2.0.1 after the Part B content fix), imported directly - never via
-// the network loader.
+// version 2.0.2 after the omitted-vs-null contract fix wave), imported
+// directly - never via the network loader.
 const bundle = loadSnapshotBundle();
 
 function runFixture(fixture: string): StaticEngineResult {
@@ -36,8 +36,8 @@ function statusMap(result: StaticEngineResult): Record<string, CheckStatus> {
   return map;
 }
 
-it("snapshot is the 2.0.1 rulepack (Part B content fix synced)", () => {
-  expect(bundle.version).toBe("2.0.1");
+it("snapshot is the 2.0.2 rulepack (omitted-vs-null contract fix synced)", () => {
+  expect(bundle.version).toBe("2.0.2");
 });
 
 // ===========================================================================
@@ -56,7 +56,7 @@ describe("swift-app integration", () => {
     expect(status["appstore.ats-arbitrary-loads"]).toBe("fail");
   });
 
-  it("encryption-declaration-missing -> fail (nulled scalar -> neq-pair true, after Part B fix)", () => {
+  it("encryption-declaration-missing -> fail (key genuinely absent -> property omitted -> MISSING -> absent true)", () => {
     expect(status["appstore.encryption-declaration-missing"]).toBe("fail");
   });
 
@@ -72,16 +72,8 @@ describe("swift-app integration", () => {
     expect(status["appstore.healthkit-with-ads"]).toBe("na");
   });
 
-  // KNOWN DISCREPANCY vs the task brief's Part E expectation ("admob fail").
-  // appstore.admob-app-id-missing uses fail_if {ios.plist.gad_application_identifier, absent}.
-  // The extractor nulls gad_application_identifier when the key is absent, so it
-  // resolves to NULLVALUE; under the binding tri-state table, `absent` on a
-  // NULLVALUE is `unknown` -> the rule is `unverified`, not `fail`. This is the
-  // IDENTICAL defect Part B fixed for encryption-declaration-missing, but the
-  // admob rule was not included in Part B's content fix (and forvibeapp changes
-  // are constrained to that one rule). The correct fix is the same neq-pair.
-  it("admob-app-id-missing -> unverified (NULLVALUE gad id + absent; see comment / report)", () => {
-    expect(status["appstore.admob-app-id-missing"]).toBe("unverified");
+  it("admob-app-id-missing -> fail (GAD key genuinely absent -> property omitted -> MISSING -> absent true)", () => {
+    expect(status["appstore.admob-app-id-missing"]).toBe("fail");
   });
 
   it("findings exist only for fail checks and are static", () => {
@@ -180,9 +172,8 @@ describe("flutter-app integration", () => {
     expect(status["appstore.subscription-without-restore"]).toBe("na");
   });
 
-  // Same known discrepancy as swift-app (see comment there).
-  it("admob-app-id-missing -> unverified (NULLVALUE gad id + absent; see report)", () => {
-    expect(status["appstore.admob-app-id-missing"]).toBe("unverified");
+  it("admob-app-id-missing -> fail (GAD key genuinely absent from the flutter Info.plist)", () => {
+    expect(status["appstore.admob-app-id-missing"]).toBe("fail");
   });
 });
 

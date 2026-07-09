@@ -76,10 +76,14 @@ export interface AppProfile {
     plist: {
       usage_descriptions: Record<string, string | null>; // key -> value; null = present but empty or unresolved $(VAR)
       background_modes: string[];
-      ats_allows_arbitrary_loads: boolean | null;
-      gad_application_identifier: string | null;
+      ats_allows_arbitrary_loads: boolean | null;        // null = ATS dict absent (kept non-optional: eq-true then resolves false -> pass, the right outcome)
+      // Omitted-vs-null contract for the two optional scalars below:
+      //   property OMITTED       = source key genuinely absent (definitive absence)
+      //   property present, null = key present but value unresolvable (unresolved $(VAR) or unparseable)
+      //   concrete value         = declared
+      gad_application_identifier?: string | null;
       sk_ad_network_count: number;
-      non_exempt_encryption: boolean | null;             // null = ITSAppUsesNonExemptEncryption key absent
+      non_exempt_encryption?: boolean | null;
       required_device_capabilities: string[];
       other_keys: string[];                              // names only
     } | null;

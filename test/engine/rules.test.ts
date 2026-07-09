@@ -251,15 +251,18 @@ describe("predicate op truth tables", () => {
     expect(evaluateCondition(p, { fact: "ios.plist.usage_descriptions.NSFoo", op: "neq", value: "x" })).toBe("true");
   });
 
-  it("encryption neq-pair: NULLVALUE -> all true -> fail; declared false -> pass", () => {
-    // Mirrors the Part B fixed rule: all[ neq true, neq false ].
+  it("neq-pair over a boolean fact: NULLVALUE -> all true; declared value -> false", () => {
+    // Pure combinator truth table: all[ neq true, neq false ] isolates a
+    // present-but-null boolean. (Rulepack 2.0.1 briefly used this for the
+    // encryption rule; 2.0.2 reverted to `absent` under the omitted-vs-null
+    // extractor contract. The evaluator semantics tested here are unchanged.)
     const neqPair: Condition = {
       all: [
         { fact: "ios.plist.non_exempt_encryption", op: "neq", value: true },
         { fact: "ios.plist.non_exempt_encryption", op: "neq", value: false },
       ],
     };
-    // NULLVALUE (key absent -> nulled scalar): both neq -> true -> all true.
+    // NULLVALUE (property present with value null): both neq -> true -> all true.
     expect(evaluateCondition(iosProfile({ non_exempt_encryption: null }), neqPair)).toBe("true");
     // Declared false: neq true -> true, neq false -> false -> all false.
     expect(evaluateCondition(iosProfile({ non_exempt_encryption: false }), neqPair)).toBe("false");

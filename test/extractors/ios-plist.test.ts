@@ -19,10 +19,13 @@ describe("extractIosPlist", () => {
     expect("NSUserTrackingUsageDescription" in plist.usage_descriptions).toBe(false);
     expect(plist.ats_allows_arbitrary_loads).toBe(true);
     expect(plist.sk_ad_network_count).toBe(2);
-    expect(plist.non_exempt_encryption).toBeNull();
+    // Omitted-vs-null contract: these source keys are genuinely absent from
+    // the fixture plist, so the properties must be OMITTED (definitive
+    // absence), not present-with-null.
+    expect("non_exempt_encryption" in plist).toBe(false);
+    expect("gad_application_identifier" in plist).toBe(false);
     expect(plist.background_modes).toEqual(["audio"]);
     expect(plist.required_device_capabilities).toEqual(["arm64"]);
-    expect(plist.gad_application_identifier).toBeNull();
   });
 
   it("swift-app: unresolved $(VAR) usage-description value is null while the key is present", () => {
@@ -86,16 +89,43 @@ describe("extractIosPlist", () => {
       }
     });
 
-    it("an unrecognized value maps to null (unknown), never a guessed boolean", () => {
+    it("a $(VAR) value keeps the property PRESENT with null (present but unresolvable)", () => {
       const dir = mkdtempSync(path.join(tmpdir(), "rsv2-ios-plist-encryption-junk-"));
       try {
         writePbxprojOnlyProject(dir, '"$(SOME_FLAG)"');
         const result = extractIosPlist(dir);
+        // The source key exists -> property present; unparseable -> null,
+        // never a guessed boolean.
+        expect("non_exempt_encryption" in result.plist!).toBe(true);
         expect(result.plist!.non_exempt_encryption).toBeNull();
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
     });
+  });
+
+  it("a $(VAR)-valued GADApplicationIdentifier is PRESENT with null (unresolved build variable)", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "rsv2-ios-plist-gad-var-"));
+    try {
+      writeFileSync(
+        path.join(dir, "Info.plist"),
+        `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>GADApplicationIdentifier</key>
+	<string>$(GAD_APP_ID)</string>
+</dict>
+</plist>
+`,
+        "utf-8"
+      );
+      const result = extractIosPlist(dir);
+      expect("gad_application_identifier" in result.plist!).toBe(true);
+      expect(result.plist!.gad_application_identifier).toBeNull();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it("expo-app: derives plist from app.json expo.ios.infoPlist", () => {
@@ -106,7 +136,8 @@ describe("extractIosPlist", () => {
     expect(result.plist!.usage_descriptions.NSMicrophoneUsageDescription).toBe(
       "Record voice notes."
     );
-    expect(result.plist!.gad_application_identifier).toBeNull();
+    // No GADApplicationIdentifier in the expo config -> property omitted.
+    expect("gad_application_identifier" in result.plist!).toBe(false);
   });
 
   it("flutter-app: reads Info.plist under ios/Runner", () => {

@@ -115,19 +115,9 @@ function extractPlistFields(merged: Record<string, unknown>): PlistFieldValue {
     }
   }
 
-  const gadApplicationIdentifier = normalizeStringValue(merged.GADApplicationIdentifier);
-
   const skAdNetworkCount = Array.isArray(merged.SKAdNetworkItems)
     ? merged.SKAdNetworkItems.length
     : 0;
-
-  // Key absent -> null (schema semantics). Key present -> parsePlistBoolean,
-  // because from the pbxproj source this value is a raw string ("NO" must
-  // map to false, not Boolean("NO") === true); unparseable -> null (unknown).
-  let nonExemptEncryption: boolean | null = null;
-  if ("ITSAppUsesNonExemptEncryption" in merged) {
-    nonExemptEncryption = parsePlistBoolean(merged.ITSAppUsesNonExemptEncryption);
-  }
 
   const requiredDeviceCapabilities = Array.isArray(merged.UIRequiredDeviceCapabilities)
     ? merged.UIRequiredDeviceCapabilities.filter((v): v is string => typeof v === "string")
@@ -141,16 +131,32 @@ function extractPlistFields(merged: Record<string, unknown>): PlistFieldValue {
     )
   ).sort();
 
-  return {
+  const fields: PlistFieldValue = {
     usage_descriptions: usageDescriptions,
     background_modes: backgroundModes,
     ats_allows_arbitrary_loads: atsAllowsArbitraryLoads,
-    gad_application_identifier: gadApplicationIdentifier,
     sk_ad_network_count: skAdNetworkCount,
-    non_exempt_encryption: nonExemptEncryption,
     required_device_capabilities: requiredDeviceCapabilities,
     other_keys: otherKeys,
   };
+
+  // Omitted-vs-null contract (schema.ts / engine types.ts): the two optional
+  // scalars below are emitted ONLY when the source key exists in the merged
+  // plist. Property omitted = key genuinely absent (rules resolve a definitive
+  // MISSING); property present with null = key present but unresolvable
+  // (unresolved $(VAR), empty string, or unparseable boolean -> NULLVALUE ->
+  // rules go unverified); concrete value = declared.
+  if ("GADApplicationIdentifier" in merged) {
+    fields.gad_application_identifier = normalizeStringValue(merged.GADApplicationIdentifier);
+  }
+  if ("ITSAppUsesNonExemptEncryption" in merged) {
+    // parsePlistBoolean because from the pbxproj source this value is a raw
+    // string ("NO" must map to false, not Boolean("NO") === true);
+    // unparseable -> null.
+    fields.non_exempt_encryption = parsePlistBoolean(merged.ITSAppUsesNonExemptEncryption);
+  }
+
+  return fields;
 }
 
 /**
