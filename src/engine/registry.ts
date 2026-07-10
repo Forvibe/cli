@@ -59,18 +59,26 @@ function matchDefault(pattern: string, dep: string, caseInsensitive: boolean): b
  * last ":") of a "group:artifact" dep. Case-sensitive.
  *
  * A trailing "*" turns the comparison into a prefix match on the same form
- * (types.ts: `"*" suffix = prefix match`). This is what lets one registry
- * pattern like "applovin-sdk*" cover versioned AAR basenames that Unity
- * projects vendor under Assets/Plugins/Android (e.g. "applovin-sdk-12.1.0"),
- * and "com.google.mlkit:*" cover a vendor's whole artifact family.
+ * the exact pattern would compare against (types.ts: `"*" suffix = prefix
+ * match`): a bare "foo*" prefix-matches bare deps and the artifact segment
+ * of "group:artifact" deps - never the group - and "group:foo*" prefix-
+ * matches full coordinates. This is what lets one registry pattern like
+ * "applovin-sdk*" cover versioned AAR basenames that Unity projects vendor
+ * under Assets/Plugins/Android (e.g. "applovin-sdk-12.1.0"), and
+ * "com.google.mlkit:*" cover a vendor's whole artifact family. A lone "*"
+ * (empty prefix) is rejected outright rather than matching everything.
  */
 function matchGradle(pattern: string, dep: string): boolean {
   if (pattern.endsWith("*")) {
     const prefix = pattern.slice(0, -1);
+    if (prefix === "") return false; // a lone "*" must not match everything
     if (prefix.includes(":")) return dep.startsWith(prefix);
-    if (dep.startsWith(prefix)) return true;
+    // Bare wildcard: mirror the exact bare-pattern semantics. A dep that has
+    // a group is only compared by its artifact segment, so "applovin-sdk*"
+    // never matches "applovin-sdkish-group:something" via its group.
+    if (!dep.includes(":")) return dep.startsWith(prefix);
     const idx = dep.lastIndexOf(":");
-    return idx >= 0 && dep.slice(idx + 1).startsWith(prefix);
+    return dep.slice(idx + 1).startsWith(prefix);
   }
   if (pattern.includes(":")) return dep === pattern;
   if (dep === pattern) return true;

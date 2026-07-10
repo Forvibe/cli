@@ -170,6 +170,20 @@ describe("matchSDKs", () => {
 
       expect(matchSDKs(deps, registry)).toEqual([]);
     });
+
+    it("a bare '*' prefix pattern does NOT match a dep whose GROUP starts with the prefix (artifact-segment semantics preserved)", () => {
+      const deps = emptyDeps({ gradle: ["applovin-sdkish-group:something"] });
+      const registry = [makeEntry("applovin-max", { gradle: ["applovin-sdk*"] })];
+
+      expect(matchSDKs(deps, registry)).toEqual([]);
+    });
+
+    it("a lone '*' pattern (empty prefix) matches nothing", () => {
+      const deps = emptyDeps({ gradle: ["anything", "com.vendor:artifact"] });
+      const registry = [makeEntry("greedy", { gradle: ["*"] })];
+
+      expect(matchSDKs(deps, registry)).toEqual([]);
+    });
   });
 
   describe("ios_imports / android_imports segment-boundary prefix matching", () => {
