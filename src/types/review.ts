@@ -20,25 +20,6 @@ export type ReviewOutcome =
   | "needs-attention";
 
 // =============================================
-// RAG - Rejection Stories
-// =============================================
-
-export interface RejectionStory {
-  id: string;
-  guidelineNumber: string;
-  guidelineName: string;
-  category: ReviewCategory;
-  rejectionReason: string;
-  whatDeveloperDid: string;
-  whatAppleSaid: string;
-  fix: string;
-  outcome: string;
-  keywords: string[];
-  behavioralSignals: string[];
-  year?: number;
-}
-
-// =============================================
 // Feature Detection (Pass 1)
 // =============================================
 

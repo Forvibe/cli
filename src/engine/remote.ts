@@ -226,12 +226,11 @@ async function writeCache(
 // Bundled fallback
 // =============================================
 
-// Mirrors src/review/rag-selector.ts's getDataDir() probing pattern: resolve
-// the data directory relative to this module's own location (import.meta.url)
-// rather than process.cwd(), so it works both in dev (src/engine/data) and
-// once tsup bundles this into dist/ (as dist/index.js or a split chunk file -
-// either way import.meta.url resolves to a flat file directly under dist/,
-// regardless of this module's original source path).
+// Resolves the data directory relative to this module's own location
+// (import.meta.url) rather than process.cwd(), so it works both in dev
+// (src/engine/data) and once tsup bundles this into dist/ (as dist/index.js
+// or a split chunk file - either way import.meta.url resolves to a flat file
+// directly under dist/, regardless of this module's original source path).
 function getEngineDataDir(): string {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);

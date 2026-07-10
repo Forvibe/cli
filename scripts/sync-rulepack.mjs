@@ -25,6 +25,19 @@ const OUTPUT_PATH = path.join(REPO_ROOT, "src", "engine", "data", "bundle.appsto
 const DEFAULT_CONTENT_DIR = path.join(REPO_ROOT, "..", "forvibeapp", "src", "lib", "review-engine", "content");
 const STORE = "appstore";
 
+// Fixed category order, mirroring forvibeapp's src/lib/review-engine/bundle.ts
+// static import order (safety, performance, business, design, legal,
+// common-pitfalls), so a --from-dir sync assembles the stories array in the
+// same sequence as the live bundle instead of readdir's alphabetical order.
+const STORY_CATEGORY_ORDER = [
+  "safety.json",
+  "performance.json",
+  "business.json",
+  "design.json",
+  "legal.json",
+  "common-pitfalls.json",
+];
+
 class SyncError extends Error {}
 
 function parseArgs(argv) {
@@ -81,18 +94,25 @@ async function buildFromDir(contentDir) {
   }
 
   const storiesDir = path.join(contentDir, "stories");
-  let storyFiles;
+  let discoveredFiles;
   try {
-    storyFiles = (await readdir(storiesDir)).filter((f) => f.endsWith(".json")).sort();
+    discoveredFiles = (await readdir(storiesDir)).filter((f) => f.endsWith(".json"));
   } catch (err) {
     throw new SyncError(`Cannot read stories directory ${storiesDir}: ${err.message}`);
   }
-  if (storyFiles.length === 0) {
+  if (discoveredFiles.length === 0) {
     throw new SyncError(`No *.json story files found in ${storiesDir}`);
   }
 
-  // Merge all story files into one array; order does not matter (consumers
-  // search/rank stories, they don't rely on file-of-origin or position).
+  // Merge story files in STORY_CATEGORY_ORDER (matching forvibeapp's
+  // bundle.ts), not readdir's alphabetical order, so the assembled stories
+  // array is sequence-identical to the live bundle. Any unrecognized extra
+  // *.json file is appended alphabetically after the known categories
+  // rather than silently dropped.
+  const knownFiles = STORY_CATEGORY_ORDER.filter((f) => discoveredFiles.includes(f));
+  const extraFiles = discoveredFiles.filter((f) => !STORY_CATEGORY_ORDER.includes(f)).sort();
+  const storyFiles = [...knownFiles, ...extraFiles];
+
   const stories = [];
   for (const file of storyFiles) {
     const filePath = path.join(storiesDir, file);
