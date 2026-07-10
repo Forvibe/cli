@@ -41,8 +41,8 @@ function statusMap(result: StaticEngineResult): Record<string, CheckStatus> {
   return map;
 }
 
-it("snapshot is the 2.2.1 rulepack (story corpus expanded 100 -> 192, still 30 rules / 118 SDKs)", () => {
-  expect(bundle.version).toBe("2.2.1");
+it("snapshot is the 2.2.2 rulepack (story corpus expanded 100 -> 192, still 30 rules / 118 SDKs)", () => {
+  expect(bundle.version).toBe("2.2.2");
   expect(bundle.rules.length).toBe(30);
   expect(bundle.sdk_registry.length).toBe(118);
   expect(bundle.stories.length).toBe(192);

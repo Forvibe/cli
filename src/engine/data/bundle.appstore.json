@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "store": "appstore",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "updated_at": "2026-07-10",
   "rules": [
     {
@@ -189,7 +189,7 @@
       },
       "severity": "high",
       "category": "safety",
-      "title": "SDK requires an Info.plist key that is missing",
+      "title": "{{sdk_names}} requires the missing {{plist_key}} Info.plist key",
       "description": "A detected SDK requires the {{plist_key}} Info.plist key which is missing.",
       "user_impact": "Apple's review process, or the SDK itself at runtime, treats the missing key as a functional or compliance failure specific to that SDK, ranging from a launch crash to a rejection for insufficient permission disclosure.",
       "fix": "Add the {{plist_key}} key to Info.plist (or the equivalent expo.ios.infoPlist / INFOPLIST_KEY_{{plist_key}} build setting). {{reason}}",
