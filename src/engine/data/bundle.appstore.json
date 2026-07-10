@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "store": "appstore",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "updated_at": "2026-07-10",
   "rules": [
     {
@@ -6283,7 +6283,9 @@
         "export-compliance",
         "encryption-questionnaire",
         "itsappusesnonexemptencryption",
-        "self-classification"
+        "self-classification",
+        "encryption",
+        "app-store-connect"
       ],
       "behavioralSignals": [
         "export compliance answers inconsistent across submissions",
@@ -7397,6 +7399,58 @@
         "no in-app account removal"
       ],
       "year": 2023
+    },
+    {
+      "id": "account-deletion-redirect-to-website-only",
+      "store": "appstore",
+      "guidelineNumber": "5.1.1(v)",
+      "guidelineName": "Account Deletion",
+      "category": "legal",
+      "rejectionReason": "Your app's account deletion option only opens a web page instead of deleting the account from within the app.",
+      "whatDeveloperDid": "Added a 'Delete Account' row in Settings, but tapping it opened Safari to a web form asking the user to re-enter their email and submit a deletion request, rather than deleting the account directly within the app.",
+      "whatAppleSaid": "Guideline 5.1.1(v) - Legal - Account Deletion: Your app's account deletion option directs users to a website rather than completing the deletion within the app. Apps that support account creation must let users initiate and complete account deletion from within the app itself.",
+      "fix": "Implemented an in-app deletion flow that authenticates the user, confirms the request, and calls the backend deletion API directly from the app, with a confirmation screen showing what data will be removed and the expected deletion timeline. The website form was kept only as an alternate path for users without the app installed.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "account-deletion",
+        "web-redirect",
+        "5.1.1",
+        "in-app-deletion",
+        "privacy"
+      ],
+      "behavioralSignals": [
+        "delete account opens external website",
+        "no in-app deletion flow",
+        "account creation without in-app deletion",
+        "deletion requires leaving the app"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "account-deletion-support-email-only-social-app",
+      "store": "appstore",
+      "guidelineNumber": "5.1.1(v)",
+      "guidelineName": "Account Deletion",
+      "category": "legal",
+      "rejectionReason": "Your app requires users to email support to delete their account instead of offering deletion within the app.",
+      "whatDeveloperDid": "Built a social photo-sharing app with account creation, but the only documented way to delete an account was to email a support address and wait for manual processing, a fact only mentioned in the FAQ section of the app's website.",
+      "whatAppleSaid": "Guideline 5.1.1(v) - Legal - Account Deletion: Your app supports account creation but does not offer account deletion from within the app; users must contact support by email instead. Apps that let people create accounts must also let them delete those accounts directly within the app.",
+      "fix": "Added a self-service 'Delete My Account' flow in the profile screen that immediately deactivates the account and schedules permanent deletion of associated content and personal data within 30 days, with an in-app status indicator during that window. Support email deletion remains available as a fallback, not the only path.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "account-deletion",
+        "support-email",
+        "5.1.1",
+        "self-service",
+        "social-app"
+      ],
+      "behavioralSignals": [
+        "account deletion requires emailing support",
+        "no self-service deletion option",
+        "deletion process undocumented in app",
+        "manual account removal only"
+      ],
+      "year": 2024
     },
     {
       "id": "att-permission-not-appearing-ipad",
@@ -8990,7 +9044,9 @@
         "background-fetch",
         "unused-capability",
         "uibackgroundmodes",
-        "bgtaskscheduler"
+        "bgtaskscheduler",
+        "background-mode",
+        "misuse"
       ],
       "behavioralSignals": [
         "background fetch mode declared",
@@ -9689,58 +9745,6 @@
         "HealthKit data collected",
         "health data sent to third party",
         "no parental consent flow for data collection"
-      ],
-      "year": 2024
-    },
-    {
-      "id": "account-deletion-redirect-to-website-only",
-      "store": "appstore",
-      "guidelineNumber": "5.1.1(v)",
-      "guidelineName": "Account Deletion",
-      "category": "safety",
-      "rejectionReason": "Your app's account deletion option only opens a web page instead of deleting the account from within the app.",
-      "whatDeveloperDid": "Added a 'Delete Account' row in Settings, but tapping it opened Safari to a web form asking the user to re-enter their email and submit a deletion request, rather than deleting the account directly within the app.",
-      "whatAppleSaid": "Guideline 5.1.1(v) - Legal - Account Deletion: Your app's account deletion option directs users to a website rather than completing the deletion within the app. Apps that support account creation must let users initiate and complete account deletion from within the app itself.",
-      "fix": "Implemented an in-app deletion flow that authenticates the user, confirms the request, and calls the backend deletion API directly from the app, with a confirmation screen showing what data will be removed and the expected deletion timeline. The website form was kept only as an alternate path for users without the app installed.",
-      "outcome": "approved-after-fix",
-      "keywords": [
-        "account-deletion",
-        "web-redirect",
-        "5.1.1",
-        "in-app-deletion",
-        "privacy"
-      ],
-      "behavioralSignals": [
-        "delete account opens external website",
-        "no in-app deletion flow",
-        "account creation without in-app deletion",
-        "deletion requires leaving the app"
-      ],
-      "year": 2023
-    },
-    {
-      "id": "account-deletion-support-email-only-social-app",
-      "store": "appstore",
-      "guidelineNumber": "5.1.1(v)",
-      "guidelineName": "Account Deletion",
-      "category": "safety",
-      "rejectionReason": "Your app requires users to email support to delete their account instead of offering deletion within the app.",
-      "whatDeveloperDid": "Built a social photo-sharing app with account creation, but the only documented way to delete an account was to email a support address and wait for manual processing, a fact only mentioned in the FAQ section of the app's website.",
-      "whatAppleSaid": "Guideline 5.1.1(v) - Legal - Account Deletion: Your app supports account creation but does not offer account deletion from within the app; users must contact support by email instead. Apps that let people create accounts must also let them delete those accounts directly within the app.",
-      "fix": "Added a self-service 'Delete My Account' flow in the profile screen that immediately deactivates the account and schedules permanent deletion of associated content and personal data within 30 days, with an in-app status indicator during that window. Support email deletion remains available as a fallback, not the only path.",
-      "outcome": "approved-after-fix",
-      "keywords": [
-        "account-deletion",
-        "support-email",
-        "5.1.1",
-        "self-service",
-        "social-app"
-      ],
-      "behavioralSignals": [
-        "account deletion requires emailing support",
-        "no self-service deletion option",
-        "deletion process undocumented in app",
-        "manual account removal only"
       ],
       "year": 2024
     },
