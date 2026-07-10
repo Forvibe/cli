@@ -10,8 +10,10 @@ import { loadSnapshotBundle } from "../helpers/load-bundle.js";
 import type { CheckStatus } from "../../src/engine/types.js";
 
 // Integration tests run against the COMMITTED snapshot (bundle.appstore.json,
-// version 2.1.0 after the content expansion wave: 30 rules, 118 registry
-// entries), imported directly - never via the network loader.
+// version 2.2.0 after the Task 8b story-corpus expansion: still 30 rules and
+// 118 registry entries, but the rejection-story corpus grew from 100 to 192
+// and 20 rules / 9 registry entries gained related_story_ids/stories[]
+// links), imported directly - never via the network loader.
 const bundle = loadSnapshotBundle();
 
 function runFixture(fixture: string): StaticEngineResult {
@@ -39,8 +41,11 @@ function statusMap(result: StaticEngineResult): Record<string, CheckStatus> {
   return map;
 }
 
-it("snapshot is the 2.1.0 rulepack (content expansion: 30 rules / 118 SDKs synced)", () => {
-  expect(bundle.version).toBe("2.1.0");
+it("snapshot is the 2.2.0 rulepack (story corpus expanded 100 -> 192, still 30 rules / 118 SDKs)", () => {
+  expect(bundle.version).toBe("2.2.0");
+  expect(bundle.rules.length).toBe(30);
+  expect(bundle.sdk_registry.length).toBe(118);
+  expect(bundle.stories.length).toBe(192);
 });
 
 // ===========================================================================

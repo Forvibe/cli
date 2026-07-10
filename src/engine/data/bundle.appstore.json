@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "store": "appstore",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "updated_at": "2026-07-10",
   "rules": [
     {
@@ -40,7 +40,9 @@
         "sdks",
         "ios.plist_source"
       ],
-      "related_story_ids": [],
+      "related_story_ids": [
+        "att-usage-description-key-missing-entirely"
+      ],
       "tags": [
         "privacy",
         "tracking"
@@ -82,7 +84,9 @@
         "sdks",
         "ios.plist_source"
       ],
-      "related_story_ids": [],
+      "related_story_ids": [
+        "admob-gadapplicationidentifier-launch-crash"
+      ],
       "tags": [
         "ads",
         "crash"
@@ -168,7 +172,9 @@
         "signals.account_deletion_found"
       ],
       "related_story_ids": [
-        "account-deletion-missing"
+        "account-deletion-missing",
+        "account-deletion-redirect-to-website-only",
+        "account-deletion-support-email-only-social-app"
       ],
       "tags": [
         "account"
@@ -280,7 +286,9 @@
         "sdks",
         "capabilities"
       ],
-      "related_story_ids": [],
+      "related_story_ids": [
+        "healthkit-fitness-app-admob-banner-ads"
+      ],
       "tags": [
         "health",
         "ads"
@@ -318,7 +326,8 @@
       ],
       "related_story_ids": [
         "kids-category-firebase-analytics",
-        "kids-category-amplitude-sdk"
+        "kids-category-amplitude-sdk",
+        "kids-category-applovin-max-ads"
       ],
       "tags": [
         "kids"
@@ -395,7 +404,8 @@
         "signals.restore_purchases_found"
       ],
       "related_story_ids": [
-        "missing-restore-purchases-button"
+        "missing-restore-purchases-button",
+        "in-app-purchase-restore-button-hidden-in-submenu"
       ],
       "tags": [
         "payments"
@@ -439,7 +449,8 @@
       ],
       "related_story_ids": [
         "webview-wrapper-app-no-native",
-        "ionic-react-native-too-web-like"
+        "ionic-react-native-too-web-like",
+        "webview-wrapper-embedded-form-no-app-value"
       ],
       "tags": [
         "quality"
@@ -473,7 +484,9 @@
       "evidence_facts": [
         "ios.plist.non_exempt_encryption"
       ],
-      "related_story_ids": [],
+      "related_story_ids": [
+        "export-compliance-wrong-questionnaire-answer"
+      ],
       "tags": [
         "submission"
       ]
@@ -553,7 +566,9 @@
       "evidence_facts": [
         "ios.plist.ats_allows_arbitrary_loads"
       ],
-      "related_story_ids": [],
+      "related_story_ids": [
+        "ats-arbitrary-loads-blanket-exception"
+      ],
       "tags": [
         "networking",
         "security"
@@ -585,7 +600,9 @@
         "capabilities"
       ],
       "related_story_ids": [
-        "ugc-moderation-missing-fliplearn"
+        "ugc-moderation-missing-fliplearn",
+        "sendbird-chat-app-no-moderation",
+        "livestreaming-app-no-real-time-moderation"
       ],
       "tags": [
         "ugc"
@@ -635,7 +652,8 @@
       ],
       "related_story_ids": [
         "privacy-policy-url-broken",
-        "privacy-policy-missing-details"
+        "privacy-policy-missing-details",
+        "ccpa-do-not-sell-my-data-link-missing"
       ],
       "tags": [
         "privacy"
@@ -759,7 +777,9 @@
         "capabilities"
       ],
       "related_story_ids": [
-        "missing-age-rating-violence-gambling"
+        "missing-age-rating-violence-gambling",
+        "real-money-poker-app-missing-state-licensing",
+        "fantasy-sports-real-money-no-geofencing"
       ],
       "tags": [
         "gambling"
@@ -791,7 +811,8 @@
         "capabilities"
       ],
       "related_story_ids": [
-        "crypto-wallet-regulatory-rejection"
+        "crypto-wallet-regulatory-rejection",
+        "crypto-ico-token-sale-non-institution"
       ],
       "tags": [
         "crypto"
@@ -823,7 +844,8 @@
         "capabilities"
       ],
       "related_story_ids": [
-        "anonymous-chat-pornography-risk"
+        "anonymous-chat-pornography-risk",
+        "ai-image-generator-nsfw-no-filter"
       ],
       "tags": [
         "ai",
@@ -864,7 +886,9 @@
       "evidence_facts": [
         "ios.plist.background_modes"
       ],
-      "related_story_ids": [],
+      "related_story_ids": [
+        "background-audio-mode-no-audio"
+      ],
       "tags": [
         "background-modes"
       ]
@@ -908,7 +932,9 @@
         "capabilities",
         "ios.entitlements.aps_environment"
       ],
-      "related_story_ids": [],
+      "related_story_ids": [
+        "push-notification-background-mode-no-push-setup"
+      ],
       "tags": [
         "background-modes",
         "push"
@@ -938,7 +964,8 @@
       ],
       "related_story_ids": [
         "tinyco-kids-email-collection-ftc",
-        "kids-app-third-party-advertising"
+        "kids-app-third-party-advertising",
+        "kids-category-health-data-collection"
       ],
       "tags": [
         "kids",
@@ -1021,7 +1048,9 @@
       "evidence_facts": [
         "ios.plist.background_modes"
       ],
-      "related_story_ids": [],
+      "related_story_ids": [
+        "voip-background-mode-no-callkit"
+      ],
       "tags": [
         "background-modes",
         "voip"
@@ -1154,7 +1183,9 @@
         "ios.privacy_manifest.tracking_domains",
         "ios.plist_source"
       ],
-      "related_story_ids": [],
+      "related_story_ids": [
+        "privacy-manifest-declares-tracking-att-key-missing"
+      ],
       "tags": [
         "privacy",
         "tracking"
@@ -1187,7 +1218,8 @@
       ],
       "related_story_ids": [
         "medical-app-no-disclaimers",
-        "drug-dosage-calculator-unapproved-entity"
+        "drug-dosage-calculator-unapproved-entity",
+        "diet-app-unproven-cure-claims"
       ],
       "tags": [
         "health"
@@ -1253,7 +1285,9 @@
         ]
       },
       "notes": "SKAdNetworkItems recommended; missing entries degrade attribution but do not cause rejection.",
-      "stories": []
+      "stories": [
+        "admob-gadapplicationidentifier-launch-crash"
+      ]
     },
     {
       "id": "stripe",
@@ -1296,7 +1330,10 @@
         "external_payment"
       ],
       "notes": "Legitimate for physical goods and services under 3.1.5. Selling digital content consumed in-app through Stripe violates 3.1.1. The rule engine marks this unverified and the AI pass decides digital vs physical.",
-      "stories": []
+      "stories": [
+        "stripe-payment-digital-goods",
+        "stripe-course-marketplace-digital-content"
+      ]
     },
     {
       "id": "revenuecat",
@@ -1342,7 +1379,10 @@
         "subscriptions"
       ],
       "notes": "Implies subscriptions capability; triggers subscription disclosure and restore purchases rules.",
-      "stories": []
+      "stories": [
+        "missing-restore-purchases-button",
+        "revenuecat-restore-purchases-missing-entitlement-check"
+      ]
     },
     {
       "id": "meta-audience-network",
@@ -1419,7 +1459,9 @@
         "ads"
       ],
       "notes": "The bare 'applovin-sdk*' gradle prefix pattern matches versioned AAR basenames vendored under Unity Assets/Plugins/Android (e.g. applovin-sdk-12.1.0.aar).",
-      "stories": []
+      "stories": [
+        "kids-category-applovin-max-ads"
+      ]
     },
     {
       "id": "unity-ads",
@@ -1456,7 +1498,9 @@
         "ads"
       ],
       "notes": "Primarily integrated through the Unity Editor package (upm); standalone React Native/Flutter wrappers are not first-party.",
-      "stories": []
+      "stories": [
+        "kids-category-unity-ads-tracking"
+      ]
     },
     {
       "id": "ironsource",
@@ -2287,7 +2331,9 @@
         ]
       },
       "notes": "The Flutter 'health' plugin bridges HealthKit on iOS (and Health Connect on Android), so it carries the same usage-description requirements.",
-      "stories": []
+      "stories": [
+        "healthkit-fitness-app-admob-banner-ads"
+      ]
     },
     {
       "id": "google-fit-health-connect",
@@ -3221,7 +3267,9 @@
       "flags": {},
       "implies": [],
       "notes": "Over-the-air JS bundle updates. Interpreted-code updates are permitted as long as they do not change the app's primary purpose; shipping native code changes outside App Review violates 2.5.2. The hosted App Center service retired in 2025, so deployments now use the standalone CodePush server.",
-      "stories": []
+      "stories": [
+        "codepush-hot-code-push-rejection"
+      ]
     },
     {
       "id": "bugsnag",
@@ -3743,7 +3791,9 @@
         "ugc"
       ],
       "notes": "In-app chat is user-generated content, so guideline 1.2 moderation requirements apply.",
-      "stories": []
+      "stories": [
+        "stream-chat-community-app-no-block"
+      ]
     },
     {
       "id": "sendbird",
@@ -3773,7 +3823,9 @@
         "ugc"
       ],
       "notes": "In-app chat is user-generated content, so guideline 1.2 moderation requirements apply. The Android artifact resolves from Sendbird's own Maven repository rather than Maven Central.",
-      "stories": []
+      "stories": [
+        "sendbird-chat-app-no-moderation"
+      ]
     },
     {
       "id": "agora",
@@ -4801,7 +4853,7 @@
       "id": "stripe-payment-digital-goods",
       "store": "appstore",
       "guidelineNumber": "3.1.1",
-      "guidelineName": "In-App Purchase - Payments",
+      "guidelineName": "In-App Purchase",
       "category": "business",
       "rejectionReason": "Your app uses a third-party payment system (Stripe) for digital content that must use In-App Purchase.",
       "whatDeveloperDid": "Integrated Stripe checkout to sell premium digital features like custom themes, advanced filters, and exclusive content within the app. Digital goods and services consumed within the app must use Apple's In-App Purchase system.",
@@ -4881,7 +4933,7 @@
       "id": "external-payment-link-digital-content",
       "store": "appstore",
       "guidelineNumber": "3.1.1",
-      "guidelineName": "In-App Purchase - Payments",
+      "guidelineName": "In-App Purchase",
       "category": "business",
       "rejectionReason": "Your app contains a link that directs users to an external payment mechanism for digital content.",
       "whatDeveloperDid": "Included a button or link in the app labeled 'Upgrade to Premium' that opened the developer's website pricing page where users could purchase premium digital features via Stripe or PayPal, bypassing Apple's IAP system.",
@@ -5015,7 +5067,7 @@
       "id": "tipping-feature-stripe-askaloo",
       "store": "appstore",
       "guidelineNumber": "3.1.1",
-      "guidelineName": "In-App Purchase - Payments",
+      "guidelineName": "In-App Purchase",
       "category": "business",
       "rejectionReason": "Your app uses Stripe for a tipping/donation feature for digital content creators, which must use In-App Purchase.",
       "whatDeveloperDid": "Askaloo (a Q&A platform) implemented a tipping feature using Stripe where users could tip content creators directly via credit card payments within the app, bypassing Apple's IAP system for what Apple classified as digital content consumption.",
@@ -5147,7 +5199,7 @@
       "id": "external-purchase-link-in-error-message",
       "store": "appstore",
       "guidelineNumber": "3.1.1",
-      "guidelineName": "In-App Purchase - Payments",
+      "guidelineName": "In-App Purchase",
       "category": "business",
       "rejectionReason": "Your app includes a link to an external purchase mechanism in an error message.",
       "whatDeveloperDid": "When a user hit a feature limit, the app displayed an error message saying 'You've reached the free limit. Upgrade at https://example.com/pricing to unlock unlimited access.' This URL led to a web checkout page with Stripe payment, bypassing IAP.",
@@ -5173,7 +5225,7 @@
       "id": "paypal-checkout-premium-features",
       "store": "appstore",
       "guidelineNumber": "3.1.1",
-      "guidelineName": "In-App Purchase - Payments",
+      "guidelineName": "In-App Purchase",
       "category": "business",
       "rejectionReason": "Your app uses PayPal to sell premium digital features that must use In-App Purchase.",
       "whatDeveloperDid": "Integrated PayPal checkout to sell premium digital features like ad removal, additional storage, and advanced editing tools within a photo editing app.",
@@ -5328,6 +5380,500 @@
       "year": 2024
     },
     {
+      "id": "revenuecat-restore-purchases-missing-entitlement-check",
+      "store": "appstore",
+      "guidelineNumber": "3.1.2",
+      "guidelineName": "Subscriptions",
+      "category": "business",
+      "rejectionReason": "Restoring purchases does not unlock previously purchased subscription content.",
+      "whatDeveloperDid": "Used RevenueCat for subscription management and added a 'Restore Purchases' button, but the app only called the restore function without re-checking the returned CustomerInfo entitlements afterward, so premium features stayed locked even after a successful restore.",
+      "whatAppleSaid": "Guideline 3.1.2 - Business - Payments - Subscriptions: We restored a previous purchase using the Restore Purchases option in your app, but premium features remained locked. Restoring a subscription must actually unlock the content the user previously purchased.",
+      "fix": "Updated the restore flow to read the active entitlements from RevenueCat's CustomerInfo object after every restore call and update the app's local unlock state accordingly, rather than assuming the restore call itself unlocks anything. Added a test case that restores on a fresh install and verifies premium features unlock.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "revenuecat",
+        "restore-purchases",
+        "subscription",
+        "entitlements",
+        "storekit"
+      ],
+      "behavioralSignals": [
+        "restore purchases button present but ineffective",
+        "RevenueCat SDK detected",
+        "premium features stay locked after restore",
+        "entitlement check missing after restore"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "subscription-free-trial-confusing-copy",
+      "store": "appstore",
+      "guidelineNumber": "3.1.2",
+      "guidelineName": "Subscriptions",
+      "category": "business",
+      "rejectionReason": "Your app's free trial offer does not clearly disclose the price and terms that apply after the trial ends.",
+      "whatDeveloperDid": "Displayed a large 'Start Free Trial' button as the only visible call to action on the paywall, with the subscription price, billing period, and auto-renewal terms only visible in small text below the fold that most users would not scroll to see.",
+      "whatAppleSaid": "Guideline 3.1.2 - Business - Payments - Subscriptions: Your app's free trial offer does not clearly present the price and duration of the subscription that follows the trial before the user commits to the purchase. Pricing and renewal terms must be presented with the same prominence as the trial offer itself.",
+      "fix": "Redesigned the paywall so the post-trial price, billing period, and auto-renewal disclosure appear directly beneath the trial button at the same font size, visible without scrolling, and added a confirmation step that repeats the price before the purchase sheet appears.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "free-trial",
+        "subscription-disclosure",
+        "paywall",
+        "auto-renew",
+        "pricing-transparency"
+      ],
+      "behavioralSignals": [
+        "trial offer emphasized over pricing",
+        "renewal terms in small text below fold",
+        "price not visible without scrolling",
+        "confusing free trial paywall"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "stripe-course-marketplace-digital-content",
+      "store": "appstore",
+      "guidelineNumber": "3.1.1",
+      "guidelineName": "In-App Purchase",
+      "category": "business",
+      "rejectionReason": "Your app sells access to video courses through Stripe instead of In-App Purchase.",
+      "whatDeveloperDid": "Built an online learning app where instructors upload video courses and students purchase access to watch them inside the app, using Stripe Checkout for all course purchases since the courses were treated internally as a marketplace transaction rather than digital content.",
+      "whatAppleSaid": "Guideline 3.1.1 - Business - Payments - In-App Purchase: Your app sells access to digital course content that is consumed within the app using a third-party payment mechanism (Stripe). Digital content and services consumed inside the app must use In-App Purchase, regardless of how the transaction is described internally.",
+      "fix": "Replaced Stripe checkout with StoreKit In-App Purchase for all course unlocks. Kept Stripe only for the instructor payout side of the marketplace, which is a business-to-business transaction outside the scope of In-App Purchase.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "stripe",
+        "course-marketplace",
+        "iap",
+        "digital-content",
+        "video-courses"
+      ],
+      "behavioralSignals": [
+        "Stripe checkout for course access",
+        "video content unlocked via external payment",
+        "marketplace app with non-IAP digital purchases",
+        "course purchase bypasses StoreKit"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "reader-app-external-link-account-entitlement-missing",
+      "store": "appstore",
+      "guidelineNumber": "3.1.3",
+      "guidelineName": "Other Purchase Methods",
+      "category": "business",
+      "rejectionReason": "Your reader app links out to an external website for purchases without the required entitlement.",
+      "whatDeveloperDid": "Built a digital magazine reader app and added a button linking to the publisher's website to purchase subscriptions, assuming that because it was a reader app it could freely link out for payment without any additional Apple approval.",
+      "whatAppleSaid": "Guideline 3.1.3 - Business - Payments - Other Purchase Methods: Your app includes a link to an external purchase mechanism. Reader apps may link to an external website to complete purchases only after being approved for the External Link Account Entitlement. Please apply for the entitlement before using this link.",
+      "fix": "Applied for and received the External Link Account Entitlement for reader apps, added the required StoreKit external purchase link API call instead of a plain web link, and included the disclosure text Apple requires immediately before the user leaves the app.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "reader-app",
+        "external-link",
+        "entitlement",
+        "3.1.3",
+        "magazine-subscription"
+      ],
+      "behavioralSignals": [
+        "external purchase link without entitlement",
+        "reader app links to publisher website",
+        "no External Link Account Entitlement on file",
+        "plain web link used for subscription purchase"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "non-reader-app-misusing-reader-exception",
+      "store": "appstore",
+      "guidelineNumber": "3.1.3",
+      "guidelineName": "Other Purchase Methods",
+      "category": "business",
+      "rejectionReason": "Your app claims the reader app exception but does not primarily provide previously purchased content for consumption.",
+      "whatDeveloperDid": "Built a general productivity app with a premium tier unlocking export and collaboration features, but added an external payment link on the assumption that any app with a content library qualifies for the reader app exception used by magazine and streaming apps.",
+      "whatAppleSaid": "Guideline 3.1.3 - Business - Payments - Other Purchase Methods: Your app links to an external purchase mechanism, but your app's core functionality does not match the reader app category, which is limited to apps that primarily provide access to previously purchased digital magazines, newspapers, books, audio, music, or video. Please use In-App Purchase for your premium features.",
+      "fix": "Removed the external payment link and implemented the premium export and collaboration features as a StoreKit auto-renewable subscription, since the app's actual functionality did not qualify for the reader app exception.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "reader-app-exception",
+        "misuse",
+        "external-link",
+        "3.1.3",
+        "iap"
+      ],
+      "behavioralSignals": [
+        "external payment link on non-reader app",
+        "app is productivity tool not content reader",
+        "reader exception claimed incorrectly",
+        "premium features not previously-purchased content"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "app-name-keyword-stuffing-trademarks",
+      "store": "appstore",
+      "guidelineNumber": "2.3.7",
+      "guidelineName": "Accurate Metadata - App Name and Keywords",
+      "category": "business",
+      "rejectionReason": "Your app's name and keyword field include competitor names and irrelevant terms to manipulate search results.",
+      "whatDeveloperDid": "Set the App Store subtitle and keyword field to include the names of several popular competing apps and unrelated high-traffic search terms, hoping to appear in searches for those other products.",
+      "whatAppleSaid": "Guideline 2.3.7 - Performance - Accurate Metadata: Your app's name, subtitle, or keywords include terms that are not relevant to your app, including the names of other apps. Developers may not pack metadata with trademarked terms or competitor app names to manipulate search rankings.",
+      "fix": "Removed competitor app names and irrelevant high-traffic keywords from the subtitle and keyword field, replacing them with terms that genuinely describe the app's own functionality and category.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "keyword-stuffing",
+        "app-name",
+        "metadata",
+        "trademark",
+        "search-manipulation"
+      ],
+      "behavioralSignals": [
+        "competitor app names in keyword field",
+        "irrelevant high-traffic keywords used",
+        "subtitle references other products",
+        "metadata packed for search ranking"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "subscription-hidden-premium-tier-not-disclosed",
+      "store": "appstore",
+      "guidelineNumber": "2.3.1",
+      "guidelineName": "Accurate Metadata - Hidden or Undocumented Features",
+      "category": "business",
+      "rejectionReason": "Your app includes an undocumented paid tier unlocked through a hidden gesture that was not described in your Notes for Review.",
+      "whatDeveloperDid": "Shipped a note-taking app with a hidden 'pro mode' unlocked by entering a promo code in a settings field that was not linked from anywhere in the UI, intended for beta testers and partners, without describing this feature anywhere in the app's Notes for Review.",
+      "whatAppleSaid": "Guideline 2.3.1 - Performance - Accurate Metadata: Your app includes hidden or undocumented functionality. Specifically, we found a promo code field that unlocks additional paid features which is not described in your app or your Notes for Review. All functionality must be disclosed with specificity so it can be reviewed.",
+      "fix": "Documented the hidden promo code field and its unlock behavior in detail in the Notes for Review, including a working test code for the reviewer, and added a visible 'Redeem Code' entry point in Settings so the feature is discoverable rather than hidden.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "hidden-feature",
+        "undocumented",
+        "promo-code",
+        "notes-for-review",
+        "premium-tier"
+      ],
+      "behavioralSignals": [
+        "hidden settings field unlocks paid features",
+        "feature not described in Notes for Review",
+        "undisclosed promo code mechanism",
+        "hidden pro mode"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "auto-renewing-subscription-under-seven-days",
+      "store": "appstore",
+      "guidelineNumber": "3.1.2",
+      "guidelineName": "Subscriptions",
+      "category": "business",
+      "rejectionReason": "Your auto-renewable subscription is configured to last less than the required minimum duration.",
+      "whatDeveloperDid": "Configured a 'daily pass' auto-renewable subscription in App Store Connect that billed and renewed every 24 hours, intending to offer a low-commitment entry point to the app's premium features.",
+      "whatAppleSaid": "Guideline 3.1.2 - Business - Payments - Subscriptions: Your auto-renewable subscription is configured with a duration shorter than the minimum required period. Auto-renewable subscriptions must last at least seven days.",
+      "fix": "Reconfigured the shortest subscription tier to a 7-day duration to meet the minimum, and repositioned it as a 'weekly pass' in the marketing copy so the pricing and duration description matched the actual App Store Connect configuration.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "subscription-duration",
+        "auto-renewable",
+        "minimum-period",
+        "app-store-connect",
+        "daily-pass"
+      ],
+      "behavioralSignals": [
+        "subscription renews every 24 hours",
+        "duration below seven-day minimum",
+        "daily pass pricing model",
+        "auto-renewable subscription misconfigured"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "nft-marketplace-in-app-purchase-bypass",
+      "store": "appstore",
+      "guidelineNumber": "3.1.1",
+      "guidelineName": "In-App Purchase",
+      "category": "business",
+      "rejectionReason": "Your app lets users mint or purchase NFTs that unlock in-app functionality using a connected crypto wallet instead of In-App Purchase.",
+      "whatDeveloperDid": "Built an app where users connected an external crypto wallet to pay gas fees and mint NFTs that unlocked cosmetic items and features inside the app, bypassing StoreKit entirely for what functioned as unlockable digital content.",
+      "whatAppleSaid": "Guideline 3.1.1 - Business - Payments - In-App Purchase: Your app allows users to purchase digital collectibles that unlock content or functionality within the app, using a payment method other than In-App Purchase. NFTs that unlock in-app content or features must be purchased through In-App Purchase like any other digital good.",
+      "fix": "Separated the two concerns: minting, buying, or transferring NFTs that the user owns and can view or trade externally remained available through the connected wallet, while any NFT-gated feature or cosmetic unlock inside the app itself was moved behind a StoreKit In-App Purchase.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "nft",
+        "crypto-wallet",
+        "in-app-purchase",
+        "digital-collectibles",
+        "iap-bypass"
+      ],
+      "behavioralSignals": [
+        "NFT minting connected to crypto wallet",
+        "wallet payment unlocks in-app features",
+        "no StoreKit purchase for unlockable content",
+        "gas fees paid outside IAP"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "siwa-private-relay-email-not-handled",
+      "store": "appstore",
+      "guidelineNumber": "4.8",
+      "guidelineName": "Login Services",
+      "category": "business",
+      "rejectionReason": "Your app's account system breaks when a user signs in with a private relay email address from Sign in with Apple.",
+      "whatDeveloperDid": "Implemented Sign in with Apple correctly for the login button itself, but the backend's email verification step rejected the anonymized '@privaterelay.appleid.com' address as invalid, since it assumed all emails would come from common consumer domains, blocking account creation for any user who chose to hide their email.",
+      "whatAppleSaid": "Guideline 4.8 - Design - Login Services: We were unable to complete account creation using Sign in with Apple with Hide My Email enabled. Apps that offer Sign in with Apple must support the private relay email addresses it generates like any other valid email address.",
+      "fix": "Updated the backend email validation to accept the privaterelay.appleid.com domain like any other, and tested account creation, password-reset-style flows, and transactional email delivery end to end using a Hide My Email address before resubmitting.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "sign-in-with-apple",
+        "private-relay",
+        "hide-my-email",
+        "authentication",
+        "account-creation"
+      ],
+      "behavioralSignals": [
+        "private relay email rejected as invalid",
+        "account creation fails with Hide My Email",
+        "Sign in with Apple present but backend incompatible",
+        "email verification blocks apple relay domain"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "gacha-game-loot-box-drop-rate-buried-in-tos",
+      "store": "appstore",
+      "guidelineNumber": "3.1.1",
+      "guidelineName": "In-App Purchase",
+      "category": "business",
+      "rejectionReason": "Your app discloses loot box probabilities, but not in a location the user sees before purchasing.",
+      "whatDeveloperDid": "Added the required drop-rate percentages for a gacha game's randomized item packs, but placed them only inside a long Terms of Service document linked from the settings menu, several taps away from the actual purchase screen.",
+      "whatAppleSaid": "Guideline 3.1.1 - Business - Payments - In-App Purchase: Your app offers loot boxes with randomized rewards, but the odds of receiving each type of item are not disclosed prior to purchase in a way a typical user would see. Burying probability disclosures in a separate legal document does not satisfy this requirement.",
+      "fix": "Added a 'View Odds' link directly on the loot box purchase screen, next to the price and buy button, that opens a simple breakdown of drop rates by rarity tier before the user can complete the purchase.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "loot-box",
+        "gacha",
+        "drop-rates",
+        "disclosure",
+        "terms-of-service"
+      ],
+      "behavioralSignals": [
+        "drop rates only in terms of service",
+        "probability disclosure not near purchase button",
+        "gacha mechanic with buried odds",
+        "loot box disclosure hard to find"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "donation-app-charitable-giving-non-nonprofit",
+      "store": "appstore",
+      "guidelineNumber": "3.2.2",
+      "guidelineName": "Other Business Model Issues - Unacceptable",
+      "category": "business",
+      "rejectionReason": "Your app collects charitable donations but the developer is not a recognized nonprofit organization.",
+      "whatDeveloperDid": "Built an app that let users make one-time and recurring donations to a cause through an In-App Purchase, marketed as a charity app, but the developer account was enrolled as an individual with no registered nonprofit status backing the campaign.",
+      "whatAppleSaid": "Guideline 3.2.2 - Business - Other Business Model Issues - Unacceptable: Your app collects charitable or fundraising donations. Apps may only collect donations of this kind if the developer is recognized as a nonprofit organization or is working directly with one. Please provide documentation of nonprofit status or partner with a registered charity.",
+      "fix": "Partnered with a registered 501(c)(3) nonprofit that took over the developer account enrollment for the app, provided documentation of the nonprofit's status to Apple, and updated the donation flow to route funds directly to the nonprofit's account.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "donations",
+        "charity",
+        "nonprofit",
+        "fundraising",
+        "3.2.2"
+      ],
+      "behavioralSignals": [
+        "donation feature without nonprofit status",
+        "individual developer account collecting donations",
+        "no documentation of charitable registration",
+        "recurring donation IAP"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "subscription-price-increase-no-consent-renewal",
+      "store": "appstore",
+      "guidelineNumber": "3.1.2",
+      "guidelineName": "Subscriptions",
+      "category": "business",
+      "rejectionReason": "Existing subscribers were charged a higher renewal price without the required advance notice and consent.",
+      "whatDeveloperDid": "Raised the price of an existing auto-renewable subscription in App Store Connect and let it apply to current subscribers on their next renewal, without realizing that meaningful price increases require existing subscribers to actively consent before being charged the new price.",
+      "whatAppleSaid": "Guideline 3.1.2 - Business - Payments - Subscriptions: Existing subscribers were charged an increased price without the notice and consent required for subscription price changes. Apps must use the price increase consent flow provided by StoreKit so subscribers can review and accept a price change before it takes effect.",
+      "fix": "Configured the price increase through App Store Connect's subscription price change flow so existing subscribers receive the system-provided notice and must consent before the new price applies on their next renewal, rather than having it apply automatically.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "subscription-price-increase",
+        "consent",
+        "renewal",
+        "storekit",
+        "existing-subscribers"
+      ],
+      "behavioralSignals": [
+        "existing subscribers charged higher price",
+        "no advance notice of price change",
+        "price increase applied without consent flow",
+        "renewal price differs from original purchase price"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "multi-app-bundle-shared-subscription-not-supported",
+      "store": "appstore",
+      "guidelineNumber": "3.1.2",
+      "guidelineName": "Subscriptions",
+      "category": "business",
+      "rejectionReason": "Your app claims a single subscription unlocks several of your other apps, but this is not implemented through a supported mechanism.",
+      "whatDeveloperDid": "Marketed a subscription as unlocking premium features across a family of four separate apps under the same developer account, but implemented this by having each app call a custom backend to check the user's account rather than using Apple's supported mechanism for sharing entitlements across apps.",
+      "whatAppleSaid": "Guideline 3.1.2 - Business - Payments - Subscriptions: Your app's marketing describes a subscription that unlocks functionality across multiple apps, but this is implemented through a custom account check rather than App Store Connect's supported subscription-sharing configuration. Please use the supported mechanism so the subscription's benefits are accurately represented and verifiable at the App Store level.",
+      "fix": "Configured the subscription group in App Store Connect to make the subscription available across the family of apps using Apple's supported cross-app entitlement sharing, replacing the custom backend account check, and updated the marketing copy to describe the mechanism accurately.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "subscription-sharing",
+        "multi-app",
+        "entitlements",
+        "app-store-connect",
+        "bundle"
+      ],
+      "behavioralSignals": [
+        "subscription described as covering multiple apps",
+        "custom backend check instead of supported sharing",
+        "entitlement verification outside App Store Connect",
+        "cross-app subscription benefits"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "crypto-ico-token-sale-non-institution",
+      "store": "appstore",
+      "guidelineNumber": "3.1.5(b)",
+      "guidelineName": "Cryptocurrencies",
+      "category": "business",
+      "rejectionReason": "Your app facilitates a token sale that is not offered by an established financial institution.",
+      "whatDeveloperDid": "Added a feature to a crypto wallet app that let users participate in a new token's initial coin offering directly from the app, run by the same small startup that built the wallet rather than by a licensed financial institution.",
+      "whatAppleSaid": "Guideline 3.1.5(b) - Business - Cryptocurrencies: Your app facilitates an initial coin offering or token sale. ICO and token sale functionality must be provided by established financial institutions, brokerage firms, futures commission merchants, or similar entities in compliance with applicable law. Please remove this feature or provide documentation of the required licensing.",
+      "fix": "Removed the in-app token sale feature entirely, since the developer could not qualify as an established financial institution. The wallet's core buy, sell, and store functionality for already-issued tokens remained, as that did not require the same institutional status.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "cryptocurrency",
+        "ico",
+        "token-sale",
+        "crypto-wallet",
+        "financial-institution"
+      ],
+      "behavioralSignals": [
+        "ICO or token sale feature in app",
+        "developer not a licensed financial institution",
+        "crypto wallet app offering primary issuance",
+        "token sale run by app developer directly"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "subscription-charges-during-free-trial-immediately",
+      "store": "appstore",
+      "guidelineNumber": "3.1.2",
+      "guidelineName": "Subscriptions",
+      "category": "business",
+      "rejectionReason": "Users were charged immediately despite the paywall stating the trial period is free.",
+      "whatDeveloperDid": "Configured a StoreKit introductory offer intending a 3-day free trial, but a misconfigured product identifier caused the payment sheet to charge the full subscription price immediately instead of applying the trial, while the paywall screen still read '3 days free, then $9.99/month.'",
+      "whatAppleSaid": "Guideline 3.1.2 - Business - Payments - Subscriptions: Your app states that a free trial applies, but we were charged immediately upon starting the subscription. The behavior of the purchase must match what is displayed to the user before they buy.",
+      "fix": "Corrected the introductory offer configuration in App Store Connect so the free trial identifier matched what the app requested from StoreKit, and added a sandbox test that verifies zero dollars are charged during the trial period before every release.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "free-trial",
+        "storekit",
+        "introductory-offer",
+        "immediate-charge",
+        "misconfiguration"
+      ],
+      "behavioralSignals": [
+        "user charged during stated free trial",
+        "paywall says free but payment sheet charges immediately",
+        "introductory offer misconfigured",
+        "trial behavior does not match display"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "business-model-ads-only-app-rejected",
+      "store": "appstore",
+      "guidelineNumber": "3.2",
+      "guidelineName": "Other Business Model Issues",
+      "category": "business",
+      "rejectionReason": "Your app is designed predominantly for the display of advertising rather than providing genuine utility.",
+      "whatDeveloperDid": "Published a simple QR code scanner where every scan triggered a full-screen interstitial ad before showing the result, the home screen itself carried a large banner ad, and the actual scanning functionality took up a small fraction of the screen and the user's time in the app.",
+      "whatAppleSaid": "Guideline 3.2 - Business - Other Business Model Issues: Your app appears to be designed predominantly for the display of advertising rather than to provide a useful function. Apps whose primary purpose is showing ads, with minimal underlying utility, are not permitted on the App Store.",
+      "fix": "Removed the interstitial ad shown after every single scan, keeping only a modest banner ad on the results screen, and added genuine utility beyond scanning: scan history, batch scanning, and the ability to generate QR codes, so the ad load was proportionate to the app's actual functionality.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "ads-only-app",
+        "business-model",
+        "interstitial-ads",
+        "utility",
+        "3.2"
+      ],
+      "behavioralSignals": [
+        "full-screen ad after every action",
+        "minimal functionality beyond ad display",
+        "ad load disproportionate to utility",
+        "simple utility wrapped in heavy advertising"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "fake-review-incentivized-rating-prompt",
+      "store": "appstore",
+      "guidelineNumber": "3.2.2",
+      "guidelineName": "Other Business Model Issues - Unacceptable",
+      "category": "business",
+      "rejectionReason": "Your app offers in-app rewards in exchange for leaving a positive App Store rating or review.",
+      "whatDeveloperDid": "Added a screen in a mobile game that offered 100 free coins to any player who left a 5-star review, with the reward triggered client-side and no verification of what the user actually submitted, effectively paying for positive ratings.",
+      "whatAppleSaid": "Guideline 3.2.2 - Business - Other Business Model Issues - Unacceptable: Your app offers a reward in exchange for a positive App Store rating or review. Manipulating a user's App Store review through incentives is not permitted, as it artificially inflates your app's rating.",
+      "fix": "Removed the reward-for-review screen entirely and replaced it with Apple's standard in-app rating prompt (SKStoreReviewController), which does not condition any reward on the outcome of the review and cannot be tied to incentives.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "incentivized-review",
+        "fake-reviews",
+        "app-store-rating",
+        "review-manipulation",
+        "3.2.2"
+      ],
+      "behavioralSignals": [
+        "in-app reward for leaving a review",
+        "reward tied to 5-star rating specifically",
+        "no verification of actual review content",
+        "review manipulation mechanic"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "in-app-purchase-restore-button-hidden-in-submenu",
+      "store": "appstore",
+      "guidelineNumber": "3.1.2",
+      "guidelineName": "Subscriptions",
+      "category": "business",
+      "rejectionReason": "Your app includes a restore purchases option, but the reviewer could not locate it during testing.",
+      "whatDeveloperDid": "Implemented a working restore-purchases function, but placed the button four levels deep in a settings hierarchy (Settings > Account > Advanced > Purchases > Restore), with no mention of it on the paywall itself where users would expect to find it.",
+      "whatAppleSaid": "Guideline 3.1.2 - Business - Payments - Subscriptions: We were unable to locate a way to restore previous purchases in your app. A restore mechanism must be easy for users to find, typically on or near the subscription purchase screen, not buried in an unrelated settings menu.",
+      "fix": "Added a visible 'Restore Purchases' link directly on the paywall screen, next to the subscribe button, in addition to keeping the existing entry in account settings for users who prefer to manage things there.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "restore-purchases",
+        "discoverability",
+        "paywall",
+        "subscription",
+        "settings-menu"
+      ],
+      "behavioralSignals": [
+        "restore purchases buried in settings submenu",
+        "no restore option on paywall itself",
+        "reviewer could not find restore mechanism",
+        "restore function works but is undiscoverable"
+      ],
+      "year": 2023
+    },
+    {
       "id": "missing-demo-account-credentials",
       "store": "appstore",
       "guidelineNumber": "2.1",
@@ -5462,9 +6008,9 @@
     {
       "id": "app-approved-removed-re-rejected-doppel",
       "store": "appstore",
-      "guidelineNumber": "3.2",
-      "guidelineName": "Other Business Model Issues",
-      "category": "business",
+      "guidelineNumber": "1.1",
+      "guidelineName": "Objectionable Content",
+      "category": "safety",
       "rejectionReason": "Your previously approved app has been removed from the App Store and re-rejected upon resubmission.",
       "whatDeveloperDid": "Doppel AI was initially approved and published on the App Store. It was later removed by Apple for guideline concerns (potentially related to deepfake/AI-generated content of real people). When the developer attempted to resubmit with modifications, the app was rejected again with additional scrutiny.",
       "whatAppleSaid": "Your app was previously removed from the App Store for guideline violations. Upon re-review, we have determined that the app still does not comply with the App Store Review Guidelines. Your app creates AI-generated likenesses of real people, which raises concerns under Guidelines 1.1 and 5.1 regarding user safety and privacy.",
@@ -5516,7 +6062,7 @@
     {
       "id": "crypto-wallet-regulatory-rejection",
       "store": "appstore",
-      "guidelineNumber": "3.1.5",
+      "guidelineNumber": "3.1.5(b)",
       "guidelineName": "Cryptocurrencies",
       "category": "business",
       "rejectionReason": "Your cryptocurrency wallet app does not comply with regulatory requirements for the regions where it operates.",
@@ -5723,6 +6269,213 @@
       "year": 2023
     },
     {
+      "id": "export-compliance-wrong-questionnaire-answer",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "Your app's export compliance answers do not match the encryption it actually uses.",
+      "whatDeveloperDid": "Answered 'No' to the export compliance encryption question in App Store Connect on every submission to avoid the extra paperwork, even after adding a custom end-to-end encrypted messaging feature that went beyond the standard HTTPS/TLS exemption.",
+      "whatAppleSaid": "Your app was flagged during export compliance review because its declared encryption use does not appear to match the answers provided. Apps using encryption beyond the standard exemptions must answer the export compliance questionnaire accurately and may need to provide additional documentation.",
+      "fix": "Set ITSAppUsesNonExemptEncryption to true in Info.plist and answered the App Store Connect questionnaire accurately to reflect the custom end-to-end encryption, then filed the one-time self-classification report required for the encryption algorithm used.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "export-compliance",
+        "encryption-questionnaire",
+        "itsappusesnonexemptencryption",
+        "self-classification"
+      ],
+      "behavioralSignals": [
+        "export compliance answers inconsistent across submissions",
+        "custom encryption feature added without updating answers",
+        "questionnaire answered no despite non-exempt encryption",
+        "encryption declaration mismatch"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "testflight-build-config-reused-in-production",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "Your production submission still uses configuration intended only for TestFlight builds.",
+      "whatDeveloperDid": "The TestFlight build correctly pointed at a pre-release feature-flag environment for internal testing, but when preparing the App Store submission, the team archived the same build configuration instead of switching the scheme to the production configuration, shipping test-only feature flags to review.",
+      "whatAppleSaid": "Guideline 2.1 - Performance - App Completeness: We found your app behaves inconsistently with its description. Several screens display experimental features and test content that appear to be part of a pre-release configuration rather than the finished app.",
+      "fix": "Created a distinct release build scheme with its own configuration file pointed at production feature flags and endpoints, separate from the TestFlight scheme, and added a pre-submission checklist step confirming the archived build used the release scheme.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "testflight",
+        "build-configuration",
+        "feature-flags",
+        "production-config",
+        "scheme-mismatch"
+      ],
+      "behavioralSignals": [
+        "experimental features visible in submitted build",
+        "TestFlight configuration reused for App Store submission",
+        "test feature flags active in reviewed build",
+        "build scheme not switched before archiving"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "screenshot-required-device-size-missing",
+      "store": "appstore",
+      "guidelineNumber": "2.3.3",
+      "guidelineName": "Accurate Metadata - Screenshots",
+      "category": "performance",
+      "rejectionReason": "Your app is missing screenshots for a required device size.",
+      "whatDeveloperDid": "Uploaded screenshots for the 6.9-inch iPhone display but let App Store Connect auto-scale them down for the 6.5-inch slot instead of providing screenshots captured at that size, resulting in letterboxed images with visible black bars.",
+      "whatAppleSaid": "Guideline 2.3.3 - Performance - Accurate Metadata: Your app's screenshots for the 6.5-inch display are not properly formatted for that device size. Please provide screenshots captured at the correct resolution for each required display size rather than relying on automatic scaling.",
+      "fix": "Captured dedicated screenshots on a 6.5-inch simulator at the exact required resolution for that slot, uploaded them directly instead of relying on App Store Connect's auto-scaling, and added a checklist covering every required device size before each submission.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "screenshots",
+        "device-size",
+        "metadata",
+        "letterboxing",
+        "app-store-connect"
+      ],
+      "behavioralSignals": [
+        "screenshots show black letterboxing",
+        "auto-scaled screenshots instead of native resolution",
+        "missing screenshots for a required device size",
+        "screenshot resolution mismatch"
+      ],
+      "year": 2025
+    },
+    {
+      "id": "ad-mediation-sdk-breaks-ipv6-only-network",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "A bundled ad mediation SDK fails to load ads on an IPv6-only network.",
+      "whatDeveloperDid": "The app's own networking code was IPv6-compatible, but a bundled ad mediation SDK's internal HTTP client resolved one of its ad-serving endpoints using a hardcoded IPv4 address, causing ad requests, and the interstitial screen waiting on them, to hang indefinitely on Apple's IPv6-only review network.",
+      "whatAppleSaid": "Guideline 2.1 - Performance - App Completeness: We were unable to proceed past the interstitial ad screen during review on an IPv6 network. The app appears to hang while attempting to load an ad. Please ensure all functionality, including third-party content, works on IPv6-only networks.",
+      "fix": "Updated the ad mediation SDK to the current version, which resolves its endpoints using standard DNS rather than a hardcoded IPv4 address, and added a timeout with a graceful skip if an ad fails to load so the flow never hangs regardless of network type.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "ipv6",
+        "ad-mediation",
+        "third-party-sdk",
+        "nat64",
+        "hang"
+      ],
+      "behavioralSignals": [
+        "interstitial ad screen hangs on IPv6 network",
+        "ad SDK uses hardcoded IPv4 endpoint",
+        "app's own code is IPv6-compatible",
+        "third-party dependency causes IPv6 failure"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "app-review-notes-empty-complex-unlock-flow",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "We could not determine how to access a feature referenced in your app's description.",
+      "whatDeveloperDid": "Built a B2B app where premium reporting features unlock only after a company admin enters an organization-specific referral code obtained outside the app, but left the App Review Notes field blank, giving the reviewer no way to know the code existed or how to obtain one.",
+      "whatAppleSaid": "Guideline 2.1 - Performance - App Completeness: Your app's description references premium reporting features that we were unable to access during review. Please provide detailed notes explaining how to test all functionality, including any features that require special setup or codes.",
+      "fix": "Added a detailed explanation to the App Review Notes describing the organization code flow, and included a working test code along with step-by-step instructions for reaching the premium reporting screens.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "notes-for-review",
+        "hidden-flow",
+        "referral-code",
+        "b2b-app",
+        "reviewer-access"
+      ],
+      "behavioralSignals": [
+        "feature referenced in description but unreachable",
+        "empty App Review Notes field",
+        "unlock flow requires code not explained",
+        "reviewer cannot access advertised feature"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "sandbox-tester-storefront-region-mismatch",
+      "store": "appstore",
+      "guidelineNumber": "3.1.1",
+      "guidelineName": "In-App Purchase",
+      "category": "business",
+      "rejectionReason": "In-app purchase pricing behaved unexpectedly during review due to a storefront and sandbox account mismatch.",
+      "whatDeveloperDid": "The App Store Connect listing was reviewed under a Japanese storefront, but the sandbox tester account referenced in the review notes was registered to a United States App Store region, causing StoreKit to present different products and pricing than what the reviewer expected to see for that storefront.",
+      "whatAppleSaid": "Guideline 3.1.1 - Business - Payments - In-App Purchase: We were unable to verify your In-App Purchase products as configured. The products and prices shown did not match what was expected for the storefront under review. Please ensure your sandbox testing setup matches the storefronts you are submitting for.",
+      "fix": "Created a sandbox tester account registered to each storefront the app targets for its initial regional launch, documented in the review notes which sandbox account corresponds to which storefront, and verified pricing displayed correctly for each in sandbox before resubmitting.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "sandbox-tester",
+        "storefront-mismatch",
+        "iap-testing",
+        "region",
+        "app-store-connect"
+      ],
+      "behavioralSignals": [
+        "IAP pricing does not match expected storefront",
+        "sandbox account region differs from review storefront",
+        "unexpected products shown during review",
+        "regional pricing test mismatch"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "app-clip-exceeds-size-limit",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "Your App Clip exceeds the maximum allowed size and fails to launch from its invocation point.",
+      "whatDeveloperDid": "Built an App Clip for a parking-payment experience that reused most of the full app's dependencies and asset catalog, pushing it well past App Clips' much stricter size limit, so it failed to download and launch when the reviewer scanned the associated QR code.",
+      "whatAppleSaid": "Guideline 2.1 - Performance - App Completeness: Your App Clip did not launch when invoked. App Clips are subject to a much smaller maximum size than the full app, and yours exceeds that limit, which prevents it from loading quickly enough at the point of invocation.",
+      "fix": "Created a dedicated App Clip target with only the frameworks and assets needed for the parking-payment flow, removed unused dependencies inherited from the full app target, and trimmed image assets, bringing the App Clip comfortably under the size limit.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "app-clip",
+        "size-limit",
+        "invocation",
+        "qr-code",
+        "lightweight-experience"
+      ],
+      "behavioralSignals": [
+        "App Clip fails to launch from QR code",
+        "App Clip target shares full app's dependencies",
+        "App Clip exceeds size limit",
+        "slow or failed App Clip download"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "provisioning-profile-entitlement-mismatch-processing-error",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "Your build was rejected during processing because its entitlements do not match its provisioning profile.",
+      "whatDeveloperDid": "Enabled the Push Notifications capability in Xcode's Signing & Capabilities for a new feature, but archived and uploaded the build using an older provisioning profile that had been downloaded before the capability was added, so the binary's entitlements did not match what the profile authorized.",
+      "whatAppleSaid": "ITMS-90046: Invalid Entitlements - Your app's aps-environment entitlement does not match the entitlements enabled in your provisioning profile. Please make sure your app's code signing entitlements match your provisioning profile.",
+      "fix": "Regenerated the provisioning profile after adding the new capability, and added a step to the release process that always fetches a fresh provisioning profile before archiving, rather than reusing one that may predate the latest capability changes.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "provisioning-profile",
+        "entitlements-mismatch",
+        "itms-90046",
+        "code-signing",
+        "processing-error"
+      ],
+      "behavioralSignals": [
+        "ITMS-90046 error at upload",
+        "entitlements do not match provisioning profile",
+        "stale provisioning profile reused",
+        "build rejected before human review"
+      ],
+      "year": 2022
+    },
+    {
       "id": "webview-wrapper-app-no-native",
       "store": "appstore",
       "guidelineNumber": "4.2",
@@ -5780,12 +6533,12 @@
     {
       "id": "ionic-react-native-too-web-like",
       "store": "appstore",
-      "guidelineNumber": "4.2",
-      "guidelineName": "Minimum Functionality",
+      "guidelineNumber": "4.0",
+      "guidelineName": "Design",
       "category": "design",
       "rejectionReason": "Your app's user interface appears to be a web-based experience that does not follow iOS design conventions.",
       "whatDeveloperDid": "Built an app using Ionic/React Native that retained many web-like UI patterns: browser-style back buttons, web-style dropdown selects, non-native scrolling behavior, text inputs without iOS keyboard accessories, and hamburger menu instead of tab bar navigation.",
-      "whatAppleSaid": "Guideline 4.2 - Design - Minimum Functionality: Your app's user interface does not provide an experience that is consistent with the quality and design expectations of the App Store. The app appears to use web-based UI components that do not conform to iOS Human Interface Guidelines. Please review the iOS Human Interface Guidelines and ensure your app provides a native-quality experience.",
+      "whatAppleSaid": "Guideline 4.0 - Design: Your app's user interface does not provide an experience that is consistent with the quality and design expectations of the App Store. The app appears to use web-based UI components that do not conform to iOS Human Interface Guidelines. Please review the iOS Human Interface Guidelines and ensure your app provides a native-quality experience.",
       "fix": "Replaced web-style components with native-looking equivalents: used bottom tab navigation instead of hamburger menu, native-style action sheets instead of web dropdowns, proper iOS navigation bar with back chevron, native scrolling with rubber-banding, and iOS-style form inputs with proper keyboard handling.",
       "outcome": "approved-after-fix",
       "keywords": [
@@ -5835,12 +6588,12 @@
     {
       "id": "sora-copycat-clones-removed",
       "store": "appstore",
-      "guidelineNumber": "4.3",
-      "guidelineName": "Spam",
+      "guidelineNumber": "4.1",
+      "guidelineName": "Copycats",
       "category": "design",
       "rejectionReason": "Your app impersonates or copies another developer's app or service.",
       "whatDeveloperDid": "After OpenAI announced Sora (AI video generation), dozens of copycat apps appeared on the App Store with names like 'Sora 2 AI Video', 'Sora Video Generator Pro', and similar variations. These apps used the Sora name and branding to mislead users, often charging subscriptions for unrelated or non-functional AI services.",
-      "whatAppleSaid": "Guideline 4.3 - Design - Spam: Your app appears to impersonate or misleadingly suggest an affiliation with another developer's product (Sora/OpenAI). Apps that copy the name, branding, or concept of another product to mislead users are not permitted on the App Store.",
+      "whatAppleSaid": "Guideline 4.1 - Design - Copycats: Your app appears to impersonate or misleadingly suggest an affiliation with another developer's product (Sora/OpenAI). Apps that copy the name, branding, or concept of another product to mislead users are not permitted on the App Store.",
       "fix": "These apps were removed from the App Store. Apple conducted a mass removal of Sora copycat apps. Developers of legitimate AI video tools need to use original branding that does not suggest affiliation with OpenAI or Sora.",
       "outcome": "rejected-permanently",
       "keywords": [
@@ -5862,8 +6615,8 @@
     {
       "id": "android-style-buttons-ui",
       "store": "appstore",
-      "guidelineNumber": "4.1",
-      "guidelineName": "Copycats",
+      "guidelineNumber": "4.0",
+      "guidelineName": "Design",
       "category": "design",
       "rejectionReason": "Your app's UI elements are inconsistent with iOS design patterns and appear to follow Android design conventions.",
       "whatDeveloperDid": "Ported an Android app to iOS but kept Android-style Material Design UI elements: floating action buttons (FAB), Android-style bottom sheets, Material Design text fields with floating labels, three-dot overflow menus, and Android-style toggle switches.",
@@ -5890,7 +6643,7 @@
       "id": "sign-in-with-apple-missing",
       "store": "appstore",
       "guidelineNumber": "4.8",
-      "guidelineName": "Sign in with Apple",
+      "guidelineName": "Login Services",
       "category": "design",
       "rejectionReason": "Your app uses third-party social login but does not offer Sign in with Apple as an option.",
       "whatDeveloperDid": "Implemented Google Sign-In and Facebook Login as authentication options but did not include Sign in with Apple. Since June 2020, apps that offer third-party social login must also offer Sign in with Apple as an equivalent option.",
@@ -5916,7 +6669,7 @@
       "id": "sign-in-with-apple-wrong-style",
       "store": "appstore",
       "guidelineNumber": "4.8",
-      "guidelineName": "Sign in with Apple",
+      "guidelineName": "Login Services",
       "category": "design",
       "rejectionReason": "Your Sign in with Apple button does not follow Apple's Human Interface Guidelines for button styling.",
       "whatDeveloperDid": "Implemented Sign in with Apple but used a custom-styled button that didn't match Apple's required design specifications. The button was too small, used a custom font, had rounded corners that didn't match the spec, and was placed below other login options in a smaller size.",
@@ -5935,33 +6688,6 @@
         "undersized Apple login button",
         "non-standard button styling",
         "Apple login less prominent than others"
-      ],
-      "year": 2022
-    },
-    {
-      "id": "apple-ip-springboard-image",
-      "store": "appstore",
-      "guidelineNumber": "4.5.3",
-      "guidelineName": "Apple Trademarks and IP",
-      "category": "design",
-      "rejectionReason": "Your app uses Apple's copyrighted imagery without authorization.",
-      "whatDeveloperDid": "Used a screenshot of the iOS home screen (SpringBoard) as a background image in the app's onboarding tutorial. The screenshot included Apple's copyrighted wallpaper, app icons, and the dock design.",
-      "whatAppleSaid": "Guideline 4.5.3 - Design - Apple Trademarks: Your app uses Apple's copyrighted material (iOS home screen screenshot including SpringBoard interface and Apple app icons). You may not use Apple-owned images, icons, or screenshots of Apple software in your app without explicit permission.",
-      "fix": "Replaced the iOS home screen screenshot with a custom-designed illustration that conveys the same tutorial concept without using Apple's copyrighted imagery. Used generic device mockups from Apple's official marketing resources (which are permitted for certain uses) or created original artwork.",
-      "outcome": "approved-after-fix",
-      "keywords": [
-        "apple-ip",
-        "trademark",
-        "copyright",
-        "springboard",
-        "home-screen",
-        "apple-images"
-      ],
-      "behavioralSignals": [
-        "iOS home screen screenshot in app",
-        "Apple wallpaper used",
-        "Apple app icons displayed",
-        "copyrighted Apple UI elements"
       ],
       "year": 2022
     },
@@ -6126,10 +6852,478 @@
       "year": 2023
     },
     {
+      "id": "affiliate-marketing-app-just-product-links",
+      "store": "appstore",
+      "guidelineNumber": "4.2",
+      "guidelineName": "Minimum Functionality",
+      "category": "design",
+      "rejectionReason": "Your app is a collection of product links that opens Safari for every action, without app-like functionality.",
+      "whatDeveloperDid": "Submitted an app that displayed a scrollable list of affiliate product deals, where tapping any item simply opened the retailer's website in Safari. There was no way to save favorites, compare items, or do anything else without leaving the app.",
+      "whatAppleSaid": "Guideline 4.2 - Design - Minimum Functionality: Your app functions primarily as a list of links to external websites. Apps that simply direct users to browser content without any native functionality of their own are not appropriate for the App Store.",
+      "fix": "Added native functionality that works without leaving the app: saved deals with local notifications when a saved item's price drops, offline browsing of previously loaded deals, and a native comparison view, so the retailer's website is only opened when the user chooses to complete a purchase.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "affiliate-links",
+        "minimum-functionality",
+        "link-list",
+        "no-native-features",
+        "safari-redirect"
+      ],
+      "behavioralSignals": [
+        "every tap opens Safari",
+        "no functionality without leaving the app",
+        "app is just a list of external links",
+        "no offline or native features"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "restaurant-menu-pdf-viewer-app",
+      "store": "appstore",
+      "guidelineNumber": "4.2",
+      "guidelineName": "Minimum Functionality",
+      "category": "design",
+      "rejectionReason": "Your app only displays a static menu and hours, which would be better served by a website.",
+      "whatDeveloperDid": "Submitted a single restaurant's branded app that showed a PDF menu, the address, and opening hours, with a button that dialed the phone number. There was no ordering, reservations, loyalty program, or any other interactive feature.",
+      "whatAppleSaid": "Guideline 4.2 - Design - Minimum Functionality: Your app provides only static information (a menu, hours, and contact details) that would be sufficiently served by a website. We encourage you to add features that take advantage of native functionality before resubmitting.",
+      "fix": "Added online ordering with order status notifications, a loyalty punch-card feature using local storage and optional account sync, and a table reservation form, giving the app functionality beyond what the restaurant's existing website already provided.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "minimum-functionality",
+        "static-content",
+        "restaurant-app",
+        "pdf-menu",
+        "single-business"
+      ],
+      "behavioralSignals": [
+        "app only shows a PDF menu",
+        "no ordering or interactive features",
+        "static hours and contact information",
+        "single-location business app"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "real-estate-listing-app-no-unique-features",
+      "store": "appstore",
+      "guidelineNumber": "4.2",
+      "guidelineName": "Minimum Functionality",
+      "category": "design",
+      "rejectionReason": "Your app duplicates functionality already widely available on real estate listing websites without adding unique value.",
+      "whatDeveloperDid": "Built an app for a single real estate agent that listed their current properties with photos and prices, functionality that was already available, in more depth, on major real estate listing websites and the agent's own site.",
+      "whatAppleSaid": "Guideline 4.2 - Design - Minimum Functionality: Your app provides a property listing experience that is already widely available through existing websites and services, without adding a compelling or unique app-based experience. Please add functionality that distinguishes your app from what a website already provides.",
+      "fix": "Added features unique to the agent's own book of business: saved-search push notifications for new matching listings, an in-app mortgage calculator tied to current rates, and a direct scheduling flow for property tours synced to the agent's calendar.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "minimum-functionality",
+        "real-estate",
+        "duplicate-content",
+        "single-agent-app",
+        "listing-app"
+      ],
+      "behavioralSignals": [
+        "property listings already available elsewhere",
+        "no unique features beyond a website",
+        "single agent branded app",
+        "static listing browser"
+      ],
+      "year": 2021
+    },
+    {
+      "id": "multiple-similar-utility-apps-same-developer",
+      "store": "appstore",
+      "guidelineNumber": "4.3",
+      "guidelineName": "Spam",
+      "category": "design",
+      "rejectionReason": "Your developer account has published several nearly identical utility apps that differ only in name and icon.",
+      "whatDeveloperDid": "Published five unit-converter apps under names like 'Unit Converter Pro,' 'Unit Converter Plus,' and 'Unit Converter Lite,' all sharing the same codebase and feature set, differing only in the app icon color and a small pricing variation.",
+      "whatAppleSaid": "Guideline 4.3 - Design - Spam: We found that your developer account has submitted multiple apps that are highly similar in functionality, with only cosmetic differences such as name and icon. Submitting near-identical apps instead of consolidating functionality into a single app is considered spam.",
+      "fix": "Consolidated the five apps into a single unit converter app with a settings-based theme picker and an optional one-time purchase to unlock the previously 'Pro' feature set, then removed the redundant listings from sale.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "spam",
+        "duplicate-apps",
+        "same-developer",
+        "template-flooding",
+        "utility-app"
+      ],
+      "behavioralSignals": [
+        "multiple near-identical apps from same account",
+        "apps differ only in name and icon",
+        "same codebase across several listings",
+        "utility app flooding"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "icon-generator-template-app-flood",
+      "store": "appstore",
+      "guidelineNumber": "4.3",
+      "guidelineName": "Spam",
+      "category": "design",
+      "rejectionReason": "Your app appears to be generated from a no-code app builder template and is indistinguishable from many similar submissions.",
+      "whatDeveloperDid": "Used a no-code app-generation service to produce a quiz-maker app, changing only the color scheme and a handful of quiz categories from the service's default template, resulting in an app nearly identical to dozens of others generated from the same template.",
+      "whatAppleSaid": "Guideline 4.3 - Design - Spam: Your app appears to be generated from a common app-building template with only cosmetic changes. We have identified numerous similar apps built from the same template. Apps must provide a unique, meaningfully different experience to be accepted.",
+      "fix": "Added functionality not present in the template: a custom quiz-authoring tool for users to create and share their own quizzes, leaderboards, and a distinctive scoring mechanic, so the app no longer read as an unmodified template output.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "template-app",
+        "no-code-builder",
+        "spam",
+        "quiz-app",
+        "generated-app"
+      ],
+      "behavioralSignals": [
+        "app matches a common builder template",
+        "only cosmetic customization applied",
+        "many similar apps from same template",
+        "no unique functionality added"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "chatgpt-wrapper-ai-app-no-value-add",
+      "store": "appstore",
+      "guidelineNumber": "4.2",
+      "guidelineName": "Minimum Functionality",
+      "category": "design",
+      "rejectionReason": "Your app is a thin wrapper around a third-party AI API with no meaningful functionality of its own.",
+      "whatDeveloperDid": "Published a paid 'AI Chat Assistant' app that was a simple text input and output screen calling a general-purpose language model API with a fixed system prompt, offering no functionality beyond what the underlying API already provided directly.",
+      "whatAppleSaid": "Guideline 4.2 - Design - Minimum Functionality: Your app provides a thin interface over a third-party AI service without adding meaningful functionality, context, or a distinct use case. Apps that simply relay requests to a general-purpose AI API do not provide sufficient value to stand on their own on the App Store.",
+      "fix": "Repositioned the app around a specific, well-defined use case (structured resume feedback) with a purpose-built interface, saved history, exportable results, and prompt engineering tailored to that task, rather than a generic open-ended chat box.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "ai-wrapper",
+        "minimum-functionality",
+        "chatgpt",
+        "generic-api",
+        "thin-client"
+      ],
+      "behavioralSignals": [
+        "app is a thin UI over a third-party AI API",
+        "no distinct use case beyond generic chat",
+        "fixed system prompt is the only differentiation",
+        "no added functionality beyond the API"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "macos-catalyst-app-non-resizable-window",
+      "store": "appstore",
+      "guidelineNumber": "4.0",
+      "guidelineName": "Design",
+      "category": "design",
+      "rejectionReason": "Your Mac app's window cannot be resized, which is inconsistent with standard macOS window behavior.",
+      "whatDeveloperDid": "Ported an iPad app to Mac using Catalyst but left the window at a fixed size inherited from the iPad layout, with no resize handles and the window manager's zoom button disabled.",
+      "whatAppleSaid": "Guideline 4.0 - Design: Your macOS app's window cannot be resized. Mac apps are expected to support standard window behaviors, including resizing, unless there is a specific and justified reason not to. Please make your app's window resizable or explain why it must remain fixed.",
+      "fix": "Enabled window resizing and implemented a responsive Auto Layout for the main window so content reflows at different sizes, and left the window's minimum size constrained only to what the layout genuinely requires.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "macos",
+        "catalyst",
+        "window-resizing",
+        "design-standards",
+        "mac-app"
+      ],
+      "behavioralSignals": [
+        "Mac app window cannot be resized",
+        "zoom button disabled",
+        "fixed size inherited from iPad layout",
+        "non-standard window behavior"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "dark-mode-not-supported-white-flash",
+      "store": "appstore",
+      "guidelineNumber": "4.0",
+      "guidelineName": "Design",
+      "category": "design",
+      "rejectionReason": "Your app does not support Dark Mode and displays unreadable text when the system appearance is set to dark.",
+      "whatDeveloperDid": "Never adopted semantic colors or Dark Mode support. With the system set to Dark Mode, several screens rendered white text on a white background because the app hardcoded light-mode colors that did not adapt to the system appearance.",
+      "whatAppleSaid": "Guideline 4.0 - Design: Your app does not properly support the system's Dark Mode appearance. Several screens display text that is difficult or impossible to read when Dark Mode is enabled. Please ensure your app's interface adapts correctly to both light and dark appearances.",
+      "fix": "Replaced hardcoded UIColor values with semantic system colors (systemBackground, label, secondaryLabel) throughout the app, and tested every screen in both Light and Dark Mode to confirm text contrast remained legible in each.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "dark-mode",
+        "semantic-colors",
+        "readability",
+        "appearance",
+        "ui-quality"
+      ],
+      "behavioralSignals": [
+        "white text on white background in dark mode",
+        "hardcoded colors do not adapt",
+        "dark mode not supported",
+        "unreadable text under system dark appearance"
+      ],
+      "year": 2021
+    },
+    {
+      "id": "ipad-app-stretched-iphone-layout",
+      "store": "appstore",
+      "guidelineNumber": "4.0",
+      "guidelineName": "Design",
+      "category": "design",
+      "rejectionReason": "Your app's iPad layout is simply the iPhone interface stretched to fill the screen, rather than an adapted layout.",
+      "whatDeveloperDid": "Marked the app as supporting iPad, but the interface was built entirely with fixed iPhone-sized frames that were scaled up, leaving large empty margins and oversized, blurry UI elements on iPad rather than using the extra screen space meaningfully.",
+      "whatAppleSaid": "Guideline 4.0 - Design: Your app's iPad interface appears to be a scaled version of the iPhone layout rather than a design adapted to the larger screen. Apps that support iPad should take advantage of the additional space rather than simply stretching the iPhone interface.",
+      "fix": "Rebuilt the main screens using Auto Layout size classes so iPad shows a proper multi-column layout (sidebar plus detail view) instead of a stretched single column, and removed the fixed iPhone-sized frames that caused the blurry scaling.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "ipad-layout",
+        "stretched-ui",
+        "size-classes",
+        "adaptive-layout",
+        "universal-app"
+      ],
+      "behavioralSignals": [
+        "iPad layout is scaled iPhone UI",
+        "oversized blurry interface elements",
+        "large empty margins on iPad",
+        "no multi-column iPad layout"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "onboarding-tutorial-cannot-be-skipped",
+      "store": "appstore",
+      "guidelineNumber": "4.0",
+      "guidelineName": "Design",
+      "category": "design",
+      "rejectionReason": "Your app's onboarding tutorial cannot be skipped or dismissed, blocking access to the app.",
+      "whatDeveloperDid": "Built a seven-screen onboarding tutorial explaining every feature in detail, with no skip button and no way to swipe past a screen until a 'Next' button had been tapped on each one, forcing every user through the full sequence on every fresh install.",
+      "whatAppleSaid": "Guideline 4.0 - Design: Your app's onboarding flow cannot be skipped or dismissed. Users should be able to bypass introductory tutorials and reach the app's core functionality without being forced through a lengthy, non-dismissible sequence.",
+      "fix": "Added a persistent 'Skip' button visible from the first onboarding screen that jumps directly to the app's main experience, and shortened the tutorial itself to three screens covering only the features that are not otherwise self-explanatory.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "onboarding",
+        "tutorial",
+        "cannot-skip",
+        "forced-flow",
+        "ui-design"
+      ],
+      "behavioralSignals": [
+        "no skip button on onboarding",
+        "tutorial cannot be dismissed",
+        "forced multi-screen sequence on every install",
+        "blocks access to core app"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "keyboard-covers-text-input-field",
+      "store": "appstore",
+      "guidelineNumber": "4.0",
+      "guidelineName": "Design",
+      "category": "design",
+      "rejectionReason": "The software keyboard covers the active text field, making it impossible to see what is being typed.",
+      "whatDeveloperDid": "Built a comment form near the bottom of a scrolling screen without any keyboard-avoidance handling, so when the on-screen keyboard appeared, it covered the text field entirely, leaving the user unable to see the text they were entering.",
+      "whatAppleSaid": "Guideline 4.0 - Design: When entering text in your app's comment field, the software keyboard covers the input field, making it impossible to see what is being typed. Please ensure your interface adjusts to keep the active input visible when the keyboard is shown.",
+      "fix": "Added keyboard-avoidance handling that scrolls the content so the focused text field stays above the keyboard, using the keyboard frame notifications to animate the adjustment, and tested every text entry screen with the keyboard open.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "keyboard-avoidance",
+        "text-input",
+        "ui-layout",
+        "covered-field",
+        "comment-form"
+      ],
+      "behavioralSignals": [
+        "keyboard covers active text field",
+        "no keyboard avoidance handling",
+        "user cannot see text while typing",
+        "comment form near bottom of screen"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "accessibility-voiceover-completely-unsupported",
+      "store": "appstore",
+      "guidelineNumber": "4.0",
+      "guidelineName": "Design",
+      "category": "design",
+      "rejectionReason": "Your app's core screens do not provide meaningful VoiceOver labels for interactive elements.",
+      "whatDeveloperDid": "Built custom UI controls without setting accessibility labels or traits, so with VoiceOver enabled, every button and icon on the main screens read simply as 'button' with no description of what it did or what content it represented.",
+      "whatAppleSaid": "Guideline 4.0 - Design: Your app's interface does not provide adequate support for VoiceOver. Interactive elements throughout the main screens have no descriptive accessibility labels, making the app very difficult to use for users who rely on VoiceOver.",
+      "fix": "Added accessibilityLabel and accessibilityTraits to every custom control, grouped related elements with accessibilityElements to establish a sensible reading order, and tested the app's primary flows end to end with VoiceOver enabled.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "accessibility",
+        "voiceover",
+        "accessibility-labels",
+        "custom-controls",
+        "hig"
+      ],
+      "behavioralSignals": [
+        "VoiceOver reads elements as generic button",
+        "no accessibility labels on custom controls",
+        "core screens unusable with VoiceOver",
+        "accessibility traits not set"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "sign-in-with-apple-not-first-in-list",
+      "store": "appstore",
+      "guidelineNumber": "4.8",
+      "guidelineName": "Login Services",
+      "category": "design",
+      "rejectionReason": "Sign in with Apple is present but is not given equal prominence to the other login options.",
+      "whatDeveloperDid": "Offered Google, Facebook, and Sign in with Apple as login options, correctly styled with Apple's own button component, but placed Sign in with Apple as the fourth and last option below a 'more options' disclosure that most users never expanded.",
+      "whatAppleSaid": "Guideline 4.8 - Design - Login Services: Your app offers Sign in with Apple, but it is not presented with the same prominence as your other login options. Apps must offer Sign in with Apple in a way that is at least as easy to find and use as any other third-party login option.",
+      "fix": "Moved Sign in with Apple into the primary, always-visible list of login buttons alongside Google and Facebook, in the same size and position tier, removing it from behind the collapsed 'more options' disclosure.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "sign-in-with-apple",
+        "login-prominence",
+        "button-placement",
+        "authentication",
+        "4.8"
+      ],
+      "behavioralSignals": [
+        "Sign in with Apple hidden behind more options",
+        "not equally prominent to other logins",
+        "correctly styled button but poorly placed",
+        "login options require extra tap to reveal"
+      ],
+      "year": 2021
+    },
+    {
+      "id": "permissions-priming-screen-mimics-system-dialog",
+      "store": "appstore",
+      "guidelineNumber": "4.0",
+      "guidelineName": "Design",
+      "category": "design",
+      "rejectionReason": "Your app's custom permission screen imitates a native iOS system dialog to influence the user's decision.",
+      "whatDeveloperDid": "Built a custom 'Allow Notifications?' screen styled to closely resemble the native iOS permission alert, including a similar font, rounded corners, and button layout, shown immediately before the real system prompt to nudge users toward tapping 'Allow.'",
+      "whatAppleSaid": "Guideline 4.0 - Design: Your app includes a custom interface element that closely imitates a native iOS system alert. Interface elements that mimic system dialogs to influence a user's decision are misleading and are not permitted.",
+      "fix": "Replaced the system-mimicking screen with a clearly custom-branded explanation screen using the app's own visual style, distinct fonts, and a plain-language description of why the permission is being requested, presented before the standard system prompt without imitating its appearance.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "dark-pattern",
+        "fake-system-dialog",
+        "permission-priming",
+        "misleading-ui",
+        "design-standards"
+      ],
+      "behavioralSignals": [
+        "custom screen mimics system alert appearance",
+        "permission priming screen resembles iOS dialog",
+        "misleading interface element",
+        "styled to influence permission decision"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "subscription-paywall-fake-close-button-dark-pattern",
+      "store": "appstore",
+      "guidelineNumber": "4.0",
+      "guidelineName": "Design",
+      "category": "design",
+      "rejectionReason": "The close button on your subscription paywall is deliberately difficult to find or use.",
+      "whatDeveloperDid": "Designed a subscription paywall where the close ('X') button was rendered in a color nearly identical to the background, positioned in a corner far from where users naturally look, and disabled for the first several seconds the screen was visible.",
+      "whatAppleSaid": "Guideline 4.0 - Design: Your app's subscription screen makes it deliberately difficult to dismiss without subscribing. The close control is hard to see and does not respond immediately. Apps must not use interface techniques designed to confuse or pressure users into a purchase.",
+      "fix": "Made the close button clearly visible with sufficient contrast against the background, positioned it in the standard top-corner location users expect, and made it immediately tappable as soon as the paywall appears.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "dark-pattern",
+        "paywall",
+        "close-button",
+        "subscription",
+        "deceptive-design"
+      ],
+      "behavioralSignals": [
+        "close button low contrast against background",
+        "close button disabled for several seconds",
+        "paywall difficult to dismiss",
+        "deceptive dismiss control"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "spam-seasonal-holiday-reskin-apps",
+      "store": "appstore",
+      "guidelineNumber": "4.3",
+      "guidelineName": "Spam",
+      "category": "design",
+      "rejectionReason": "Your developer account republishes the same seasonal app under a new listing every year instead of updating the existing app.",
+      "whatDeveloperDid": "Published 'Christmas Countdown 2023' as a new app listing, then the following year submitted 'Christmas Countdown 2024' as an entirely separate app with the same functionality and only the year changed, rather than updating the original app in place.",
+      "whatAppleSaid": "Guideline 4.3 - Design - Spam: We found that your developer account has published multiple seasonal apps that are functionally identical from year to year, distinguished only by the year in the name. Please update your existing app for each new season rather than submitting a new, near-identical listing.",
+      "fix": "Removed the prior years' listings from sale and updated the original app in place each year with new countdown targets and seasonal assets, preserving the existing app's reviews and download history instead of starting over with a new bundle ID.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "spam",
+        "seasonal-app",
+        "reskin",
+        "duplicate-listing",
+        "holiday-app"
+      ],
+      "behavioralSignals": [
+        "new app listing each year for same concept",
+        "only the year changed between listings",
+        "same functionality republished repeatedly",
+        "prior year's app left live alongside new one"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "copycat-app-icon-mimics-popular-app",
+      "store": "appstore",
+      "guidelineNumber": "4.1",
+      "guidelineName": "Copycats",
+      "category": "design",
+      "rejectionReason": "Your app's icon closely mimics the icon of a well-known, unrelated app.",
+      "whatDeveloperDid": "Designed an app icon that used the same color gradient, silhouette, and layout as a very popular messaging app's icon, with only a minor detail changed, for an unrelated to-do list app, apparently to benefit from users mistaking it for the popular app in search results.",
+      "whatAppleSaid": "Guideline 4.1 - Design - Copycats: Your app's icon closely resembles the icon of another popular app on the App Store. Making minor changes to another app's name, icon, or UI and passing it off as original is not permitted, even when the underlying functionality is different.",
+      "fix": "Commissioned an original icon design with a distinct color palette, shape, and mark that did not reference the other app's visual identity, and updated the App Store listing's screenshots to match the new branding.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "copycat",
+        "app-icon",
+        "icon-mimicry",
+        "brand-confusion",
+        "4.1"
+      ],
+      "behavioralSignals": [
+        "icon closely resembles a popular app's icon",
+        "same color gradient and silhouette",
+        "unrelated functionality to the mimicked app",
+        "icon designed to cause search confusion"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "webview-wrapper-embedded-form-no-app-value",
+      "store": "appstore",
+      "guidelineNumber": "4.2",
+      "guidelineName": "Minimum Functionality",
+      "category": "design",
+      "rejectionReason": "Your app is an icon wrapped around a single embedded web form with no other functionality.",
+      "whatDeveloperDid": "Submitted an app whose only screen was a WebView loading a third-party survey form, used to collect customer feedback for a local business. There was no other content, navigation, or native functionality anywhere in the app.",
+      "whatAppleSaid": "Guideline 4.2 - Design - Minimum Functionality: Your app consists of a single embedded web form with no additional functionality. An app that only wraps a single third-party form does not provide the level of functionality expected of an App Store app.",
+      "fix": "The developer concluded the concept did not warrant a standalone app and instead published the survey as a web link and QR code for customers to fill out in their mobile browser, withdrawing the app submission rather than adding artificial functionality just to pass review.",
+      "outcome": "rejected-permanently",
+      "keywords": [
+        "webview",
+        "single-form",
+        "minimum-functionality",
+        "survey-app",
+        "no-native-features"
+      ],
+      "behavioralSignals": [
+        "app is a single embedded web form",
+        "no navigation beyond the form",
+        "no native functionality present",
+        "third-party form wrapped in an app icon"
+      ],
+      "year": 2022
+    },
+    {
       "id": "missing-privacy-info-xcprivacy",
       "store": "appstore",
       "guidelineNumber": "5.1.2",
-      "guidelineName": "Data Use and Sharing - Required Reason APIs",
+      "guidelineName": "Data Use and Sharing",
       "category": "legal",
       "rejectionReason": "Your app does not include the required PrivacyInfo.xcprivacy manifest file.",
       "whatDeveloperDid": "Submitted an app without the PrivacyInfo.xcprivacy file, which became mandatory for all apps submitted after February 2025. The app used Required Reason APIs (UserDefaults, file timestamp access, disk space) without declaring the reasons in a privacy manifest.",
@@ -6155,7 +7349,7 @@
       "id": "privacy-manifest-not-in-build-phases",
       "store": "appstore",
       "guidelineNumber": "5.1.2",
-      "guidelineName": "Data Use and Sharing - Required Reason APIs",
+      "guidelineName": "Data Use and Sharing",
       "category": "legal",
       "rejectionReason": "Your PrivacyInfo.xcprivacy file exists in the project but is not included in the app bundle.",
       "whatDeveloperDid": "Created the PrivacyInfo.xcprivacy file and added it to the Xcode project, but forgot to add it to the target's Build Phases > Copy Bundle Resources. The file existed in the project navigator but was not included in the compiled app bundle.",
@@ -6180,8 +7374,8 @@
     {
       "id": "account-deletion-missing",
       "store": "appstore",
-      "guidelineNumber": "5.1.1",
-      "guidelineName": "Data Collection and Storage - Account Deletion",
+      "guidelineNumber": "5.1.1(v)",
+      "guidelineName": "Account Deletion",
       "category": "legal",
       "rejectionReason": "Your app supports account creation but does not offer account deletion.",
       "whatDeveloperDid": "Built an app with user registration and login but did not provide any way for users to delete their account and associated data from within the app. Users had to email support to request account deletion.",
@@ -6521,6 +7715,397 @@
       "year": 2024
     },
     {
+      "id": "apple-ip-springboard-image",
+      "store": "appstore",
+      "guidelineNumber": "5.2.1",
+      "guidelineName": "Intellectual Property",
+      "category": "legal",
+      "rejectionReason": "Your app uses Apple's copyrighted imagery without authorization.",
+      "whatDeveloperDid": "Used a screenshot of the iOS home screen (SpringBoard) as a background image in the app's onboarding tutorial. The screenshot included Apple's copyrighted wallpaper, app icons, and the dock design.",
+      "whatAppleSaid": "Guideline 5.2.1 - Legal - Intellectual Property: Your app uses Apple's copyrighted material (iOS home screen screenshot including SpringBoard interface and Apple app icons). You may not use Apple-owned images, icons, or screenshots of Apple software in your app without explicit permission.",
+      "fix": "Replaced the iOS home screen screenshot with a custom-designed illustration that conveys the same tutorial concept without using Apple's copyrighted imagery. Used generic device mockups from Apple's official marketing resources (which are permitted for certain uses) or created original artwork.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "apple-ip",
+        "trademark",
+        "copyright",
+        "springboard",
+        "home-screen",
+        "apple-images"
+      ],
+      "behavioralSignals": [
+        "iOS home screen screenshot in app",
+        "Apple wallpaper used",
+        "Apple app icons displayed",
+        "copyrighted Apple UI elements"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "att-usage-description-key-missing-entirely",
+      "store": "appstore",
+      "guidelineNumber": "5.1.2",
+      "guidelineName": "Data Use and Sharing",
+      "category": "legal",
+      "rejectionReason": "Your app includes a tracking SDK but never requests App Tracking Transparency permission.",
+      "whatDeveloperDid": "Integrated an ad mediation SDK that reads the IDFA for attribution, but never added NSUserTrackingUsageDescription to Info.plist and never called the ATT authorization request, so the app collected tracking-capable identifiers without ever asking the user.",
+      "whatAppleSaid": "Guideline 5.1.2 - Legal - Privacy - Data Use and Sharing: Your app includes an SDK capable of tracking users across apps and websites, but it does not request permission using the AppTrackingTransparency framework. Apps must obtain the user's permission before tracking, and the required usage description was not found.",
+      "fix": "Added NSUserTrackingUsageDescription to Info.plist with a specific reason for the ad personalization use case, and called ATTrackingManager.requestTrackingAuthorization before the ad mediation SDK initializes, so the app only tracks after explicit consent.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "att",
+        "nsusertrackingusagedescription",
+        "missing-key",
+        "tracking",
+        "info-plist"
+      ],
+      "behavioralSignals": [
+        "tracking SDK detected with no ATT prompt",
+        "NSUserTrackingUsageDescription absent from Info.plist",
+        "IDFA accessed without permission request",
+        "no AppTrackingTransparency usage anywhere in app"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "privacy-manifest-declares-tracking-att-key-missing",
+      "store": "appstore",
+      "guidelineNumber": "5.1.2",
+      "guidelineName": "Data Use and Sharing",
+      "category": "legal",
+      "rejectionReason": "Your app's privacy manifest declares tracking, but there is no App Tracking Transparency prompt anywhere in the app.",
+      "whatDeveloperDid": "Bundled a third-party attribution SDK whose own PrivacyInfo.xcprivacy correctly set NSPrivacyTracking to true, but the developer never added NSUserTrackingUsageDescription or called the ATT authorization request, assuming the SDK's manifest alone satisfied the requirement.",
+      "whatAppleSaid": "Guideline 5.1.2 - Legal - Privacy - Data Use and Sharing: Your app's privacy manifest declares that it tracks users, but no NSUserTrackingUsageDescription is present and no ATT permission prompt was observed. A manifest that declares tracking must be backed by an actual App Tracking Transparency request before any tracking occurs.",
+      "fix": "Added NSUserTrackingUsageDescription to Info.plist and called ATTrackingManager.requestTrackingAuthorization before the attribution SDK begins tracking, so the app's actual behavior matches what its privacy manifest declares.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "privacy-manifest",
+        "xcprivacy",
+        "nsprivacytracking",
+        "att",
+        "attribution-sdk"
+      ],
+      "behavioralSignals": [
+        "privacy manifest declares NSPrivacyTracking true",
+        "no ATT prompt implemented",
+        "third-party SDK manifest assumed sufficient",
+        "tracking declared but not requested from user"
+      ],
+      "year": 2025
+    },
+    {
+      "id": "revenuecat-privacy-manifest-outdated-sdk-version",
+      "store": "appstore",
+      "guidelineNumber": "5.1.2",
+      "guidelineName": "Data Use and Sharing",
+      "category": "legal",
+      "rejectionReason": "A bundled subscription SDK does not include the privacy manifest Apple now requires.",
+      "whatDeveloperDid": "Used an older version of the RevenueCat SDK, integrated over a year before submission, that predated RevenueCat's own PrivacyInfo.xcprivacy manifest, so the required Required Reason API declarations for that dependency were missing from the app bundle.",
+      "whatAppleSaid": "ITMS-91061: Missing privacy manifest - Your app uses a third-party SDK that requires a privacy manifest, but no manifest was found for this dependency. Please update to a version of the SDK that includes a privacy manifest, or add the required declarations yourself.",
+      "fix": "Updated the RevenueCat dependency to the current version, which ships its own PrivacyInfo.xcprivacy, and re-ran the App Store Connect upload to confirm the ITMS warning no longer appeared.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "revenuecat",
+        "privacy-manifest",
+        "outdated-sdk",
+        "itms-91061",
+        "xcprivacy"
+      ],
+      "behavioralSignals": [
+        "ITMS-91061 warning at upload",
+        "third-party SDK missing privacy manifest",
+        "outdated dependency version",
+        "subscription SDK without required declarations"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "networking-library-no-privacy-manifest-required-reason",
+      "store": "appstore",
+      "guidelineNumber": "5.1.2",
+      "guidelineName": "Data Use and Sharing",
+      "category": "legal",
+      "rejectionReason": "A bundled networking library accesses a Required Reason API without a declared reason.",
+      "whatDeveloperDid": "Used a popular open-source networking library that reads file timestamps for cache management, a Required Reason API category, but the app's own PrivacyInfo.xcprivacy did not declare a reason for that API category, and the library itself was an older version with no manifest of its own.",
+      "whatAppleSaid": "ITMS-91053: Missing API declaration - Your app's code references APIs that require a reason, specifically file timestamp APIs used by a bundled networking library. Please add a NSPrivacyAccessedAPICategoryFileTimestamp entry with an approved reason to your app's privacy manifest.",
+      "fix": "Added a NSPrivacyAccessedAPICategoryFileTimestamp entry with the approved '0A2A.1' reason code to the app's own PrivacyInfo.xcprivacy to cover the dependency's usage, and separately opened an update request with the library's maintainers to ship a manifest of their own.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "privacy-manifest",
+        "required-reason-api",
+        "networking-library",
+        "file-timestamp",
+        "itms-91053"
+      ],
+      "behavioralSignals": [
+        "ITMS-91053 warning referencing a bundled library",
+        "Required Reason API used without declared reason",
+        "third-party networking dependency without manifest",
+        "file timestamp API access undeclared"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "att-prompt-soft-ask-then-tracks-after-decline",
+      "store": "appstore",
+      "guidelineNumber": "5.1.2",
+      "guidelineName": "Data Use and Sharing",
+      "category": "legal",
+      "rejectionReason": "Your app continues to track the user after they decline the App Tracking Transparency prompt.",
+      "whatDeveloperDid": "Showed a custom 'soft ask' screen encouraging the user to allow tracking for a 'better experience,' and when the user tapped Decline on the follow-up system ATT prompt, the app's analytics SDK kept sending device-level identifiers to the ad network regardless of the recorded authorization status.",
+      "whatAppleSaid": "Guideline 5.1.2 - Legal - Privacy - Data Use and Sharing: Your app continues to track users after they have declined the App Tracking Transparency permission request. The authorization status returned by the system must be honored; tracking may not continue after a user denies permission.",
+      "fix": "Added a check before every tracking-related network call that reads the current ATTrackingManager authorization status and disables the analytics SDK's tracking identifiers entirely when the status is denied or restricted, verified with the sandbox ATT status override in Settings.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "att",
+        "soft-ask",
+        "tracking-after-decline",
+        "authorization-status",
+        "privacy"
+      ],
+      "behavioralSignals": [
+        "custom pre-permission screen before ATT prompt",
+        "tracking continues after user declines",
+        "authorization status not checked before tracking calls",
+        "device identifiers sent regardless of ATT decision"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "att-reason-string-too-generic-rejected",
+      "store": "appstore",
+      "guidelineNumber": "5.1.2",
+      "guidelineName": "Data Use and Sharing",
+      "category": "legal",
+      "rejectionReason": "Your App Tracking Transparency purpose string does not explain what tracking is for.",
+      "whatDeveloperDid": "Set NSUserTrackingUsageDescription to a boilerplate placeholder string copied from a tutorial, 'This identifier will be used to track you across apps,' without customizing it to explain what the tracking actually supports for this specific app.",
+      "whatAppleSaid": "Guideline 5.1.2 - Legal - Privacy - Data Use and Sharing: Your app's tracking permission request does not clearly explain to the user how tracking data will be used. Please provide a specific purpose string describing the actual benefit to the user, such as more relevant ads or measuring ad campaign performance.",
+      "fix": "Rewrote NSUserTrackingUsageDescription to a specific description of the app's actual use: 'This identifier lets us show you ads that are more relevant to your interests and measure how well our ad campaigns perform.'",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "att",
+        "purpose-string",
+        "usage-description",
+        "generic-text",
+        "tracking-transparency"
+      ],
+      "behavioralSignals": [
+        "ATT purpose string is generic boilerplate",
+        "usage description copied from tutorial",
+        "tracking purpose not explained to user",
+        "purpose string does not mention actual benefit"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "gdpr-consent-banner-missing-before-ads-init",
+      "store": "appstore",
+      "guidelineNumber": "5.1.2",
+      "guidelineName": "Data Use and Sharing",
+      "category": "legal",
+      "rejectionReason": "Your app initializes advertising SDKs and begins collecting data for EU users before obtaining consent.",
+      "whatDeveloperDid": "Initialized the ad mediation SDK and began sending ad requests as soon as the app launched, for all users including those in the European Economic Area, without first showing a consent management platform banner as required under GDPR for data processing and personalized ads.",
+      "whatAppleSaid": "Guideline 5.1.2 - Legal - Privacy - Data Use and Sharing: Your app collects and shares data with advertising SDKs for users in the European Economic Area before obtaining the consent required by applicable law. Please implement a consent mechanism before any such data collection begins for those users.",
+      "fix": "Integrated a consent management platform banner that detects EEA users and blocks ad SDK initialization and any data collection until the user makes a consent choice, defaulting ad requests to non-personalized until consent is granted.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "gdpr",
+        "consent-banner",
+        "eea",
+        "ads-sdk",
+        "data-collection"
+      ],
+      "behavioralSignals": [
+        "ad SDK initializes before consent shown",
+        "no consent banner for EEA users",
+        "personalized ad requests sent immediately on launch",
+        "GDPR consent flow missing"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "ccpa-do-not-sell-my-data-link-missing",
+      "store": "appstore",
+      "guidelineNumber": "5.1.1",
+      "guidelineName": "Data Collection and Storage",
+      "category": "legal",
+      "rejectionReason": "Your app does not provide the required mechanism for California users to opt out of the sale or sharing of their data.",
+      "whatDeveloperDid": "Shared user data with several advertising and analytics partners in exchange for services, which can qualify as a sale or sharing of personal information under California law, but the app's privacy policy and settings screen had no 'Do Not Sell or Share My Personal Information' option for California residents.",
+      "whatAppleSaid": "Guideline 5.1.1 - Legal - Privacy - Data Collection and Storage: Your app's privacy policy indicates it shares data with third parties, but does not provide the opt-out mechanism required for California residents. Please add a clear way for eligible users to exercise this choice.",
+      "fix": "Added a 'Do Not Sell or Share My Personal Information' toggle in the privacy settings screen that, when enabled, disables data sharing with advertising and analytics partners for that user, and linked it clearly from the privacy policy.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "ccpa",
+        "do-not-sell",
+        "data-sharing",
+        "opt-out",
+        "california-privacy"
+      ],
+      "behavioralSignals": [
+        "data shared with third parties for advertising",
+        "no opt-out mechanism for data sale",
+        "privacy policy missing CCPA disclosure",
+        "no do-not-sell toggle in settings"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "real-money-poker-app-missing-state-licensing",
+      "store": "appstore",
+      "guidelineNumber": "5.3.4",
+      "guidelineName": "Gaming, Gambling, and Lotteries",
+      "category": "legal",
+      "rejectionReason": "Your real-money poker app does not have the required licensing for the jurisdictions where it operates.",
+      "whatDeveloperDid": "Launched a real-money poker app available nationwide in the United States, without obtaining the state-by-state gaming licenses required in the handful of states where regulated real-money poker is legal, and without geo-restricting the app to only those states.",
+      "whatAppleSaid": "Guideline 5.3.4 - Legal - Gaming, Gambling, and Lotteries: Your app offers real-money poker but does not appear to have the necessary licensing and permissions for every location where it is available. Apps offering real-money gaming must be geo-restricted to jurisdictions where the developer holds the required license.",
+      "fix": "Obtained gaming licenses in the specific states where regulated online poker is legal, implemented device and payment-method-based geofencing that restricts real-money play to those states, and provided Apple with copies of the licenses for each covered jurisdiction.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "real-money-gaming",
+        "poker",
+        "gambling-license",
+        "geo-restriction",
+        "5.3.4"
+      ],
+      "behavioralSignals": [
+        "real-money poker available nationwide",
+        "no state gaming licenses on file",
+        "no geo-restriction by jurisdiction",
+        "real-money gaming without documented licensing"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "sweepstakes-casino-real-money-equivalent-prizes",
+      "store": "appstore",
+      "guidelineNumber": "5.3.4",
+      "guidelineName": "Gaming, Gambling, and Lotteries",
+      "category": "legal",
+      "rejectionReason": "Your social casino app awards sweepstakes prizes that function as real-money gambling without the required licensing.",
+      "whatDeveloperDid": "Built a 'social casino' style app with slot machine and card games that used a dual-currency sweepstakes model: free play coins alongside a second, purchasable currency that could be redeemed for cash prizes, without holding gambling or sweepstakes licenses in most states where the app was available.",
+      "whatAppleSaid": "Guideline 5.3.4 - Legal - Gaming, Gambling, and Lotteries: Your app's sweepstakes mechanic allows users to win real-money-equivalent prizes redeemable for cash, which is treated as real-money gaming. Apps offering this must have the necessary licensing and permissions in every location where the app operates and must be geo-restricted accordingly.",
+      "fix": "Removed the cash-redeemable sweepstakes currency entirely in states without the required licensing, restricting the cash-prize sweepstakes mode to the specific states where the developer held sweepstakes gaming approval, with geofencing enforced at both the app and payment-processor level.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "sweepstakes",
+        "social-casino",
+        "real-money-prizes",
+        "dual-currency",
+        "gambling-license"
+      ],
+      "behavioralSignals": [
+        "dual-currency sweepstakes model",
+        "cash-redeemable prizes available broadly",
+        "no sweepstakes gaming license documented",
+        "social casino app with real-money-equivalent payouts"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "fantasy-sports-real-money-no-geofencing",
+      "store": "appstore",
+      "guidelineNumber": "5.3.4",
+      "guidelineName": "Gaming, Gambling, and Lotteries",
+      "category": "legal",
+      "rejectionReason": "Your real-money daily fantasy sports app does not restrict entry from states where it is not permitted.",
+      "whatDeveloperDid": "Launched a daily fantasy sports app with real-money entry fees and cash payouts nationwide, without implementing location-based restrictions for the states where daily fantasy sports contests with entry fees are restricted or banned.",
+      "whatAppleSaid": "Guideline 5.3.4 - Legal - Gaming, Gambling, and Lotteries: Your app offers real-money fantasy sports contests but does not appear to restrict participation in states where this is not permitted. Apps offering real-money gaming must be geo-restricted to jurisdictions where they are legally permitted to operate.",
+      "fix": "Implemented device location verification at contest entry that blocks real-money contest participation from states on the restricted list, while keeping free-to-play contests available everywhere, and documented the geofencing implementation for Apple's review.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "fantasy-sports",
+        "real-money",
+        "geofencing",
+        "daily-fantasy",
+        "5.3.4"
+      ],
+      "behavioralSignals": [
+        "real-money contests available nationwide",
+        "no location verification at entry",
+        "daily fantasy sports with cash payouts",
+        "restricted states not geofenced"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "trademark-third-party-brand-name-in-app-title",
+      "store": "appstore",
+      "guidelineNumber": "5.2.1",
+      "guidelineName": "Intellectual Property",
+      "category": "legal",
+      "rejectionReason": "Your app's name uses another company's trademark without authorization or affiliation.",
+      "whatDeveloperDid": "Named an unofficial follower-tracking companion app 'Instagram Followers Tracker Pro,' using a well-known social platform's trademarked name directly in the App Store title even though the app had no affiliation with or authorization from that company.",
+      "whatAppleSaid": "Guideline 5.2.1 - Legal - Intellectual Property: Your app's name uses a third party's trademark without authorization, and your app is not affiliated with that company. Using another company's protected trademark in your app name or metadata without permission is not permitted.",
+      "fix": "Renamed the app to a original name that described its function without using the trademarked platform name ('Follower Insights for Social Profiles'), and updated the icon, screenshots, and description to remove any implication of official affiliation.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "trademark",
+        "app-name",
+        "intellectual-property",
+        "brand-name",
+        "unauthorized-use"
+      ],
+      "behavioralSignals": [
+        "app name includes another company's trademark",
+        "no affiliation with the trademarked brand",
+        "companion app implies official partnership",
+        "third-party brand name used in metadata"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "developer-seller-name-mismatch-guideline",
+      "store": "appstore",
+      "guidelineNumber": "5.2.1",
+      "guidelineName": "Intellectual Property",
+      "category": "legal",
+      "rejectionReason": "The seller and company name on your developer account do not reflect the app's branded name.",
+      "whatDeveloperDid": "Built an app under a client's brand name, 'Riverside Cafe Rewards,' but submitted it from a personal developer account whose seller name in App Store Connect was an unrelated freelance contracting business with no visible connection to the cafe brand.",
+      "whatAppleSaid": "Guideline 5.2.1 - Legal - Intellectual Property: The seller and company names associated with your app do not reflect the app's name in the app or its metadata. Your app must be published under a seller name and company name that reflects the branded name, or you must provide documentation showing you are authorized to use it.",
+      "fix": "Provided Apple with a signed letter of authorization from the cafe confirming the developer was contracted to build and publish the app under their brand name, and updated the developer account's display name to include a 'developed for' reference to the client, resolving the mismatch.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "seller-name",
+        "developer-account",
+        "brand-authorization",
+        "5.2.1",
+        "client-work"
+      ],
+      "behavioralSignals": [
+        "seller name does not match app's branded name",
+        "app built for a client under contractor's account",
+        "no documentation of authorization on file",
+        "company name mismatch with app metadata"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "unauthorized-celebrity-likeness-app-icon",
+      "store": "appstore",
+      "guidelineNumber": "5.2.1",
+      "guidelineName": "Intellectual Property",
+      "category": "legal",
+      "rejectionReason": "Your app uses a public figure's photograph in its icon and marketing without their authorization.",
+      "whatDeveloperDid": "Built a workout program app and used a well-known athlete's publicity photo as the App Store icon and primary screenshot to imply an endorsement, without any agreement, license, or release from the athlete or their representatives.",
+      "whatAppleSaid": "Guideline 5.2.1 - Legal - Intellectual Property: Your app's icon and metadata use a photograph of a public figure without documented authorization, which may infringe on that person's publicity rights and misleadingly imply an endorsement. Please provide documentation of authorization or remove the image.",
+      "fix": "Removed the athlete's photograph from the icon and all marketing materials, replacing it with original illustrated artwork, since the developer could not obtain a likeness release in time and did not want to misrepresent an endorsement that did not exist.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "publicity-rights",
+        "celebrity-likeness",
+        "app-icon",
+        "unauthorized-endorsement",
+        "5.2.1"
+      ],
+      "behavioralSignals": [
+        "public figure's photo used in app icon",
+        "no likeness release or endorsement agreement",
+        "marketing implies celebrity endorsement",
+        "publicity rights not cleared"
+      ],
+      "year": 2021
+    },
+    {
       "id": "app-crash-during-review",
       "store": "appstore",
       "guidelineNumber": "2.1",
@@ -6655,7 +8240,7 @@
       "id": "background-audio-mode-no-audio",
       "store": "appstore",
       "guidelineNumber": "2.5.4",
-      "guidelineName": "Required Device Capabilities",
+      "guidelineName": "Software Requirements - Background Modes",
       "category": "performance",
       "rejectionReason": "Your app declares audio background mode but does not play audio content.",
       "whatDeveloperDid": "Added the UIBackgroundModes 'audio' capability to keep the app alive in the background for periodic data syncing, even though the app had no audio playback functionality.",
@@ -6762,7 +8347,7 @@
       "id": "codepush-hot-code-push-rejection",
       "store": "appstore",
       "guidelineNumber": "2.3.1",
-      "guidelineName": "Hidden or Undocumented Features",
+      "guidelineName": "Accurate Metadata - Hidden or Undocumented Features",
       "category": "performance",
       "rejectionReason": "Your app includes the ability to download and execute code after installation, which can be used to introduce features not reviewed by Apple.",
       "whatDeveloperDid": "Used Microsoft CodePush (or a similar hot-code-push solution) to push JavaScript bundle updates to a React Native app, bypassing the App Store review process. The updates were capable of changing app functionality beyond minor bug fixes.",
@@ -6840,12 +8425,12 @@
     {
       "id": "screenshots-dont-match-ui",
       "store": "appstore",
-      "guidelineNumber": "2.3.7",
+      "guidelineNumber": "2.3.3",
       "guidelineName": "Accurate Metadata - Screenshots",
       "category": "performance",
       "rejectionReason": "Your app's screenshots do not accurately reflect the current version of your app.",
       "whatDeveloperDid": "Submitted an app update with significant UI changes but forgot to update the App Store screenshots. The screenshots showed the old design with a tab bar at the bottom, while the new version used a sidebar navigation pattern.",
-      "whatAppleSaid": "Guideline 2.3.7 - Performance - Accurate Metadata: Your app's screenshots do not reflect the current version of your app. The screenshots show a different navigation pattern and UI layout than what is present in the current build. Please update your screenshots to accurately represent the app.",
+      "whatAppleSaid": "Guideline 2.3.3 - Performance - Accurate Metadata: Your app's screenshots do not reflect the current version of your app. The screenshots show a different navigation pattern and UI layout than what is present in the current build. Please update your screenshots to accurately represent the app.",
       "fix": "Took new screenshots on all required device sizes reflecting the current UI. Used Xcode's screenshot automation or a tool like fastlane snapshot to generate consistent screenshots across all required device sizes and localizations.",
       "outcome": "approved-after-fix",
       "keywords": [
@@ -7049,6 +8634,451 @@
       "year": 2024
     },
     {
+      "id": "admob-gadapplicationidentifier-launch-crash",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "We discovered one or more bugs in your app. Your app crashed at launch.",
+      "whatDeveloperDid": "Integrated Google Mobile Ads (AdMob) to show banner ads, but forgot to add the GADApplicationIdentifier key to Info.plist. The AdMob SDK deliberately calls fatalError during initialization when this key is absent, crashing the app before the first screen renders.",
+      "whatAppleSaid": "Guideline 2.1 - Performance - App Completeness: We discovered one or more bugs in your app when reviewed on iPhone. Specifically, the app crashed immediately on launch. Please review the crash logs in the resolution center and correct the issue before resubmitting.",
+      "fix": "Added GADApplicationIdentifier to Info.plist with the AdMob app ID from the AdMob console, formatted as ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY. Verified on a clean install that the app no longer crashes even before any ad request is made.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "admob",
+        "gadapplicationidentifier",
+        "crash",
+        "launch-crash",
+        "google-mobile-ads",
+        "info-plist"
+      ],
+      "behavioralSignals": [
+        "app crashes immediately on launch",
+        "AdMob SDK detected in binary",
+        "GADApplicationIdentifier missing from Info.plist",
+        "fatal error during SDK initialization"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "facebook-sdk-missing-fbid-crash",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "Your app crashed during review due to a missing Facebook SDK configuration key.",
+      "whatDeveloperDid": "Added Facebook Login using FBSDKCoreKit and FBSDKLoginKit, but did not add the FacebookAppID, FacebookClientToken, and FacebookDisplayName keys to Info.plist. The Facebook SDK threw an uncaught exception during initialization on first launch.",
+      "whatAppleSaid": "Guideline 2.1 - Performance - App Completeness: We discovered one or more bugs in your app. The app crashed on launch before any content was displayed. Please fix this issue and ensure the app is stable before resubmitting for review.",
+      "fix": "Added FacebookAppID, FacebookClientToken, and FacebookDisplayName to Info.plist per Meta's current SDK setup documentation, and wrapped Facebook SDK initialization in a guard that logs and skips Facebook features gracefully if the keys are ever missing in a future build.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "facebook-sdk",
+        "crash",
+        "launch-crash",
+        "fbsdk",
+        "info-plist",
+        "facebookappid"
+      ],
+      "behavioralSignals": [
+        "app crashes on launch",
+        "Facebook SDK detected in binary",
+        "FacebookAppID missing from Info.plist",
+        "uncaught exception during SDK init"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "firebase-missing-googleservice-plist-crash",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "Your app crashed on launch because a required configuration file was missing from the build.",
+      "whatDeveloperDid": "Integrated Firebase for authentication and analytics, but the GoogleService-Info.plist file was added to the Xcode project navigator without being included in the actual app target's Copy Bundle Resources, so it was missing from the shipped binary Apple reviewed.",
+      "whatAppleSaid": "Guideline 2.1 - Performance - App Completeness: We discovered one or more bugs in your app. The app crashed immediately after launch with no content displayed. Our crash logs indicate the app failed during startup configuration.",
+      "fix": "Added GoogleService-Info.plist to the correct target's Copy Bundle Resources build phase, verified its presence inside the compiled .app bundle by inspecting the archive contents, and added a startup check that logs a clear error instead of crashing if Firebase configuration is ever missing again.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "firebase",
+        "googleservice-info",
+        "crash",
+        "launch-crash",
+        "build-phases",
+        "configuration-missing"
+      ],
+      "behavioralSignals": [
+        "app crashes on launch",
+        "Firebase SDK detected",
+        "GoogleService-Info.plist not in bundle",
+        "crash during startup configuration"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "broken-login-oauth-redirect-uri-mismatch",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "We were unable to sign in to your app because the login flow failed to return to the app after authentication.",
+      "whatDeveloperDid": "Implemented OAuth login through a web-based identity provider, but the production build's redirect URI scheme registered in the provider's dashboard still pointed at a staging bundle identifier. When the reviewer completed the login form in the in-app browser, the redirect failed silently and the app never received the auth token.",
+      "whatAppleSaid": "Guideline 2.1 - Performance - App Completeness: We were unable to complete the sign-in process in your app. After entering valid credentials in the login screen, the app did not return from the authentication flow. Please ensure your app's login process works correctly before resubmitting.",
+      "fix": "Updated the OAuth provider's redirect URI configuration to match the production bundle identifier and universal link domain, and added an explicit timeout with a clear error message and retry button in case the redirect ever fails again, instead of leaving the reviewer on a blank browser screen.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "oauth",
+        "redirect-uri",
+        "broken-login",
+        "authentication",
+        "production-config"
+      ],
+      "behavioralSignals": [
+        "login flow does not return to app",
+        "redirect URI points to staging",
+        "authentication succeeds but app never receives token",
+        "reviewer stuck on login screen"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "broken-login-expired-sandbox-test-account",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "We were unable to sign in to your app using the demo account credentials provided.",
+      "whatDeveloperDid": "Provided demo account credentials in the App Review notes, but the account's password had been rotated by an automated security policy between submission and the actual review, and the account was locked after the reviewer's first failed login attempt.",
+      "whatAppleSaid": "Guideline 2.1 - Performance - App Completeness: We were unable to sign in to your app using the credentials provided in the App Review Information. Please provide a demo account that will remain valid and accessible throughout the review process.",
+      "fix": "Excluded the demo review account from the password-rotation policy and account-lockout rules entirely, and added a note in App Store Connect confirming the credentials do not expire. Also added monitoring that alerts the team if the review account's login ever fails.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "demo-account",
+        "expired-credentials",
+        "sandbox-account",
+        "login",
+        "password-rotation"
+      ],
+      "behavioralSignals": [
+        "demo account credentials rejected",
+        "account locked after failed login",
+        "password rotated before review",
+        "reviewer cannot sign in"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "placeholder-social-links-dead-urls",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "Your app includes links that lead to broken or placeholder pages.",
+      "whatDeveloperDid": "Shipped a settings screen with Twitter, Instagram, and 'Visit our website' links, but two of the three social accounts had not been created yet and the buttons opened a generic 'page not found' error, while the website link pointed at a placeholder 'coming soon' page.",
+      "whatAppleSaid": "Guideline 2.1 - Performance - App Completeness: Your app includes links that lead to broken or placeholder content. Specifically, the social media links in Settings do not lead to functioning pages. Apps must not include non-functional URLs or placeholder content.",
+      "fix": "Removed the links to social accounts that did not exist yet, kept only the working website link, and added a lightweight check in the release process that verifies every outbound URL in the app returns a successful response before a build is submitted.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "placeholder",
+        "dead-links",
+        "broken-url",
+        "social-links",
+        "app-completeness"
+      ],
+      "behavioralSignals": [
+        "social media links return page not found",
+        "website link shows coming soon",
+        "non-functional URLs in settings",
+        "placeholder content in production build"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "push-notification-background-mode-no-push-setup",
+      "store": "appstore",
+      "guidelineNumber": "2.5.4",
+      "guidelineName": "Software Requirements - Background Modes",
+      "category": "performance",
+      "rejectionReason": "Your app declares the remote-notification background mode but does not appear to receive push notifications.",
+      "whatDeveloperDid": "Enabled the 'Remote notifications' background mode in Xcode's Signing & Capabilities early in development, intending to add push notifications later, but shipped several versions without ever implementing push registration, an APNs certificate, or the aps-environment entitlement.",
+      "whatAppleSaid": "Guideline 2.5.4 - Performance - Software Requirements: Your app declares the remote-notification background mode in UIBackgroundModes, but we found no evidence that your app registers for or receives push notifications. Background modes may only be used for their intended purpose.",
+      "fix": "Removed 'remote-notification' from UIBackgroundModes since the feature was not yet built. Documented that the team will re-add it, along with actual push registration and the Push Notifications capability, when the notification feature ships.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "background-mode",
+        "remote-notification",
+        "push-notifications",
+        "unjustified",
+        "uibackgroundmodes"
+      ],
+      "behavioralSignals": [
+        "remote-notification background mode declared",
+        "no push notification registration in code",
+        "no aps-environment entitlement",
+        "background mode enabled but unused"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "voip-background-mode-no-callkit",
+      "store": "appstore",
+      "guidelineNumber": "2.5.4",
+      "guidelineName": "Software Requirements - Background Modes",
+      "category": "performance",
+      "rejectionReason": "Your app declares the VoIP background mode but does not implement real calling functionality.",
+      "whatDeveloperDid": "Declared the 'voip' background mode to keep a chat app alive in the background for faster message delivery, without implementing any actual voice calling feature or reporting incoming calls to CallKit.",
+      "whatAppleSaid": "Guideline 2.5.4 - Performance - Software Requirements: Your app declares the VoIP background mode, but we could not find a voice calling feature that uses it. Since iOS 13, the VoIP background mode is intended only for apps with genuine calling functionality that report incoming calls through CallKit.",
+      "fix": "Removed the 'voip' background mode and switched to standard remote push notifications with the Push Notifications capability for message delivery. Documented that if voice calling is added in the future, incoming call pushes will be reported to CallKit as required.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "background-mode",
+        "voip",
+        "callkit",
+        "uibackgroundmodes",
+        "keep-alive"
+      ],
+      "behavioralSignals": [
+        "voip background mode declared",
+        "no calling feature in app",
+        "no CallKit integration",
+        "background mode used to keep app alive"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "ats-arbitrary-loads-blanket-exception",
+      "store": "appstore",
+      "guidelineNumber": "2.5.1",
+      "guidelineName": "Software Requirements",
+      "category": "performance",
+      "rejectionReason": "Your app disables App Transport Security for all network connections instead of scoping exceptions to specific domains.",
+      "whatDeveloperDid": "Set NSAllowsArbitraryLoads to true under NSAppTransportSecurity to quickly work around a TLS issue with one legacy API endpoint during development, and never scoped the exception down before submitting the app.",
+      "whatAppleSaid": "Guideline 2.5.1 - Performance - Software Requirements: Your app disables App Transport Security for all network connections. Apps should only request exceptions for specific domains that genuinely cannot support HTTPS, with a justification, rather than disabling ATS entirely.",
+      "fix": "Removed NSAllowsArbitraryLoads and added a scoped NSExceptionDomains entry only for the one legacy endpoint that could not yet support TLS 1.2, with NSExceptionRequiresForwardSecrecy explicitly documented as an accepted risk in the Notes for Review. All other traffic uses standard HTTPS with no exceptions.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "ats",
+        "app-transport-security",
+        "nsallowsarbitraryloads",
+        "networking",
+        "security"
+      ],
+      "behavioralSignals": [
+        "NSAllowsArbitraryLoads set to true",
+        "blanket ATS exception with no per-domain scoping",
+        "app-wide insecure connections allowed",
+        "no justification for ATS exception"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "deprecated-api-uiwebview-rejection",
+      "store": "appstore",
+      "guidelineNumber": "2.5.1",
+      "guidelineName": "Software Requirements",
+      "category": "performance",
+      "rejectionReason": "Your app uses a deprecated API that Apple no longer accepts in new submissions.",
+      "whatDeveloperDid": "An older codebase still linked UIWebView through a third-party dependency that had not been updated. The dependency had a newer version available that used WKWebView instead, but the team had not upgraded it.",
+      "whatAppleSaid": "ITMS-90809: Deprecated API Usage - Apple will stop accepting submissions of apps that use UIWebView APIs. Your app or one of its third-party libraries appears to use UIWebView. Please update to WKWebView before resubmitting.",
+      "fix": "Identified the outdated dependency referencing UIWebView via a binary symbol scan, updated it to the version that uses WKWebView, and added a build-time check that fails the archive step if UIWebView symbols are ever detected again.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "uiwebview",
+        "deprecated-api",
+        "wkwebview",
+        "itms-90809",
+        "software-requirements"
+      ],
+      "behavioralSignals": [
+        "ITMS-90809 warning at upload",
+        "UIWebView symbols found in binary",
+        "outdated third-party dependency",
+        "deprecated API usage"
+      ],
+      "year": 2021
+    },
+    {
+      "id": "expired-push-certificate-notifications-fail",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "Push notifications did not work during review because the certificate used to send them had expired.",
+      "whatDeveloperDid": "The app's core feature depended on push notifications for order updates, but the APNs authentication key configured on the backend had been revoked during an unrelated credential rotation, so no push notifications were delivered when the reviewer tested the order flow.",
+      "whatAppleSaid": "Guideline 2.1 - Performance - App Completeness: We were unable to verify a core feature of your app. We placed a test order but did not receive the push notification your app description says should follow. Please ensure this functionality works correctly before resubmitting.",
+      "fix": "Reissued the APNs authentication key, added it to the backend's push service configuration, and added automated monitoring that alerts the team immediately if push delivery success rate drops, so a revoked credential is caught before it reaches App Review or production users.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "push-notifications",
+        "apns",
+        "expired-certificate",
+        "core-feature",
+        "notification-delivery"
+      ],
+      "behavioralSignals": [
+        "push notifications not delivered during review",
+        "APNs credential revoked",
+        "core feature depends on push",
+        "notification-dependent flow fails"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "unity-game-crash-on-ipad-only",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "Your app crashed on iPad, though it worked correctly on iPhone.",
+      "whatDeveloperDid": "Shipped a Unity-based game that had only been tested on iPhone. The game's UI layout assumed a fixed aspect ratio and crashed with an out-of-bounds array access when rendering the HUD on iPad's different screen proportions.",
+      "whatAppleSaid": "Guideline 2.1 - Performance - App Completeness: We discovered one or more bugs in your app when reviewed on iPad. Specifically, the app crashed when loading the main menu. The app must function properly on all supported device types.",
+      "fix": "Fixed the HUD layout code to compute positions relative to the actual screen bounds instead of assuming a fixed iPhone aspect ratio, and added iPad Simulator runs (multiple screen sizes) to the pre-submission test checklist alongside the existing iPhone-only testing.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "ipad",
+        "crash",
+        "aspect-ratio",
+        "unity",
+        "device-testing",
+        "hud-layout"
+      ],
+      "behavioralSignals": [
+        "crash reproduces only on iPad",
+        "works correctly on iPhone",
+        "out-of-bounds array access in UI layout",
+        "fixed aspect ratio assumption"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "camera-permission-crash-missing-usage-description",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "Your app crashed when attempting to access the camera.",
+      "whatDeveloperDid": "Added a barcode-scanning feature using AVCaptureDevice, but forgot to add NSCameraUsageDescription to Info.plist. iOS immediately terminates an app that calls camera APIs without the corresponding usage description, rather than showing a permission dialog.",
+      "whatAppleSaid": "Guideline 2.1 - Performance - App Completeness: We discovered one or more bugs in your app. The app crashed when we tapped the barcode scan button. Please review the attached crash log and correct the issue before resubmitting.",
+      "fix": "Added NSCameraUsageDescription to Info.plist with a clear explanation of the barcode-scanning use case, and added an automated Info.plist audit to CI that fails the build if any imported framework requiring a usage description does not have a matching key present.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "camera-permission",
+        "crash",
+        "nscamerausagedescription",
+        "avcapturedevice",
+        "info-plist"
+      ],
+      "behavioralSignals": [
+        "app crashes when opening camera feature",
+        "NSCameraUsageDescription missing from Info.plist",
+        "immediate termination instead of permission prompt",
+        "barcode scanner crashes on tap"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "background-fetch-declared-unused",
+      "store": "appstore",
+      "guidelineNumber": "2.5.4",
+      "guidelineName": "Software Requirements - Background Modes",
+      "category": "performance",
+      "rejectionReason": "Your app declares the background fetch mode but does not appear to use it for any user-facing feature.",
+      "whatDeveloperDid": "Enabled the 'Background fetch' capability while experimenting with a content pre-loading feature, but the feature was shelved and the background mode was left declared in the project with no BGTaskScheduler registration or scheduled work left in the code.",
+      "whatAppleSaid": "Guideline 2.5.4 - Performance - Software Requirements: Your app declares the background fetch mode in UIBackgroundModes, but we found no corresponding background task implementation. Declaring background modes your app does not use for their intended purpose is not permitted.",
+      "fix": "Removed the unused 'fetch' background mode from the project capabilities and Info.plist. Documented in the team's release checklist that background mode capabilities should be removed as soon as the corresponding feature is descoped, not left dangling.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "background-fetch",
+        "unused-capability",
+        "uibackgroundmodes",
+        "bgtaskscheduler"
+      ],
+      "behavioralSignals": [
+        "background fetch mode declared",
+        "no BGTaskScheduler registration in code",
+        "capability enabled for abandoned feature",
+        "unjustified background mode"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "low-memory-crash-older-device-model",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "Your app crashed under low-memory conditions on an older supported device.",
+      "whatDeveloperDid": "Tested exclusively on a current-generation iPhone with ample memory. On the oldest iPhone model the app still listed as supported, loading several high-resolution images in the gallery feature at once triggered a memory warning that the app did not handle, causing the OS to terminate it.",
+      "whatAppleSaid": "Guideline 2.1 - Performance - App Completeness: We discovered one or more bugs in your app when reviewed on an older supported iPhone model. Specifically, the app crashed while browsing the photo gallery. Please test your app on all devices it supports before resubmitting.",
+      "fix": "Added image downsampling and a bounded in-memory cache to the gallery feature so it releases off-screen images under memory pressure, implemented didReceiveMemoryWarning handling, and added the oldest officially supported device model to the pre-submission test matrix.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "low-memory-crash",
+        "older-device",
+        "memory-warning",
+        "gallery",
+        "device-testing"
+      ],
+      "behavioralSignals": [
+        "crash reproduces only on oldest supported device",
+        "memory warning not handled",
+        "high-resolution images loaded without downsampling",
+        "works fine on newer devices"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "widget-extension-blank-missing-app-group",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "Your app's home screen widget does not display any content.",
+      "whatDeveloperDid": "Shipped a WidgetKit extension meant to show the user's recent activity, but the widget target and the main app were not both configured with the same App Group entitlement, so the widget could never read the shared data the main app wrote and always rendered its empty placeholder state.",
+      "whatAppleSaid": "Guideline 2.1 - Performance - App Completeness: Your app's widget does not display functional content. When added to the Home Screen, the widget only shows an empty placeholder. Please ensure all advertised features, including widgets, work correctly.",
+      "fix": "Added the same App Group identifier to both the main app target and the widget extension target's entitlements, and updated the main app to write shared data into the App Group's container so the widget's timeline provider can read it. Verified on a clean install that the widget populates within one refresh cycle.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "widgetkit",
+        "app-group",
+        "blank-widget",
+        "entitlements",
+        "home-screen-widget"
+      ],
+      "behavioralSignals": [
+        "widget shows empty placeholder",
+        "widget and app missing shared App Group",
+        "widget never displays real content",
+        "WidgetKit extension present in binary"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "missing-launch-screen-blank-white",
+      "store": "appstore",
+      "guidelineNumber": "2.1",
+      "guidelineName": "App Completeness",
+      "category": "performance",
+      "rejectionReason": "Your app appears to hang on a blank white screen after launch.",
+      "whatDeveloperDid": "A misconfigured LaunchScreen storyboard reference in the target's build settings pointed at a storyboard that had been deleted during a refactor. The app still launched and initialized correctly underneath, but the launch screen rendered as a blank white view that the reviewer mistook for a hang.",
+      "whatAppleSaid": "Guideline 2.1 - Performance - App Completeness: Your app appears to hang or fail to load after launch. We waited on a blank white screen and the app never became responsive. Please investigate and fix this issue before resubmitting.",
+      "fix": "Restored a valid LaunchScreen storyboard reference in the target's Info.plist (UILaunchStoryboardName) matching the actual file in the project, and added a build-time check that fails if the referenced launch storyboard file does not exist.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "launch-screen",
+        "blank-screen",
+        "storyboard",
+        "app-hang",
+        "misconfiguration"
+      ],
+      "behavioralSignals": [
+        "blank white screen after launch",
+        "app appears to hang on startup",
+        "LaunchScreen storyboard reference broken",
+        "app is actually running underneath"
+      ],
+      "year": 2022
+    },
+    {
       "id": "ugc-moderation-missing-fliplearn",
       "store": "appstore",
       "guidelineNumber": "1.2",
@@ -7158,7 +9188,7 @@
       "id": "drug-dosage-calculator-unapproved-entity",
       "store": "appstore",
       "guidelineNumber": "1.4.2",
-      "guidelineName": "Medical - Drug Dosage Calculators",
+      "guidelineName": "Physical Harm - Drug Dosage Calculators",
       "category": "safety",
       "rejectionReason": "Your app provides drug dosage calculations but is not from a recognized institution such as a drug manufacturer, hospital, or university.",
       "whatDeveloperDid": "An independent developer built a drug dosage calculator app for healthcare professionals that calculated dosages based on patient weight, age, and renal function without affiliation to any medical institution.",
@@ -7237,8 +9267,8 @@
     {
       "id": "ninjawords-dictionary-vulgar-terms",
       "store": "appstore",
-      "guidelineNumber": "1.1.1",
-      "guidelineName": "Objectionable Content - Defamatory or Mean-Spirited",
+      "guidelineNumber": "1.1",
+      "guidelineName": "Objectionable Content",
       "category": "safety",
       "rejectionReason": "Your app contains objectionable content including vulgar and profane language.",
       "whatDeveloperDid": "Ninjawords, a dictionary app, was rejected because it contained definitions for vulgar and profane words. The developer had to strip out thousands of dictionary entries that Apple deemed objectionable, even though the app was a reference dictionary.",
@@ -7263,12 +9293,12 @@
     {
       "id": "hot-or-not-voting-objectification",
       "store": "appstore",
-      "guidelineNumber": "1.1.1",
-      "guidelineName": "Objectionable Content - Defamatory or Mean-Spirited",
+      "guidelineNumber": "1.1",
+      "guidelineName": "Objectionable Content",
       "category": "safety",
       "rejectionReason": "Your app enables users to rate the physical appearance of real people, which is considered mean-spirited and objectionable.",
       "whatDeveloperDid": "Built a Hot-or-Not style app where users could upload photos of real people and other users would vote on their attractiveness with a rating system.",
-      "whatAppleSaid": "Guideline 1.1.1 - Safety - Objectionable Content: Your app allows users to rate the physical appearance of other people, which Apple considers to be mean-spirited and potentially harmful. This type of content that objectifies real individuals is not appropriate for the App Store.",
+      "whatAppleSaid": "Guideline 1.1 - Safety - Objectionable Content: Your app allows users to rate the physical appearance of other people, which Apple considers to be mean-spirited and potentially harmful. This type of content that objectifies real individuals is not appropriate for the App Store.",
       "fix": "The concept was fundamentally incompatible with Apple's guidelines. The developer pivoted to a photo contest app where users voluntarily submitted their own photos to themed photography challenges judged on artistic merit rather than personal appearance.",
       "outcome": "approved-after-fix",
       "keywords": [
@@ -7369,7 +9399,7 @@
       "id": "medical-app-no-disclaimers",
       "store": "appstore",
       "guidelineNumber": "1.4.1",
-      "guidelineName": "Medical - Physical Harm",
+      "guidelineName": "Physical Harm",
       "category": "safety",
       "rejectionReason": "Your medical app does not include appropriate disclaimers about the limitations of its health-related information.",
       "whatDeveloperDid": "Created a symptom checker app that provided potential diagnoses based on user-entered symptoms without any medical disclaimers, warnings that the information is not a substitute for professional medical advice, or recommendation to consult a healthcare provider.",
@@ -7395,12 +9425,12 @@
     {
       "id": "tobacco-alcohol-no-age-gate",
       "store": "appstore",
-      "guidelineNumber": "1.1.5",
-      "guidelineName": "Objectionable Content - Age-Restricted Content",
+      "guidelineNumber": "1.4.3",
+      "guidelineName": "Physical Harm - Alcohol, Tobacco, and Drugs",
       "category": "safety",
       "rejectionReason": "Your app promotes tobacco and/or alcohol products without implementing an age verification gate.",
       "whatDeveloperDid": "Built a craft beer discovery app that showcased various alcohol brands, included purchasing links, and featured tobacco-related lifestyle content without any age verification or age gate on app launch.",
-      "whatAppleSaid": "Guideline 1.1.5 - Safety - Objectionable Content: Your app facilitates the sale or promotion of tobacco and alcohol products but does not include an age gate. Apps that promote or sell age-restricted products must include an appropriate age verification mechanism to ensure users meet the minimum legal age requirements.",
+      "whatAppleSaid": "Guideline 1.4.3 - Safety - Physical Harm: Your app facilitates the sale or promotion of tobacco and alcohol products but does not include an age gate. Apps that promote or sell age-restricted products must include an appropriate age verification mechanism to ensure users meet the minimum legal age requirements.",
       "fix": "Implemented an age gate on first launch requiring users to confirm they are of legal drinking age (21+ in US). Added date-of-birth verification with persistent storage so users only need to verify once. Also added age-appropriate content warnings on alcohol-related pages.",
       "outcome": "approved-after-fix",
       "keywords": [
@@ -7443,6 +9473,433 @@
         "no way to report users",
         "content moderation only backend",
         "missing user-facing reporting"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "kids-category-applovin-max-ads",
+      "store": "appstore",
+      "guidelineNumber": "1.3",
+      "guidelineName": "Kids Category",
+      "category": "safety",
+      "rejectionReason": "Your Kids Category app includes a third-party advertising and mediation SDK that can collect identifiable information from children.",
+      "whatDeveloperDid": "Published a children's puzzle game in the Kids Category and integrated AppLovin MAX for rewarded video ads and mediation, without realizing the mediation layer requests App Tracking Transparency and pulls in multiple third-party ad networks.",
+      "whatAppleSaid": "Guideline 1.3 - Safety - Kids Category: Your app includes AppLovin MAX, a third-party advertising and mediation SDK capable of collecting identifiable information and requesting tracking permission. Apps in the Kids Category may not include third-party advertising or analytics of this kind, regardless of whether tracking is actually enabled for this app's users.",
+      "fix": "Removed AppLovin MAX and its mediated ad networks entirely from the Kids Category build. Replaced rewarded video with a non-tracking, COPPA-compliant ad network certified for the Kids Category, and confirmed no mediation partner requests ATT in that build.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "kids-category",
+        "applovin",
+        "mediation",
+        "ads",
+        "coppa",
+        "children"
+      ],
+      "behavioralSignals": [
+        "app is in Kids Category",
+        "AppLovin MAX SDK detected",
+        "ad mediation requesting ATT",
+        "rewarded video ads in children's game"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "kids-category-unity-ads-tracking",
+      "store": "appstore",
+      "guidelineNumber": "1.3",
+      "guidelineName": "Kids Category",
+      "category": "safety",
+      "rejectionReason": "Your Kids Category app includes Unity Ads, a third-party advertising SDK capable of collecting device identifiers.",
+      "whatDeveloperDid": "Built a simple arcade game aimed at young children and published it in the Kids Category, using Unity Ads to show interstitial ads between levels for monetization.",
+      "whatAppleSaid": "Guideline 1.3 - Safety - Kids Category: We found that your app uses Unity Ads, which is capable of collecting device and advertising identifiers. Apps in the Kids Category may not include third-party advertising SDKs of this kind. Please remove the SDK or move the app out of the Kids Category before resubmitting.",
+      "fix": "Removed Unity Ads from the Kids Category build. Switched to a one-time unlock purchase (no ads) as the monetization model, since no advertising SDK on the developer's shortlist could be configured to avoid identifier collection entirely for this age group.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "kids-category",
+        "unity-ads",
+        "advertising",
+        "coppa",
+        "children",
+        "interstitial-ads"
+      ],
+      "behavioralSignals": [
+        "app is in Kids Category",
+        "Unity Ads SDK detected",
+        "interstitial ads between game levels",
+        "advertising identifier collection in children's app"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "healthkit-fitness-app-admob-banner-ads",
+      "store": "appstore",
+      "guidelineNumber": "1.4.1",
+      "guidelineName": "Physical Harm",
+      "category": "safety",
+      "rejectionReason": "Your app mixes health data collection with third-party advertising on the same screens.",
+      "whatDeveloperDid": "Built a fitness tracking app that reads step count and heart rate from HealthKit and displayed AdMob banner ads directly on the workout summary and heart-rate history screens, the same screens that surface the user's health data.",
+      "whatAppleSaid": "Guideline 1.4.1 - Safety - Physical Harm: Your app displays third-party advertising on screens that present health data read from HealthKit. Apps that access health data are held to greater scrutiny, and mixing advertising with sensitive health information on the same screen raises concerns about how that data could be exposed to the advertising SDK.",
+      "fix": "Removed AdMob banners from every screen that displays HealthKit-derived data (workout summary, heart-rate history, step trends). Ads now only appear on unrelated screens (settings, a tips feed) that never render health metrics, and the app documents this separation in the Notes for Review.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "healthkit",
+        "admob",
+        "ads",
+        "health-data",
+        "fitness",
+        "physical-harm"
+      ],
+      "behavioralSignals": [
+        "app reads HealthKit data",
+        "AdMob SDK detected",
+        "ads displayed alongside health metrics",
+        "fitness app with advertising SDK"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "ai-image-generator-nsfw-no-filter",
+      "store": "appstore",
+      "guidelineNumber": "1.2",
+      "guidelineName": "User-Generated Content",
+      "category": "safety",
+      "rejectionReason": "Your AI image generation app can produce sexualized depictions of real people and does not include adequate content filtering.",
+      "whatDeveloperDid": "Launched an AI photo and avatar generator that let users upload a photo and generate stylized images, but placed no restrictions on prompts or reference photos, allowing the model to produce sexualized or degrading depictions of real, identifiable people.",
+      "whatAppleSaid": "Guideline 1.2 - Safety - User-Generated Content: Your app can generate objectionable content, including sexualized depictions of real people, without any filtering, reporting mechanism, or safeguard. Apps that generate content based on user input are held to the same user-generated content standards as apps that host it directly.",
+      "fix": "Added server-side prompt and output filtering that blocks sexualized generations involving real or photorealistic faces, added a report button on generated images, and required an age rating and content warning consistent with what the generator can actually produce.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "ai-generated-content",
+        "image-generator",
+        "nsfw",
+        "content-filter",
+        "deepfake",
+        "moderation"
+      ],
+      "behavioralSignals": [
+        "AI image generation from user photos",
+        "no output content filter",
+        "sexualized image generation possible",
+        "no report mechanism for generated content"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "diet-app-unproven-cure-claims",
+      "store": "appstore",
+      "guidelineNumber": "1.4.1",
+      "guidelineName": "Physical Harm",
+      "category": "safety",
+      "rejectionReason": "Your app makes unproven claims that its program can cure or reverse a medical condition.",
+      "whatDeveloperDid": "Built a diet and meal-tracking app whose marketing copy and in-app screens claimed the program could 'reverse Type 2 diabetes' and 'cure chronic inflammation,' without citing any clinical studies or including a disclaimer that the app does not provide medical treatment.",
+      "whatAppleSaid": "Guideline 1.4.1 - Safety - Physical Harm: Your app claims to cure or reverse a diagnosed medical condition without supporting clinical evidence. Health apps that make treatment or diagnostic claims must disclose the methodology and evidence behind those claims, and must not suggest they replace professional medical care.",
+      "fix": "Removed all 'cure' and 'reverse' language from the app and its marketing screens, replaced it with general wellness framing ('supports healthy blood sugar habits'), and added a persistent disclaimer that the app is not a substitute for medical diagnosis or treatment and results are not guaranteed.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "health-claims",
+        "diet-app",
+        "unproven-cure",
+        "medical-disclaimer",
+        "diabetes",
+        "misinformation"
+      ],
+      "behavioralSignals": [
+        "app claims to cure a medical condition",
+        "no clinical evidence cited",
+        "no medical disclaimer",
+        "diet or health app with treatment claims"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "sendbird-chat-app-no-moderation",
+      "store": "appstore",
+      "guidelineNumber": "1.2",
+      "guidelineName": "User-Generated Content",
+      "category": "safety",
+      "rejectionReason": "Your app includes real-time chat between users but does not include the required moderation controls.",
+      "whatDeveloperDid": "Added one-on-one and group messaging to a marketplace app using the Sendbird Chat SDK, but shipped without a block-user option, a way to report a conversation, or any published community guidelines covering chat behavior.",
+      "whatAppleSaid": "Guideline 1.2 - Safety - User-Generated Content: Your app enables real-time messaging between users but does not include the ability to block abusive users or report objectionable messages. Apps with user-generated content, including chat, must include these controls regardless of whether the messaging is public or private.",
+      "fix": "Added a block-user action and a report-conversation flow reachable from every chat thread, wired to Sendbird's moderation APIs to suspend reported users pending review, and published in-app community guidelines linked from the chat screen.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "sendbird",
+        "chat",
+        "ugc",
+        "moderation",
+        "block",
+        "report"
+      ],
+      "behavioralSignals": [
+        "Sendbird Chat SDK detected",
+        "one-on-one messaging feature",
+        "no block user option",
+        "no report conversation option"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "stream-chat-community-app-no-block",
+      "store": "appstore",
+      "guidelineNumber": "1.2",
+      "guidelineName": "User-Generated Content",
+      "category": "safety",
+      "rejectionReason": "Your community app's chat feature does not let users block other users.",
+      "whatDeveloperDid": "Built a hobbyist community app with public group channels powered by Stream Chat. The app included a report button on individual messages but had no way for a user to block another user from contacting or appearing to them.",
+      "whatAppleSaid": "Guideline 1.2 - Safety - User-Generated Content: Your app allows users to message each other in group channels but does not provide a way to block abusive users. Reporting content is not a substitute for the ability to block; apps with user-generated content must offer both.",
+      "fix": "Added a block-user action on every profile and message long-press menu, implemented with Stream Chat's user-blocking API so blocked users' messages are hidden client-side and future direct messages are prevented.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "stream-chat",
+        "ugc",
+        "block-user",
+        "moderation",
+        "community-app",
+        "group-channels"
+      ],
+      "behavioralSignals": [
+        "Stream Chat SDK detected",
+        "group channel messaging",
+        "report button present but no block option",
+        "community app with public chat"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "kids-category-health-data-collection",
+      "store": "appstore",
+      "guidelineNumber": "5.1.4",
+      "guidelineName": "Kids",
+      "category": "safety",
+      "rejectionReason": "Your Kids Category app collects health or fitness data from children without verifiable parental consent.",
+      "whatDeveloperDid": "Published a Kids Category app that gamified handwashing and bedtime routines by reading step count and sleep data through HealthKit, sending aggregated activity data to a third-party analytics backend to power a rewards leaderboard.",
+      "whatAppleSaid": "Guideline 5.1.4 - Legal - Kids: Your app collects health and fitness data from children and transmits it to a third-party service without documented parental consent. Apps for kids must handle any personal data from minors with heightened care, and Guideline 1.3 separately prohibits sending personally identifiable or device information from Kids Category apps to third parties.",
+      "fix": "Removed the third-party analytics backend entirely and moved the leaderboard to on-device storage with no network transmission of health data. Added a verifiable parental consent screen, gated by a simple math challenge and an email confirmation to a parent-provided address, before any activity tracking begins.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "kids-category",
+        "health-data",
+        "healthkit",
+        "parental-consent",
+        "coppa",
+        "children-privacy"
+      ],
+      "behavioralSignals": [
+        "app is in Kids Category",
+        "HealthKit data collected",
+        "health data sent to third party",
+        "no parental consent flow for data collection"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "account-deletion-redirect-to-website-only",
+      "store": "appstore",
+      "guidelineNumber": "5.1.1(v)",
+      "guidelineName": "Account Deletion",
+      "category": "safety",
+      "rejectionReason": "Your app's account deletion option only opens a web page instead of deleting the account from within the app.",
+      "whatDeveloperDid": "Added a 'Delete Account' row in Settings, but tapping it opened Safari to a web form asking the user to re-enter their email and submit a deletion request, rather than deleting the account directly within the app.",
+      "whatAppleSaid": "Guideline 5.1.1(v) - Legal - Account Deletion: Your app's account deletion option directs users to a website rather than completing the deletion within the app. Apps that support account creation must let users initiate and complete account deletion from within the app itself.",
+      "fix": "Implemented an in-app deletion flow that authenticates the user, confirms the request, and calls the backend deletion API directly from the app, with a confirmation screen showing what data will be removed and the expected deletion timeline. The website form was kept only as an alternate path for users without the app installed.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "account-deletion",
+        "web-redirect",
+        "5.1.1",
+        "in-app-deletion",
+        "privacy"
+      ],
+      "behavioralSignals": [
+        "delete account opens external website",
+        "no in-app deletion flow",
+        "account creation without in-app deletion",
+        "deletion requires leaving the app"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "account-deletion-support-email-only-social-app",
+      "store": "appstore",
+      "guidelineNumber": "5.1.1(v)",
+      "guidelineName": "Account Deletion",
+      "category": "safety",
+      "rejectionReason": "Your app requires users to email support to delete their account instead of offering deletion within the app.",
+      "whatDeveloperDid": "Built a social photo-sharing app with account creation, but the only documented way to delete an account was to email a support address and wait for manual processing, a fact only mentioned in the FAQ section of the app's website.",
+      "whatAppleSaid": "Guideline 5.1.1(v) - Legal - Account Deletion: Your app supports account creation but does not offer account deletion from within the app; users must contact support by email instead. Apps that let people create accounts must also let them delete those accounts directly within the app.",
+      "fix": "Added a self-service 'Delete My Account' flow in the profile screen that immediately deactivates the account and schedules permanent deletion of associated content and personal data within 30 days, with an in-app status indicator during that window. Support email deletion remains available as a fallback, not the only path.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "account-deletion",
+        "support-email",
+        "5.1.1",
+        "self-service",
+        "social-app"
+      ],
+      "behavioralSignals": [
+        "account deletion requires emailing support",
+        "no self-service deletion option",
+        "deletion process undocumented in app",
+        "manual account removal only"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "livestreaming-app-no-real-time-moderation",
+      "store": "appstore",
+      "guidelineNumber": "1.2",
+      "guidelineName": "User-Generated Content",
+      "category": "safety",
+      "rejectionReason": "Your live-streaming app does not include a way to report or block content while a broadcast is in progress.",
+      "whatDeveloperDid": "Built a live video streaming app where any user could start a public broadcast and viewers could comment in a live chat. There was a report option for the streamer's profile after the fact, but no way to report the live stream itself or a specific comment while it was happening.",
+      "whatAppleSaid": "Guideline 1.2 - Safety - User-Generated Content: Your app allows live video broadcasts and live chat but does not provide a way to report objectionable content while it is being streamed. Live content still requires a timely reporting mechanism, not only a profile-level report available after the broadcast ends.",
+      "fix": "Added a persistent report button on the live video overlay and on each chat message that flags the stream for expedited human review, with an automatic temporary hold on the stream if multiple reports arrive within a short window. Added a visible moderator response time commitment in the community guidelines.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "live-streaming",
+        "ugc",
+        "real-time-moderation",
+        "report",
+        "live-chat"
+      ],
+      "behavioralSignals": [
+        "live video broadcasting feature",
+        "live chat during stream",
+        "no report option during broadcast",
+        "moderation only after stream ends"
+      ],
+      "year": 2024
+    },
+    {
+      "id": "anonymous-qa-app-cyberbullying-risk",
+      "store": "appstore",
+      "guidelineNumber": "1.2",
+      "guidelineName": "User-Generated Content",
+      "category": "safety",
+      "rejectionReason": "Your app lets people send anonymous messages to real users with no way to block the sender or report harassment.",
+      "whatDeveloperDid": "Built an anonymous question-and-answer app popular among teenagers, where anyone with a link could send anonymous messages to a user's public profile. There was no way for a recipient to block a specific anonymous sender or report a harassing message, since the sender's identity was hidden even from the app's own report queue.",
+      "whatAppleSaid": "Guideline 1.2 - Safety - User-Generated Content: Your app allows anonymous messages to be sent to identifiable users without a mechanism to block the sender or report harassment. Anonymity does not exempt an app from the requirement to let users block abusive senders and report objectionable messages for review.",
+      "fix": "Implemented sender-side device and account fingerprinting retained internally (never shown to the recipient) so a specific anonymous sender can be blocked and their future messages suppressed, added a report action on every message routed to a moderation queue, and added a parental-style safety center explaining how to limit who can send messages.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "anonymous-messaging",
+        "cyberbullying",
+        "ugc",
+        "block-sender",
+        "report",
+        "teen-safety"
+      ],
+      "behavioralSignals": [
+        "anonymous messages to real profiles",
+        "no way to block anonymous sender",
+        "no report option on messages",
+        "app popular with teenagers"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "kids-app-external-link-no-parental-gate",
+      "store": "appstore",
+      "guidelineNumber": "1.3",
+      "guidelineName": "Kids Category",
+      "category": "safety",
+      "rejectionReason": "Your Kids Category app includes a link to an external website or social media page without a parental gate.",
+      "whatDeveloperDid": "Published a coloring app for young children in the Kids Category with a 'Follow us!' button on the main menu that opened the developer's Instagram profile directly in Safari, with no confirmation step or age gate in front of it.",
+      "whatAppleSaid": "Guideline 1.3 - Safety - Kids Category: Your app includes a link to an external website (Instagram) that is not placed behind a parental gate. Apps in the Kids Category must not include links out of the app unless access is gated by a mechanism that requires an adult, such as a simple multiplication problem or a system permission prompt.",
+      "fix": "Placed the social media link behind a parental gate that asks the user to solve a simple multiplication problem before the browser opens, matching the same pattern already used for the app's in-app purchase entry point.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "kids-category",
+        "parental-gate",
+        "external-link",
+        "social-media",
+        "children"
+      ],
+      "behavioralSignals": [
+        "app is in Kids Category",
+        "external link with no parental gate",
+        "social media button on main menu",
+        "link opens Safari directly"
+      ],
+      "year": 2022
+    },
+    {
+      "id": "kids-category-iap-no-parental-gate",
+      "store": "appstore",
+      "guidelineNumber": "1.3",
+      "guidelineName": "Kids Category",
+      "category": "safety",
+      "rejectionReason": "Your Kids Category app presents in-app purchase prompts without a parental gate.",
+      "whatDeveloperDid": "Built a children's storybook app in the Kids Category with a 'Get More Stories' button that opened the StoreKit purchase sheet immediately when tapped, with no confirmation step to keep a child from initiating a purchase unsupervised.",
+      "whatAppleSaid": "Guideline 1.3 - Safety - Kids Category: Your app presents a purchasing opportunity without a parental gate. Apps in the Kids Category must place in-app purchases, as well as any other purchasing opportunities, behind a parental gate so children cannot initiate a purchase without adult involvement.",
+      "fix": "Added a parental gate (an on-screen challenge requiring an adult to enter a short calculation or hold a button for several seconds) immediately before the purchase sheet is presented, applied consistently to every entry point that can trigger a purchase.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "kids-category",
+        "parental-gate",
+        "in-app-purchase",
+        "storekit",
+        "children"
+      ],
+      "behavioralSignals": [
+        "app is in Kids Category",
+        "purchase button with no confirmation step",
+        "StoreKit sheet opens immediately",
+        "no parental gate before purchase"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "dating-app-no-report-block-harassment",
+      "store": "appstore",
+      "guidelineNumber": "1.2",
+      "guidelineName": "User-Generated Content",
+      "category": "safety",
+      "rejectionReason": "Your dating app does not include a way to report or block another user from within a conversation.",
+      "whatDeveloperDid": "Launched a photo-based dating app with in-app messaging, but the only safety feature was an 'unmatch' button that simply removed the conversation from the user's list. There was no way to report a user for harassment or explicit content, and unmatching did not prevent the same person from matching again later.",
+      "whatAppleSaid": "Guideline 1.2 - Safety - User-Generated Content: Your app enables messaging between matched users but does not provide a way to report abusive behavior or permanently block a user. Unmatching alone is not sufficient; apps with user-generated content must offer a real reporting mechanism with a timely response.",
+      "fix": "Added a 'Report and Block' action inside every conversation that permanently prevents the reported user from being shown as a match again, routes the report and recent messages to a moderation queue with a same-day response target, and added published community guidelines linked from the safety center.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "dating-app",
+        "ugc",
+        "report",
+        "block",
+        "harassment",
+        "moderation"
+      ],
+      "behavioralSignals": [
+        "dating app with in-app messaging",
+        "only unmatch option available",
+        "no report mechanism for harassment",
+        "blocked users can match again"
+      ],
+      "year": 2023
+    },
+    {
+      "id": "voice-chat-game-no-mute-block",
+      "store": "appstore",
+      "guidelineNumber": "1.2",
+      "guidelineName": "User-Generated Content",
+      "category": "safety",
+      "rejectionReason": "Your multiplayer game's voice chat feature does not let players mute, block, or report other players.",
+      "whatDeveloperDid": "Added open-microphone voice chat to a competitive multiplayer game so teammates could coordinate during matches, but shipped without a per-player mute control, a way to block a player across future matches, or a way to report abusive voice chat.",
+      "whatAppleSaid": "Guideline 1.2 - Safety - User-Generated Content: Your app includes live voice chat between players but does not provide the ability to mute, block, or report other users. Voice chat is user-generated content, and apps that offer it must provide the same moderation controls required for text-based user-generated content.",
+      "fix": "Added a per-player mute toggle accessible from the in-match scoreboard, a persistent block list that keeps blocked players out of future matchmaking where possible, and a post-match report flow for voice chat abuse that captures a short audio buffer for the moderation team to review.",
+      "outcome": "approved-after-fix",
+      "keywords": [
+        "voice-chat",
+        "multiplayer-game",
+        "ugc",
+        "mute",
+        "block",
+        "report"
+      ],
+      "behavioralSignals": [
+        "open microphone voice chat in game",
+        "no mute control for players",
+        "no way to block other players",
+        "no report option for voice chat"
       ],
       "year": 2024
     }
@@ -7488,6 +9945,11 @@
       "summary": "Drug dosage calculators must come from the drug manufacturer, a hospital, university, health insurance company, pharmacy, or other approved entity, or must receive approval from the FDA or an equivalent national body.",
       "section": "Safety"
     },
+    "1.4.3": {
+      "name": "Physical Harm - Alcohol, Tobacco, and Drugs",
+      "summary": "Apps may not encourage consumption of tobacco or vape products, illegal drugs, or excessive amounts of alcohol, and may not encourage minors to consume any of these substances. Facilitating the sale of tobacco or controlled substances is not permitted, except for licensed pharmacies and legal cannabis dispensaries.",
+      "section": "Safety"
+    },
     "2.1": {
       "name": "App Completeness",
       "summary": "Submissions must be final versions with all necessary metadata and fully functional URLs included, and must not contain placeholder text, empty websites, or other temporary content. Apps that crash or exhibit obvious bugs are rejected under this guideline.",
@@ -7501,6 +9963,11 @@
     "2.3.1": {
       "name": "Accurate Metadata - Hidden or Undocumented Features",
       "summary": "Apps may not include hidden, dormant, or undocumented features. All functionality must be described with specificity in the Notes for Review, and the app must not be marketed in a way that promotes content or services it does not actually provide.",
+      "section": "Performance"
+    },
+    "2.3.3": {
+      "name": "Accurate Metadata - Screenshots",
+      "summary": "App previews and screenshots must accurately reflect the app's current version in actual use, captured on the applicable device, rather than splash screens, concept art, or mockups.",
       "section": "Performance"
     },
     "2.3.7": {
@@ -7606,6 +10073,11 @@
     "5.1.4": {
       "name": "Kids",
       "summary": "Apps primarily designed for kids must comply with children's privacy statutes such as COPPA and GDPR-K, must handle any personal data from minors with heightened care and parental consent where required, and may not send personally identifiable information or device information from kids apps to third parties.",
+      "section": "Legal"
+    },
+    "5.2.1": {
+      "name": "Intellectual Property",
+      "summary": "Apps must not use protected third-party material, including trademarks, copyrighted works, or patented ideas, without permission, and must not include misleading, false, or copycat representations, names, or metadata. This includes using Apple's own trademarks, icons, or copyrighted interface elements without authorization.",
       "section": "Legal"
     },
     "5.3.4": {
