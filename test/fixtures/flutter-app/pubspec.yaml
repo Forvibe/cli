@@ -1,0 +1,17 @@
+name: fixture_flutter
+description: Fixture flutter app for review-engine extractor tests.
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_mobile_ads: ^5.0.0
+  health: ^10.0.0
+  in_app_purchase: ^3.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

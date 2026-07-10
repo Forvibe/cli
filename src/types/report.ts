@@ -180,6 +180,8 @@ export type TechStack =
   | "kotlin"
   | "capacitor"
   | "dotnet-maui"
+  | "unity"
+  | "kmp"
   | "unknown";
 
 export interface TechStackResult {

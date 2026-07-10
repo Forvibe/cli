@@ -3,13 +3,14 @@
 import { Command } from "commander";
 import { analyzeCommand } from "./commands/analyze.js";
 import { reviewCommand } from "./commands/review.js";
+import { getCliVersion } from "./utils/version.js";
 
 const program = new Command();
 
 program
   .name("forvibe")
-  .description("Forvibe CLI — AI-powered App Store automation")
-  .version("0.1.0");
+  .description("Forvibe CLI - AI-powered App Store automation")
+  .version(getCliVersion());
 
 program
   .command("analyze", { isDefault: true })
@@ -32,10 +33,16 @@ program
   .option("-d, --dir <path>", "Project directory to review", process.cwd())
   .option("--deep", "Enable deep 2-pass review (feature detection + reviewer simulation)")
   .option("--format <type>", "Output format: terminal, json, markdown", "terminal")
+  .option("--static-only", "Run only the static rule engine, skipping the AI behavioral review (no API key needed)")
   .option("--send", "Send results to Forvibe for combined review with metadata analysis")
   .option(
     "--api-url <url>",
     "Forvibe API URL (for development)",
+    undefined
+  )
+  .option(
+    "--rulepack-url <url>",
+    "Base URL to fetch the review rulepack from (defaults to the Forvibe API URL)",
     undefined
   )
   .action(reviewCommand);

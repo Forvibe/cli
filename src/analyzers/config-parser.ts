@@ -27,6 +27,10 @@ export function parseConfig(
       return parseCapacitorConfig(rootDir);
     case "dotnet-maui":
       return parseMauiConfig(rootDir);
+    case "unity":
+      return parseUnityConfig(rootDir);
+    case "kmp":
+      return parseKmpConfig(rootDir);
     default:
       return emptyConfig();
   }
@@ -586,6 +590,93 @@ function parseMauiConfig(rootDir: string): ParsedConfig {
       }
     }
   } catch { /* ignore */ }
+
+  return config;
+}
+
+// =============================================
+// Unity
+// =============================================
+
+/**
+ * Parses ProjectSettings/ProjectSettings.asset with small dedicated regexes
+ * (deliberately NOT the engine's extractUnityProjectSettings/yaml.parse
+ * path - see rsv2-task-4-brief.md: this keeps analyzers/ from taking a
+ * dependency on engine/, even though no cycle would actually result today).
+ */
+function parseUnityConfig(rootDir: string): ParsedConfig {
+  const config = emptyConfig();
+
+  const content = readFileSafe(
+    join(rootDir, "ProjectSettings", "ProjectSettings.asset")
+  );
+  if (!content) return config;
+
+  const productNameMatch = content.match(/^\s*productName:\s*(.+)$/m);
+  if (productNameMatch) config.app_name = productNameMatch[1].trim();
+
+  const versionMatch = content.match(/^\s*bundleVersion:\s*(\S+)/m);
+  if (versionMatch) config.version = versionMatch[1].trim();
+
+  // applicationIdentifier block: prefer iPhone, fall back to Android. Bounded
+  // to the block itself (stops at the next line back at <=2-space indent,
+  // i.e. the next sibling PlayerSettings key) so an unrelated key elsewhere
+  // in the file can never be picked up by mistake.
+  const blockIdx = content.indexOf("applicationIdentifier:");
+  if (blockIdx >= 0) {
+    const after = content.slice(blockIdx + "applicationIdentifier:".length);
+    const nextSiblingKey = after.search(/\n {0,2}\S/);
+    const block = nextSiblingKey >= 0 ? after.slice(0, nextSiblingKey) : after;
+    const iphone = block.match(/iPhone:\s*(\S+)/);
+    const android = block.match(/Android:\s*(\S+)/);
+    const id = iphone?.[1] ?? android?.[1] ?? null;
+    if (id) config.bundle_id = id.trim();
+  }
+
+  return config;
+}
+
+// =============================================
+// Kotlin Multiplatform
+// =============================================
+
+/**
+ * `bundle_id` from the Android application module's build.gradle(.kts)
+ * (androidApp/, composeApp/, app/ in that order); `app_name` /
+ * `min_ios_version` from iosApp's Info.plist.
+ */
+function parseKmpConfig(rootDir: string): ParsedConfig {
+  const config = emptyConfig();
+
+  for (const moduleName of ["androidApp", "composeApp", "app"]) {
+    const moduleDir = join(rootDir, moduleName);
+    let gradleConfig = parseGradle(join(moduleDir, "build.gradle.kts"));
+    if (!gradleConfig.applicationId) {
+      gradleConfig = parseGradle(join(moduleDir, "build.gradle"));
+    }
+    if (gradleConfig.applicationId) {
+      config.bundle_id = gradleConfig.applicationId;
+      if (gradleConfig.versionName) config.version = gradleConfig.versionName;
+      if (gradleConfig.minSdk) config.min_android_sdk = gradleConfig.minSdk;
+      break;
+    }
+  }
+
+  const infoPlistPath = findFile(join(rootDir, "iosApp"), "Info.plist", 3);
+  if (infoPlistPath) {
+    const plistData = parsePlist(infoPlistPath);
+    if (plistData) {
+      const displayName =
+        (plistData.CFBundleDisplayName as string) ||
+        (plistData.CFBundleName as string);
+      if (displayName && !isXcodeVariable(displayName)) {
+        config.app_name = displayName;
+      }
+      if (!config.min_ios_version) {
+        config.min_ios_version = (plistData.MinimumOSVersion as string) || null;
+      }
+    }
+  }
 
   return config;
 }

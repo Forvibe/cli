@@ -1,0 +1,16 @@
+[
+  {
+    "id": "mini-story-b",
+    "store": "appstore",
+    "guidelineNumber": "1.1",
+    "guidelineName": "Mini Test Guideline",
+    "category": "safety",
+    "rejectionReason": "Test fixture only.",
+    "whatDeveloperDid": "Test fixture only.",
+    "whatAppleSaid": "Test fixture only.",
+    "fix": "Test fixture only.",
+    "outcome": "test-fixture",
+    "keywords": [],
+    "behavioralSignals": []
+  }
+]

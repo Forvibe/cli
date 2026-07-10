@@ -1,13 +1,40 @@
 import { existsSync, readdirSync } from "fs";
-import { join } from "path";
+import { join, relative } from "path";
 import type { TechStack, TechStackResult } from "../types/report.js";
-import { readFileSafe } from "../utils/file-scanner.js";
+import { readFileSafe, findFiles } from "../utils/file-scanner.js";
 
 interface DetectionRule {
   stack: TechStack;
   label: string;
   platforms: ("ios" | "android")[];
   detect: (rootDir: string) => string[];
+}
+
+// Matches any of the three ways a Gradle module declares the Kotlin
+// Multiplatform plugin (KTS function-call form, KTS/Groovy plugin-id form,
+// or the version-catalog alias name used in generated KMP wizard projects).
+const KMP_PLUGIN_MARKER_RE =
+  /kotlin\(\s*["']multiplatform["']\s*\)|id\(\s*["']org\.jetbrains\.kotlin\.multiplatform["']\s*\)|kotlinMultiplatform/;
+
+/**
+ * Finds the first module `build.gradle(.kts)` (depth-2 scan, so it reaches
+ * e.g. "shared/build.gradle.kts") whose content declares the Kotlin
+ * Multiplatform plugin. Returns the path relative to `dir`, or null.
+ * Deliberately does NOT special-case the root gradle file: it is already
+ * covered by the separate "root gradle file exists" check in the kmp rule,
+ * and a real KMP wizard project's root build.gradle.kts only ever applies
+ * the plugin with `apply false` for subprojects to use - it's the module
+ * (e.g. shared/) that actually activates it.
+ */
+function findKmpModuleGradleFile(dir: string): string | null {
+  const candidates = findFiles(dir, ["build.gradle.kts", "build.gradle"], 2);
+  for (const candidate of candidates) {
+    const content = readFileSafe(candidate);
+    if (content && KMP_PLUGIN_MARKER_RE.test(content)) {
+      return relative(dir, candidate);
+    }
+  }
+  return null;
 }
 
 const DETECTION_RULES: DetectionRule[] = [
@@ -110,7 +137,7 @@ const DETECTION_RULES: DetectionRule[] = [
   },
   {
     stack: "swift",
-    label: "Swift / SwiftUI",
+    label: "iOS Native (Swift/Objective-C)",
     platforms: ["ios"],
     detect: (dir) => {
       const files: string[] = [];
@@ -124,17 +151,61 @@ const DETECTION_RULES: DetectionRule[] = [
       } catch { /* ignore */ }
       if (existsSync(join(dir, "Package.swift"))) files.push("Package.swift");
       if (existsSync(join(dir, "Podfile"))) files.push("Podfile");
-      // Check for Swift source files
+      // Check for Swift OR Objective-C source files at root (.m/.mm added
+      // alongside .swift so an ObjC-only project with no .xcodeproj at root
+      // still matches this rule instead of falling through to "unknown").
       try {
         const entries = readdirSync(dir);
         for (const entry of entries) {
-          if (entry.endsWith(".swift")) {
+          if (entry.endsWith(".swift") || entry.endsWith(".m") || entry.endsWith(".mm")) {
             files.push(entry);
             break;
           }
         }
       } catch { /* ignore */ }
       return files;
+    },
+  },
+  {
+    stack: "unity",
+    label: "Unity",
+    platforms: ["ios", "android"],
+    detect: (dir) => {
+      // All three markers required (unlike most rules' `files.length >= N`
+      // threshold): each is individually common in unrelated project types
+      // (e.g. any Node project can have a "manifest.json"-shaped file), so
+      // requiring all three keeps this rule from ever firing on a
+      // non-Unity project.
+      const manifest = join(dir, "Packages", "manifest.json");
+      const projectSettings = join(dir, "ProjectSettings", "ProjectSettings.asset");
+      const assets = join(dir, "Assets");
+      if (existsSync(manifest) && existsSync(projectSettings) && existsSync(assets)) {
+        return [
+          "Packages/manifest.json",
+          "ProjectSettings/ProjectSettings.asset",
+          "Assets/",
+        ];
+      }
+      return [];
+    },
+  },
+  {
+    stack: "kmp",
+    label: "Kotlin Multiplatform",
+    platforms: ["ios", "android"],
+    detect: (dir) => {
+      const rootGradleFile = ["build.gradle.kts", "build.gradle", "settings.gradle.kts", "settings.gradle"]
+        .find((name) => existsSync(join(dir, name)));
+      if (!rootGradleFile) return [];
+
+      // iosApp/ is required so a pure-JVM/multi-target KMP *library* (no iOS
+      // app shell at all) is not misdetected as a mobile app stack here.
+      if (!existsSync(join(dir, "iosApp"))) return [];
+
+      const moduleGradleFile = findKmpModuleGradleFile(dir);
+      if (!moduleGradleFile) return [];
+
+      return [rootGradleFile, moduleGradleFile, "iosApp/"];
     },
   },
   {

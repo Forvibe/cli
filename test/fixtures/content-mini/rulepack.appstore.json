@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "store": "appstore",
+  "version": "0.0.1-mini",
+  "updated_at": "2026-01-01",
+  "rules": [
+    {
+      "id": "appstore.mini-test-rule",
+      "store": "appstore",
+      "guideline": { "number": "1.1", "name": "Mini Test Guideline" },
+      "severity": "low",
+      "category": "safety",
+      "title": "Mini test rule",
+      "description": "A minimal rule used only by test/scripts/sync-rulepack.test.ts.",
+      "user_impact": "None; test fixture only.",
+      "fix": "N/A",
+      "applies_if": { "always": true },
+      "fail_if": { "always": true },
+      "evidence_facts": []
+    }
+  ]
+}

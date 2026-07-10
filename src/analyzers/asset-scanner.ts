@@ -1,6 +1,7 @@
 import { readFileSync, existsSync, readdirSync, statSync } from "fs";
 import { join, extname, relative, basename } from "path";
 import type { TechStack, CLIAppAsset, CLIAssetType } from "../types/report.js";
+import { readFileSafe } from "../utils/file-scanner.js";
 
 const MAX_ASSET_SIZE = 5 * 1024 * 1024; // 5MB per asset (uploaded direct to Supabase Storage)
 const MAX_TOTAL_ASSETS = 10;
