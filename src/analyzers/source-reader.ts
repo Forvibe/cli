@@ -143,7 +143,7 @@ function getExtensionsForStack(techStack: TechStack): string[] {
 /**
  * Priority patterns - files matching these come first
  */
-function getPriorityPatternsForStack(techStack: TechStack): string[] {
+export function getPriorityPatternsForStack(techStack: TechStack): string[] {
   const common = [
     "main",
     "app",
@@ -161,7 +161,16 @@ function getPriorityPatternsForStack(techStack: TechStack): string[] {
 
   switch (techStack) {
     case "flutter":
-      return [...common, "widget", "screen", "page", "bloc", "provider", "controller"];
+      // "view"/"viewmodel"/"settings"/"auth"/"onboarding" were missing while
+      // the swift list had "view", which is why lib/features/settings/view/
+      // settings_view.dart scored ZERO on a Flutter app and never made it into
+      // the prompt, despite holding the account-deletion, privacy-policy and
+      // restore-purchases flows.
+      return [
+        ...common,
+        "widget", "screen", "page", "bloc", "provider", "controller",
+        "view", "viewmodel", "settings", "auth", "onboarding",
+      ];
     case "swift":
       return [...common, "view", "controller", "manager", "delegate", "contentview"];
     case "kotlin":
@@ -189,31 +198,67 @@ function getPriorityPatternsForStack(techStack: TechStack): string[] {
   }
 }
 
+/** Files any single directory may contribute before others get a turn. */
+const MAX_PER_DIR = 4;
+
 /**
- * Sort files by priority (important files first)
+ * Scores one file. The BASENAME dominates; a directory match is only a weak
+ * hint.
+ *
+ * The previous version counted pattern hits anywhere in the full path, which
+ * made scoring degenerate: on a Flutter app every file under
+ * lib/features/home/widget/ scored 2 (for "home" and "widget", both directory
+ * names) while lib/main.dart scored 1, so one feature folder outranked the
+ * entry point and consumed the whole budget.
  */
-function sortByPriority(files: string[], patterns: string[]): string[] {
-  return [...files].sort((a, b) => {
-    const aLower = a.toLowerCase();
-    const bLower = b.toLowerCase();
+function scoreFile(rel: string, patterns: string[]): number {
+  const lower = rel.toLowerCase();
+  const slash = Math.max(lower.lastIndexOf("/"), lower.lastIndexOf("\\"));
+  const base = slash >= 0 ? lower.slice(slash + 1) : lower;
+  const dir = slash >= 0 ? lower.slice(0, slash) : "";
 
-    const aScore = patterns.reduce(
-      (score, pattern) => (aLower.includes(pattern) ? score + 1 : score),
-      0
-    );
-    const bScore = patterns.reduce(
-      (score, pattern) => (bLower.includes(pattern) ? score + 1 : score),
-      0
-    );
-
-    // Higher priority first
-    if (aScore !== bScore) return bScore - aScore;
-    // Shorter paths first (more likely to be important)
-    return a.length - b.length;
-  });
+  let score = 0;
+  for (const p of patterns) {
+    if (base.includes(p)) score += 3;
+    else if (dir.includes(p)) score += 1;
+  }
+  // Shallower files are likelier to be entry points; cap so deep-but-relevant
+  // files are not buried outright.
+  return score - Math.min(rel.split(/[/\\]/).length - 1, 6);
 }
 
-function isTestFile(file: string): boolean {
+/**
+ * Sort files by priority (important files first), with a per-directory quota
+ * so that no single folder can monopolise a caller's budget.
+ */
+export function sortByPriority(files: string[], patterns: string[]): string[] {
+  const ranked = [...files].sort((a, b) => {
+    const d = scoreFile(b, patterns) - scoreFile(a, patterns);
+    if (d !== 0) return d;
+    if (a.length !== b.length) return a.length - b.length;
+    return a.localeCompare(b);
+  });
+
+  // Round-robin the quota: take up to MAX_PER_DIR per directory in rank order,
+  // then append everything that overflowed (still in rank order).
+  const perDir = new Map<string, number>();
+  const primary: string[] = [];
+  const overflow: string[] = [];
+  for (const file of ranked) {
+    const slash = Math.max(file.lastIndexOf("/"), file.lastIndexOf("\\"));
+    const dir = slash >= 0 ? file.slice(0, slash) : "";
+    const used = perDir.get(dir) ?? 0;
+    if (used < MAX_PER_DIR) {
+      perDir.set(dir, used + 1);
+      primary.push(file);
+    } else {
+      overflow.push(file);
+    }
+  }
+  return [...primary, ...overflow];
+}
+
+export function isTestFile(file: string): boolean {
   const lower = file.toLowerCase();
   // Standard test directory segments (JVM: src/test/, src/androidTest/; JS: __tests__; general: tests/, spec/)
   if (
@@ -233,7 +278,7 @@ function isTestFile(file: string): boolean {
   return false;
 }
 
-function isGeneratedFile(file: string, content: string): boolean {
+export function isGeneratedFile(file: string, content: string): boolean {
   const lower = file.toLowerCase();
   if (
     lower.includes(".g.dart") ||

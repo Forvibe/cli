@@ -3,8 +3,6 @@
 // signal scan, the profile builder, and the rule evaluator into one
 // synchronous, network-free, AI-free entry point.
 
-import { join } from "node:path";
-import { scanDirectory, readFileSafe } from "../utils/file-scanner.js";
 import { collectRawDependencies } from "../analyzers/sdk-scanner.js";
 import { matchSDKs } from "./registry.js";
 import { extractIosPlist } from "./extractors/ios-plist.js";
@@ -18,9 +16,11 @@ import {
   buildAppProfile,
   scanSourceSignals,
   type SourceSignals,
+  type SignalHit,
 } from "./profile-builder.js";
+import { readSourceCorpus, type SourceCorpus, type CorpusCoverage } from "./source-corpus.js";
 import { evaluateRules } from "./rules.js";
-import type { TechStack, TechStackResult } from "../types/report.js";
+import type { TechStackResult } from "../types/report.js";
 import type { AppProfile, ReviewCheck, RulepackBundle } from "./types.js";
 import type { ReviewFinding } from "../types/review.js";
 
@@ -35,8 +35,14 @@ export interface StaticEngineInput {
     min_android_sdk?: string | null;
   };
   bundle: RulepackBundle;
-  /** Provided when the caller (review.ts) already read source files. */
-  sourceFiles?: { path: string; content: string }[];
+  /**
+   * Provided when the caller already read the corpus (review.ts does, so the
+   * same read is reused for AI context selection). Omit to have the engine
+   * read it itself. Either way the signal scan sees the WHOLE corpus: it must
+   * never be handed the AI prompt's budgeted subset, or "not found" becomes a
+   * confident lie.
+   */
+  sourceCorpus?: SourceCorpus;
   /** Optional fixed timestamp for deterministic output; defaults to now. */
   generatedAt?: string;
 }
@@ -45,61 +51,9 @@ export interface StaticEngineResult {
   profile: AppProfile;
   checks: ReviewCheck[];
   findings: ReviewFinding[];
-}
-
-// Source-file extensions per stack. Mirrors source-reader.ts's mapping WITHOUT
-// its budget/priority logic (see brief) - the engine only needs raw content to
-// regex for behavioral signals.
-function extensionsForStack(stack: TechStack): string[] {
-  switch (stack) {
-    case "flutter":
-      return [".dart"];
-    case "swift":
-      return [".swift", ".m", ".mm", ".h"];
-    case "kotlin":
-      return [".kt", ".kts"];
-    case "expo":
-    case "react-native":
-    case "capacitor":
-      return [".ts", ".tsx", ".js", ".jsx"];
-    case "dotnet-maui":
-      return [".cs", ".xaml"];
-    case "unity":
-      return [".cs"];
-    case "kmp":
-      return [".kt", ".kts", ".swift"];
-    default:
-      return [".ts", ".js", ".swift", ".dart", ".kt"];
-  }
-}
-
-const SELF_SCAN_MAX_FILES = 300;
-const SELF_SCAN_MAX_TOTAL_CHARS = 200 * 1024; // 200KB budget across all files
-
-/**
- * Lightweight self-scan so the engine also works standalone (no caller-provided
- * source). Reads up to 300 source files or 200KB total, whichever comes first.
- */
-function selfScanSource(
-  rootDir: string,
-  stack: TechStack
-): { path: string; content: string }[] {
-  const relPaths = scanDirectory(rootDir, {
-    extensions: extensionsForStack(stack),
-    maxDepth: 8,
-    maxFiles: SELF_SCAN_MAX_FILES,
-  });
-
-  const files: { path: string; content: string }[] = [];
-  let totalChars = 0;
-  for (const rel of relPaths) {
-    if (files.length >= SELF_SCAN_MAX_FILES || totalChars >= SELF_SCAN_MAX_TOTAL_CHARS) break;
-    const content = readFileSafe(join(rootDir, rel));
-    if (content === null) continue;
-    files.push({ path: rel, content });
-    totalChars += content.length;
-  }
-  return files;
+  coverage: CorpusCoverage;
+  /** Every signal match, for evidence-driven AI corpus selection. */
+  signalHits: SignalHit[];
 }
 
 /**
@@ -158,15 +112,17 @@ export function runStaticEngine(input: StaticEngineInput): StaticEngineResult {
     }
   }
 
-  // Signals: caller-provided files win; otherwise self-scan. A self-scan that
-  // finds no source at all -> null signals (honest "we didn't see any source").
-  let signals: SourceSignals | null;
-  if (input.sourceFiles !== undefined) {
-    signals = scanSourceSignals({ files: input.sourceFiles });
-  } else {
-    const selfFiles = selfScanSource(rootDir, stack);
-    signals = selfFiles.length > 0 ? scanSourceSignals({ files: selfFiles }) : null;
-  }
+  // Signals are scanned over the WHOLE corpus, never over a token-budgeted
+  // subset. Zero source files at all -> null signals (honest "we didn't see
+  // any source"), which resolves to unverified rather than to violations.
+  const corpus: SourceCorpus = input.sourceCorpus ?? readSourceCorpus(rootDir, stack);
+  const signals: SourceSignals | null =
+    corpus.files.length > 0
+      ? scanSourceSignals({
+          files: corpus.files,
+          coverageComplete: corpus.coverage.complete,
+        })
+      : null;
 
   const profile = buildAppProfile({
     rootDir,
@@ -181,6 +137,7 @@ export function runStaticEngine(input: StaticEngineInput): StaticEngineResult {
     android,
     gradleTargets,
     signals,
+    coverage: corpus.coverage,
     generatedAt: input.generatedAt ?? new Date().toISOString(),
   });
 
@@ -190,7 +147,13 @@ export function runStaticEngine(input: StaticEngineInput): StaticEngineResult {
 
   const { checks, findings } = evaluateRules(profile, bundle);
 
-  return { profile, checks, findings };
+  return {
+    profile,
+    checks,
+    findings,
+    coverage: corpus.coverage,
+    signalHits: signals?.hits ?? [],
+  };
 }
 
 export type { RuleEvaluationResult } from "./rules.js";

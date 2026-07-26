@@ -22,20 +22,52 @@ import type { EvidenceMap } from "./extractors/shared.js";
 // Source signal scanning
 // ===========================================================================
 
+export type SignalKey =
+  | "restore_purchases"
+  | "account_deletion"
+  | "account_creation"
+  | "privacy_policy_link"
+  | "external_checkout_url"
+  | "webview"
+  | "ugc_surface"
+  | "moderation_controls";
+
+/** Where a signal matched. Drives evidence attribution and AI corpus selection. */
+export interface SignalHit {
+  path: string;
+  signal: SignalKey;
+  /** Character offset of the match within the file. */
+  index: number;
+}
+
 export interface SignalScanInput {
   files: { path: string; content: string }[];
+  /**
+   * Whether `files` is the COMPLETE source corpus. When false, a signal that
+   * was not found resolves to undefined ("unknown") rather than false, because
+   * the evidence may simply live in a file we never read.
+   *
+   * Defaults to true: every existing caller passes a corpus it believes whole.
+   */
+  coverageComplete?: boolean;
 }
 
 export interface SourceSignals {
-  restore_purchases_found: boolean;
-  account_deletion_found: boolean;
-  privacy_policy_link_found: boolean;
-  external_checkout_url_found: boolean;
-  webview_ratio: number;
-  account_creation_found: boolean;
+  // undefined = unknown (partial coverage). See AppProfile["signals"].
+  restore_purchases_found?: boolean;
+  account_deletion_found?: boolean;
+  privacy_policy_link_found?: boolean;
+  external_checkout_url_found?: boolean;
+  account_creation_found?: boolean;
+  ugc_surface_found?: boolean;
+  moderation_controls_found?: boolean;
+  webview_ratio?: number;
   webview_files: number;
   scanned_files: number;
   source_chars: number;
+  coverage_complete: boolean;
+  /** Engine-internal. NOT serialized into AppProfile. */
+  hits: SignalHit[];
 }
 
 // Signal patterns. Case-sensitivity is deliberate per pattern:
@@ -44,7 +76,16 @@ export interface SourceSignals {
 //   - webview refs are framework/type identifiers -> case-sensitive.
 const RESTORE_RE =
   /restorePurchases|restoreCompletedTransactions|restoreTransactions|queryPurchasesAsync|\brestore\s*\(\s*\)/;
-const ACCOUNT_DELETION_RE = /deleteAccount|removeAccount|deleteUser|closeAccount|account.{0,20}delet/i;
+// Deliberately does NOT include a loose `account.{0,20}delet` proximity clause.
+// Now that the scan covers the whole corpus rather than a curated slice, that
+// clause matched dead constants, admin-only endpoints and commented-out code,
+// which would report a delete flow as present when the UI has no such button.
+// A false "deletion exists" is worse than the false positive it replaced.
+// `(?![a-z])` rather than `\b` so camelCase continuations still match
+// (purgeAccountAndDeleteData) while unrelated longer words do not
+// (deleteUsername, removeAccountingEntry).
+const ACCOUNT_DELETION_RE =
+  /\b(?:delete|remove|close|destroy|purge)(?:My)?(?:Account|User|Profile)s?(?![a-z])|\baccountDeletion\b|["'`][^"'`]{0,20}[Dd]elete (?:my )?[Aa]ccount/;
 const ACCOUNT_CREATION_RE = /createAccount|createUser|signUp|register(?:User|Account|WithEmail)/;
 const PRIVACY_POLICY_RE = /privacy[\s_-]?policy/i;
 const EXTERNAL_CHECKOUT_RE =
@@ -52,47 +93,135 @@ const EXTERNAL_CHECKOUT_RE =
 const WEBVIEW_RE =
   /WKWebView|UIWebView|webview_flutter|react-native-webview|InAppWebView|android\.webkit\.WebView/;
 
+// UGC detection is two-factor by design: a content VERB bound to a social
+// NOUN, or a high-precision social identifier. Bare `comment|report|block|
+// share|feed` words are excluded - a naive OR of those matched 85 of 263 files
+// (32%) on a real app, which is indistinguishable from noise.
+//
+// The verb-to-noun gap allows an infix so domain-specific names still match
+// (addSharedFlashCardComment). `Message` is deliberately paired only with
+// post|publish|upload|submit|share and never with add|send|create, because
+// `addMessage`/`sendMessage` is how every AI-chat app writes to its own
+// conversation cache; flagging those would put a high-severity 1.2 finding on
+// every chatbot. Bare `share` + arbitrary noun is likewise excluded: it is
+// indistinguishable from an OS share-sheet call.
+// The trailing (?![a-z]) is what keeps the infix safe: getPostalCode and
+// postRequest are rejected because the noun must end at a camelCase boundary.
+const UGC_SURFACE_RE =
+  /\b(?:add|post|publish|submit|create|edit|update|delete|fetch|load|get)[A-Za-z]{0,24}(?:Comment|Reply|Thread|Discussion|Post)s?(?![a-z])|\b(?:post|publish|upload|submit|share)(?:Review|Story|Photo|Video|Content|Message)s?(?![a-z])|\buserGenerated\b|(?:[Ff]eed|[Tt]imeline|[Cc]ommunity)(?:ViewModel|Controller|Bloc|Provider|Repository|Service|Screen|Page|View)s?(?![a-z])|\bcommentCount\b|\blikeCount\b|\bupvote|\bsharedBy\b/;
+
+// Moderation affordances Apple looks for under 1.2: report content, block
+// users, filter objectionable material. Compound identifiers only - a bare
+// `report` matches crashReport/bugReport, a bare `block` matches
+// blockSize/blockchain, and even the word "moderation" shows up in ordinary
+// prose. A false match here makes a real 1.2 violation silently PASS, which is
+// the worst outcome this engine can produce, so the bar is deliberately high.
+// report/flag allows an infix (reportSharedFlashCardSet) but the negative
+// lookahead keeps crash-reporting out: reportErrorToUser would otherwise
+// satisfy 1.2 and let an unmoderated app pass.
+const MODERATION_RE =
+  /\b(?:report|flag)(?!Error|Crash|Bug|Exception|Issue|Analytics|Event)[A-Za-z]{0,24}(?:Content|Post|Comment|User|Abuse|Message|Reason|Item|Set|Author)s?(?![a-z])|\b(?:block|mute|ban|unblock)(?:ed)?(?:User|Author|Account|Member|List|Comment|Set)s?(?![a-z])|(?:Block|Unblock|Mute)(?:ed)?(?:User|Author|Account|Member|List|Comment|Set)s?(?![a-z])|[Cc]ontentReport|[Rr]eportReason|\bmoderate(?:Comment|Post|Content|User|Item)|[Cc]ontentModeration\b|[Mm]oderationQueue\b/;
+
 /** Rounds to 2 decimal places. */
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
+/** The once-per-signal detectors, in the order they appear in SourceSignals. */
+const ONESHOT_SIGNALS: { key: SignalKey; re: RegExp }[] = [
+  { key: "restore_purchases", re: RESTORE_RE },
+  { key: "account_deletion", re: ACCOUNT_DELETION_RE },
+  { key: "account_creation", re: ACCOUNT_CREATION_RE },
+  { key: "privacy_policy_link", re: PRIVACY_POLICY_RE },
+  { key: "external_checkout_url", re: EXTERNAL_CHECKOUT_RE },
+];
+
 /**
- * Scans already-read source files for behavioral signals. Always returns
- * concrete booleans and counts; the "we didn't scan any source" case is
- * represented by passing `null` for the signals input to buildAppProfile.
+ * Scans already-read source files for behavioral signals.
+ *
+ * Coverage handling is deliberately ASYMMETRIC. A positive is coverage
+ * independent: finding `deleteAccount` proves deletion exists no matter how
+ * much else you skipped. A negative is not: "not found" only means "absent"
+ * if you actually looked everywhere. So `found ? true : complete ? false :
+ * <omitted>`, and an omitted key resolves to `unverified` in the rule engine
+ * rather than to a violation.
  */
 export function scanSourceSignals(input: SignalScanInput): SourceSignals {
-  let restore = false;
-  let deletion = false;
-  let creation = false;
-  let privacyPolicy = false;
-  let externalCheckout = false;
+  const complete = input.coverageComplete ?? true;
+  const found = new Map<SignalKey, SignalHit>();
+  const hits: SignalHit[] = [];
   let webviewFiles = 0;
   let sourceChars = 0;
 
-  for (const { content } of input.files) {
+  for (const { path, content } of input.files) {
     sourceChars += content.length;
-    if (!restore && RESTORE_RE.test(content)) restore = true;
-    if (!deletion && ACCOUNT_DELETION_RE.test(content)) deletion = true;
-    if (!creation && ACCOUNT_CREATION_RE.test(content)) creation = true;
-    if (!privacyPolicy && PRIVACY_POLICY_RE.test(content)) privacyPolicy = true;
-    if (!externalCheckout && EXTERNAL_CHECKOUT_RE.test(content)) externalCheckout = true;
-    if (WEBVIEW_RE.test(content)) webviewFiles += 1;
+
+    for (const { key, re } of ONESHOT_SIGNALS) {
+      // First hit wins: it becomes the evidence file for this signal. Skipping
+      // already-found signals also keeps a full-corpus scan cheap.
+      if (found.has(key)) continue;
+      const m = re.exec(content);
+      if (m) {
+        const hit: SignalHit = { path, signal: key, index: m.index };
+        found.set(key, hit);
+        hits.push(hit);
+      }
+    }
+
+    // UGC and moderation are evaluated together, per file, because moderation
+    // only counts when it is attached to user-generated content. A standalone
+    // `reportMessage` in a chat app's support dialog is a support ticket, not
+    // 1.2 moderation, and letting it satisfy the check would make a genuinely
+    // unmoderated UGC app PASS. Requiring co-occurrence errs toward reporting
+    // a 1.2 risk that turns out to be handled, which is the safe direction.
+    const ugc = UGC_SURFACE_RE.exec(content);
+    if (ugc && !found.has("ugc_surface")) {
+      const hit: SignalHit = { path, signal: "ugc_surface", index: ugc.index };
+      found.set("ugc_surface", hit);
+      hits.push(hit);
+    }
+    if (ugc && !found.has("moderation_controls")) {
+      const mod = MODERATION_RE.exec(content);
+      if (mod) {
+        const hit: SignalHit = { path, signal: "moderation_controls", index: mod.index };
+        found.set("moderation_controls", hit);
+        hits.push(hit);
+      }
+    }
+
+    const wv = WEBVIEW_RE.exec(content);
+    if (wv) {
+      webviewFiles += 1;
+      hits.push({ path, signal: "webview", index: wv.index });
+    }
   }
 
   const scannedFiles = input.files.length;
+  const tri = (key: SignalKey): boolean | undefined =>
+    found.has(key) ? true : complete ? false : undefined;
+
+  // Build with conditional spread so an unknown signal is a genuinely ABSENT
+  // property (hasOwnProperty === false), not a property set to undefined.
+  // resolveFact distinguishes the two, and only "missing" is unambiguous.
+  const put = (name: string, key: SignalKey) => {
+    const v = tri(key);
+    return v === undefined ? {} : { [name]: v };
+  };
 
   return {
-    restore_purchases_found: restore,
-    account_deletion_found: deletion,
-    privacy_policy_link_found: privacyPolicy,
-    external_checkout_url_found: externalCheckout,
-    webview_ratio: round2(webviewFiles / Math.max(scannedFiles, 1)),
-    account_creation_found: creation,
+    ...put("restore_purchases_found", "restore_purchases"),
+    ...put("account_deletion_found", "account_deletion"),
+    ...put("account_creation_found", "account_creation"),
+    ...put("privacy_policy_link_found", "privacy_policy_link"),
+    ...put("external_checkout_url_found", "external_checkout_url"),
+    ...put("ugc_surface_found", "ugc_surface"),
+    ...put("moderation_controls_found", "moderation_controls"),
+    ...(complete ? { webview_ratio: round2(webviewFiles / Math.max(scannedFiles, 1)) } : {}),
     webview_files: webviewFiles,
     scanned_files: scannedFiles,
     source_chars: sourceChars,
+    coverage_complete: complete,
+    hits,
   };
 }
 
@@ -119,7 +248,40 @@ export interface BuildProfileInput {
   android: AndroidManifestExtraction | null;
   gradleTargets: GradleTargetsExtraction | null;
   signals: SourceSignals | null;
+  /** Corpus coverage behind `signals`, surfaced in profile.stats. */
+  coverage?: { discovered: number; complete: boolean };
   generatedAt: string;
+}
+
+/** Maps a signal key to the `signals.*` fact path rules reference. */
+const SIGNAL_FACT_PATH: Record<SignalKey, string | null> = {
+  restore_purchases: "signals.restore_purchases_found",
+  account_deletion: "signals.account_deletion_found",
+  account_creation: "signals.account_creation_found",
+  privacy_policy_link: "signals.privacy_policy_link_found",
+  external_checkout_url: "signals.external_checkout_url_found",
+  ugc_surface: "signals.ugc_surface_found",
+  moderation_controls: "signals.moderation_controls_found",
+  webview: "signals.webview_ratio",
+};
+
+/**
+ * Turns the first hit for each found signal into an evidence entry.
+ *
+ * This is what finally populates `ReviewFinding.file` for signal-driven rules:
+ * firstEvidenceFile() already walks each rule's `evidence_facts`, and those
+ * rules already list their `signals.*` paths there, so no rule change is
+ * needed. A signal-based claim is now auditable instead of asserted.
+ */
+function signalEvidence(signals: SourceSignals | null): EvidenceMap {
+  const evidence: EvidenceMap = {};
+  if (!signals) return evidence;
+  for (const hit of signals.hits) {
+    const factPath = SIGNAL_FACT_PATH[hit.signal];
+    if (!factPath || evidence[factPath]) continue;
+    evidence[factPath] = { file: hit.path, detail: "source scan" };
+  }
+  return evidence;
 }
 
 /** Maps an android permission (full or short name) to its short suffix. */
@@ -188,13 +350,20 @@ function deriveCapabilities(input: BuildProfileInput): Capability[] {
     caps.add("tracking");
   }
 
-  // 5. Source signals.
+  // 5. Source signals. Explicit `=== true`: these are now tri-state, and an
+  //    unknown signal must not derive a capability.
   const signals = input.signals;
   if (signals) {
-    if (signals.account_creation_found) caps.add("account_creation");
-    if (signals.account_deletion_found) caps.add("account_deletion");
-    if (signals.webview_ratio >= 0.5) caps.add("webview_heavy");
-    if (signals.external_checkout_url_found) caps.add("external_payment");
+    if (signals.account_creation_found === true) caps.add("account_creation");
+    if (signals.account_deletion_found === true) caps.add("account_deletion");
+    if (signals.external_checkout_url_found === true) caps.add("external_payment");
+    // UGC used to be derivable ONLY from a matched third-party SDK (Stream,
+    // Agora and friends), so a hand-rolled sharing/commenting feature was
+    // invisible to guideline 1.2 no matter how large it was.
+    if (signals.ugc_surface_found === true) caps.add("ugc");
+    if (signals.webview_ratio !== undefined && signals.webview_ratio >= 0.5) {
+      caps.add("webview_heavy");
+    }
   }
 
   // 6. Android permissions.
@@ -248,6 +417,7 @@ function deriveCapabilities(input: BuildProfileInput): Capability[] {
 function mergeEvidence(input: BuildProfileInput): AppProfile["evidence"] {
   const evidence: EvidenceMap = {};
   const sources: (EvidenceMap | undefined)[] = [
+    signalEvidence(input.signals),
     input.ios?.evidence,
     input.entitlements?.evidence,
     input.privacyManifest?.evidence,
@@ -290,21 +460,36 @@ export function buildAppProfile(input: BuildProfileInput): AppProfile {
 
   const android: AppProfile["android"] = input.android ? input.android.android : null;
 
-  const signals: AppProfile["signals"] = input.signals
-    ? {
-        restore_purchases_found: input.signals.restore_purchases_found,
-        account_deletion_found: input.signals.account_deletion_found,
-        privacy_policy_link_found: input.signals.privacy_policy_link_found,
-        external_checkout_url_found: input.signals.external_checkout_url_found,
-        webview_ratio: input.signals.webview_ratio,
+  // Copy only the keys the scan actually resolved. An unresolved signal must
+  // stay ABSENT from the profile (not present-as-null) so resolveFact reports
+  // `missing` and the rule engine yields "unverified". `null` would work too
+  // (it resolves to unknown), but absence is the contract-consistent shape and
+  // is exactly what an older CLI's profile looks like.
+  const SIGNAL_FIELDS = [
+    "restore_purchases_found",
+    "account_deletion_found",
+    "privacy_policy_link_found",
+    "external_checkout_url_found",
+    "ugc_surface_found",
+    "moderation_controls_found",
+    "webview_ratio",
+  ] as const;
+
+  const signals: AppProfile["signals"] = {};
+  if (input.signals) {
+    const src = input.signals as unknown as Record<string, unknown>;
+    for (const field of SIGNAL_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(src, field)) {
+        (signals as Record<string, unknown>)[field] = src[field];
       }
-    : {
-        restore_purchases_found: null,
-        account_deletion_found: null,
-        privacy_policy_link_found: null,
-        external_checkout_url_found: null,
-        webview_ratio: null,
-      };
+    }
+  } else {
+    // No source was scanned at all. Explicit nulls say "present but
+    // unresolvable", which also resolves to unverified.
+    for (const field of SIGNAL_FIELDS) {
+      (signals as Record<string, unknown>)[field] = null;
+    }
+  }
 
   return {
     schema_version: 1,
@@ -330,6 +515,12 @@ export function buildAppProfile(input: BuildProfileInput): AppProfile {
     stats: {
       files_scanned: input.signals?.scanned_files ?? 0,
       source_chars_read: input.signals?.source_chars ?? 0,
+      ...(input.coverage
+        ? {
+            files_discovered: input.coverage.discovered,
+            coverage_complete: input.coverage.complete,
+          }
+        : {}),
     },
   };
 }

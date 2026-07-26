@@ -165,15 +165,26 @@ export function findFiles(
   );
 }
 
+/** Default size above which readFileSafe refuses to read a file. */
+export const DEFAULT_MAX_READ_BYTES = 1024 * 1024;
+
 /**
- * Read a file safely, returning null on error
+ * Read a file safely, returning null on error.
+ *
+ * `maxBytes` defaults to 1MB, which is the right guard for the many callers
+ * that read a single config/manifest file. The source-corpus reader raises it
+ * deliberately: compliance code (deleteAccount, restorePurchases) frequently
+ * lives in oversized god-service files, and silently dropping those is how the
+ * signal scan used to produce false "not found" results.
  */
-export function readFileSafe(filePath: string): string | null {
+export function readFileSafe(
+  filePath: string,
+  maxBytes: number = DEFAULT_MAX_READ_BYTES
+): string | null {
   try {
     if (!existsSync(filePath)) return null;
     const stat = statSync(filePath);
-    // Skip files larger than 1MB
-    if (stat.size > 1024 * 1024) return null;
+    if (stat.size > maxBytes) return null;
     return readFileSync(filePath, "utf-8");
   } catch {
     return null;

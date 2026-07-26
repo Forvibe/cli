@@ -105,6 +105,9 @@ export interface AssembleReportInput {
   platform: string;
   bundleId: string | null;
   sourceFilesAnalyzed: number;
+  sourceFilesDiscovered?: number;
+  sourceScanComplete?: boolean;
+  aiContextFiles?: number;
   /** AI pass-1 feature names; [] on the static-only path (capabilities live in app_profile.capabilities). */
   featuresDetected: string[];
   staticFindings: ReviewFinding[];
@@ -136,6 +139,13 @@ export function assembleReportV2(input: AssembleReportInput): CodeReviewReport {
   return {
     features_detected: input.featuresDetected,
     source_files_analyzed: input.sourceFilesAnalyzed,
+    ...(input.sourceFilesDiscovered !== undefined
+      ? { source_files_discovered: input.sourceFilesDiscovered }
+      : {}),
+    ...(input.sourceScanComplete !== undefined
+      ? { source_scan_complete: input.sourceScanComplete }
+      : {}),
+    ...(input.aiContextFiles !== undefined ? { ai_context_files: input.aiContextFiles } : {}),
     platform: input.platform,
     bundle_id: input.bundleId,
     findings,

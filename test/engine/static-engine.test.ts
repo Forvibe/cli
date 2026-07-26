@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { runStaticEngine, type StaticEngineResult } from "../../src/engine/index.js";
@@ -10,10 +10,11 @@ import { loadSnapshotBundle } from "../helpers/load-bundle.js";
 import type { CheckStatus } from "../../src/engine/types.js";
 
 // Integration tests run against the COMMITTED snapshot (bundle.appstore.json,
-// version 2.2.0 after the Task 8b story-corpus expansion: still 30 rules and
-// 118 registry entries, but the rejection-story corpus grew from 100 to 192
-// and 20 rules / 9 registry entries gained related_story_ids/stories[]
-// links), imported directly - never via the network loader.
+// version 2.3.0: still 30 rules and 118 registry entries with a 192-story
+// corpus, but the two guideline 1.2 rules now key on
+// signals.moderation_controls_found instead of {always:true}, which is what
+// makes them able to pass or fail at all), imported directly - never via the
+// network loader.
 const bundle = loadSnapshotBundle();
 
 function runFixture(fixture: string): StaticEngineResult {
@@ -41,8 +42,8 @@ function statusMap(result: StaticEngineResult): Record<string, CheckStatus> {
   return map;
 }
 
-it("snapshot is the 2.2.2 rulepack (story corpus expanded 100 -> 192, still 30 rules / 118 SDKs)", () => {
-  expect(bundle.version).toBe("2.2.2");
+it("snapshot is the 2.3.0 rulepack (1.2 UGC rules made decidable, still 30 rules / 118 SDKs)", () => {
+  expect(bundle.version).toBe("2.3.0");
   expect(bundle.rules.length).toBe(30);
   expect(bundle.sdk_registry.length).toBe(118);
   expect(bundle.stories.length).toBe(192);
@@ -466,6 +467,94 @@ describe("build-variable GAD id end-to-end", () => {
       ).toBe(false);
     } finally {
       rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+// ===========================================================================
+// Guideline 1.2 - the rules that were inert before rulepack 2.3.0
+// ===========================================================================
+
+describe("guideline 1.2 UGC rules", () => {
+  /** Minimal Flutter project with the given lib/ sources. */
+  function flutterProject(files: Record<string, string>): string {
+    const root = mkdtempSync(path.join(tmpdir(), "forvibe-ugc-"));
+    writeFileSync(
+      path.join(root, "pubspec.yaml"),
+      "name: demo\nversion: 1.0.0+1\ndependencies:\n  flutter:\n    sdk: flutter\n"
+    );
+    // tech-detector needs >= 2 of pubspec.yaml / lib / android / ios.
+    mkdirSync(path.join(root, "lib"), { recursive: true });
+    mkdirSync(path.join(root, "ios"), { recursive: true });
+    mkdirSync(path.join(root, "android"), { recursive: true });
+    for (const [rel, content] of Object.entries(files)) {
+      const full = path.join(root, "lib", rel);
+      mkdirSync(path.dirname(full), { recursive: true });
+      writeFileSync(full, content);
+    }
+    return root;
+  }
+
+  function runProject(root: string): StaticEngineResult {
+    const stackResult = detectTechStack(root);
+    return runStaticEngine({
+      rootDir: root,
+      stackResult,
+      appConfig: {
+        app_name: "Demo",
+        bundle_id: "com.demo.app",
+        version: "1.0.0",
+        min_ios_version: null,
+        min_android_sdk: null,
+      },
+      bundle,
+      generatedAt: "2026-07-26T00:00:00.000Z",
+    });
+  }
+
+  it("FAILS when a hand-rolled UGC feature has no moderation controls", () => {
+    // No third-party UGC SDK anywhere. Before the source signal existed, the
+    // `ugc` capability was derivable only from a matched SDK, so this app was
+    // completely invisible to 1.2 no matter how large the feature was.
+    const root = flutterProject({
+      "features/social/comments_view.dart":
+        "Future<void> addComment(String text) async { await api.postComment(text); }",
+    });
+    try {
+      const result = runProject(root);
+      expect(result.profile.capabilities).toContain("ugc");
+      expect(result.profile.signals.moderation_controls_found).toBe(false);
+      expect(statusMap(result)["appstore.ugc-without-moderation"]).toBe("fail");
+      expect(result.findings.some((f) => f.rule_id === "appstore.ugc-without-moderation")).toBe(
+        true
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("PASSES when report and block controls sit with the content", () => {
+    const root = flutterProject({
+      "features/social/comments_view.dart":
+        "Future<void> addComment(String t) async {}\nFuture<void> reportComment(int id) async {}\nvoid blockUser(String id) {}",
+    });
+    try {
+      const result = runProject(root);
+      expect(result.profile.capabilities).toContain("ugc");
+      expect(result.profile.signals.moderation_controls_found).toBe(true);
+      // The whole point of 2.3.0: this rule can now reach "pass" at all.
+      expect(statusMap(result)["appstore.ugc-without-moderation"]).toBe("pass");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("stays n/a for an app with no user-generated content", () => {
+    const root = flutterProject({ "main.dart": "void main() { runApp(MyApp()); }" });
+    try {
+      expect(statusMap(runProject(root))["appstore.ugc-without-moderation"]).toBe("na");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
     }
   });
 });

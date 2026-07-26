@@ -199,3 +199,40 @@ describe("formatJSON", () => {
     expect(parsed.app_profile?.app.bundle_id).toBe("com.test.app");
   });
 });
+
+describe("coverage reporting", () => {
+  it("shows a denominator and the AI subset when the scan reported coverage", () => {
+    // "34 source files analyzed" with no denominator let a 13% scan read as a
+    // complete audit. The denominator is the whole point.
+    const report = makeV2Report({
+      source_files_analyzed: 262,
+      source_files_discovered: 265,
+      source_scan_complete: true,
+      ai_context_files: 41,
+    });
+
+    const terminal = strip(formatTerminal(report));
+    expect(terminal).toContain("262 of 265 source files scanned (99%)");
+    expect(terminal).toContain("41 sent to AI");
+
+    expect(formatMarkdown(report)).toContain("262 of 265 source files scanned (99%)");
+  });
+
+  it("renders the legacy line for a v1-shaped report with no coverage fields", () => {
+    const report = makeV2Report({ source_files_analyzed: 12 });
+
+    expect(strip(formatTerminal(report))).toContain("12 source files analyzed");
+    expect(formatMarkdown(report)).toContain("12 source files analyzed");
+  });
+
+  it("warns that a partial scan reports unfound signals as unverified", () => {
+    const report = makeV2Report({
+      source_files_analyzed: 400,
+      source_files_discovered: 5000,
+      source_scan_complete: false,
+    });
+
+    expect(strip(formatTerminal(report))).toContain("Partial scan");
+    expect(formatMarkdown(report)).toContain("Partial scan");
+  });
+});

@@ -89,7 +89,14 @@ import type { AppProfile, ReviewCheck } from "../engine/types.js";
 
 export interface CodeReviewReport {
   features_detected: string[];
+  /** Files the DETERMINISTIC scan read. Not the AI prompt's subset. */
   source_files_analyzed: number;
+  /** Files the walker discovered. Denominator for source_files_analyzed. */
+  source_files_discovered?: number;
+  /** False when a budget stopped the scan short of the whole project. */
+  source_scan_complete?: boolean;
+  /** Files placed in the AI prompt (a subset of source_files_analyzed). */
+  ai_context_files?: number;
   platform: string;
   bundle_id: string | null;
   findings: ReviewFinding[];
