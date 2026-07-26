@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "store": "appstore",
-  "version": "2.2.2",
-  "updated_at": "2026-07-10",
+  "version": "2.3.0",
+  "updated_at": "2026-07-26",
   "rules": [
     {
       "id": "appstore.att-usage-description-missing",
@@ -583,21 +583,26 @@
       },
       "severity": "high",
       "category": "safety",
-      "title": "User-generated content detected without confirmed moderation controls",
-      "description": "The app allows users to post content, but whether the required moderation controls exist cannot be determined by static analysis alone. Guideline 1.2 requires apps with user-generated content to include a way to filter objectionable material, a mechanism to report content and abusive users with a timely response, the ability to block abusive users, and published contact information.",
-      "user_impact": "If any of the required controls, filtering, reporting, blocking, or published contact information, is missing, the reviewer posts test content and rejects under 1.2 once its absence is confirmed.",
-      "fix": "Confirm the app has all four required controls: a report or flag action on every piece of user content, a user-blocking feature, a moderation process with a stated response time, and a visible way to contact the developer, then document them in the Notes for Review since App Review cannot always find them through UI exploration alone.",
+      "title": "User-generated content without report or block controls",
+      "description": "The app lets users create or share content with each other, but the source scan found no reporting or blocking controls attached to it. Guideline 1.2 requires apps with user-generated content to include a way to filter objectionable material, a mechanism to report content and abusive users with a timely response, the ability to block abusive users, and published contact information.",
+      "user_impact": "The reviewer posts test content, looks for a way to report it or block its author, finds neither, and rejects under 1.2.",
+      "fix": "Add all four required controls: a report or flag action on every piece of user content, a user-blocking feature, a moderation process with a stated response time, and a visible way to contact the developer. Then document them in the Notes for Review, since App Review cannot always find them through UI exploration alone.",
       "applies_if": {
         "capability": "ugc"
       },
       "unverified_if": {
-        "always": true
+        "fact": "signals.moderation_controls_found",
+        "op": "absent"
       },
       "fail_if": {
-        "always": true
+        "fact": "signals.moderation_controls_found",
+        "op": "eq",
+        "value": false
       },
       "evidence_facts": [
-        "capabilities"
+        "capabilities",
+        "signals.ugc_surface_found",
+        "signals.moderation_controls_found"
       ],
       "related_story_ids": [
         "ugc-moderation-missing-fliplearn",
@@ -828,20 +833,24 @@
       "severity": "medium",
       "category": "safety",
       "title": "AI-generated content needs moderation and reporting controls",
-      "description": "The app appears to generate content with AI. App Review applies guideline 1.2's user-generated content standards to AI-generated content: the app needs filtering of objectionable material, a way for users to report problematic output, and an age rating that matches what the generator can produce. Apps that can generate adult or abusive content without guardrails are rejected. Whether these controls exist is behavioral, so this always needs manual verification.",
+      "description": "The app appears to generate content with AI, and the source scan found no reporting or blocking controls on it. App Review applies guideline 1.2's user-generated content standards to AI-generated content: the app needs filtering of objectionable material, a way for users to report problematic output, and an age rating that matches what the generator can produce. Apps that can generate adult or abusive content without guardrails are rejected.",
       "user_impact": "The reviewer prompts the AI feature with borderline requests, and rejects under 1.2 or demands a 17+ age rating if the app produces objectionable content without filtering, reporting, or blocking controls.",
       "fix": "Add server-side content filtering for AI output, an in-app report action on generated content, and a block mechanism where user-to-user sharing exists, then set the age rating to match what the generator can actually produce and describe the moderation pipeline in the Notes for Review.",
       "applies_if": {
         "capability": "ai_generated_content"
       },
       "unverified_if": {
-        "always": true
+        "fact": "signals.moderation_controls_found",
+        "op": "absent"
       },
       "fail_if": {
-        "always": true
+        "fact": "signals.moderation_controls_found",
+        "op": "eq",
+        "value": false
       },
       "evidence_facts": [
-        "capabilities"
+        "capabilities",
+        "signals.moderation_controls_found"
       ],
       "related_story_ids": [
         "anonymous-chat-pornography-risk",

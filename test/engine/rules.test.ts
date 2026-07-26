@@ -4,6 +4,7 @@ import {
   evaluateCondition,
   evaluateRules,
 } from "../../src/engine/rules.js";
+import { loadSnapshotBundle } from "../helpers/load-bundle.js";
 import type {
   AppProfile,
   Condition,
@@ -790,5 +791,49 @@ describe("deterministic output ordering", () => {
     const a = evaluateRules(baseProfile(), b);
     const c = evaluateRules(baseProfile(), b);
     expect(a).toEqual(c);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Backward compatibility: an OLD CLI's profile against the 2.3.0 rulepack.
+// ---------------------------------------------------------------------------
+
+describe("old-CLI profiles against the rewritten 1.2 rules", () => {
+  const bundle = loadSnapshotBundle();
+
+  /** A pre-2.0.2 profile: UGC capability, but no moderation signal key at all. */
+  function oldCliProfile(): AppProfile {
+    const p = baseProfile({ capabilities: ["ugc"] });
+    // Old CLIs never emitted these keys. Delete rather than set to undefined:
+    // resolveFact distinguishes `missing` from `nullvalue`, and this must be
+    // genuinely missing to reproduce the real wire shape.
+    delete (p.signals as Record<string, unknown>).moderation_controls_found;
+    delete (p.signals as Record<string, unknown>).ugc_surface_found;
+    return p;
+  }
+
+  it("resolves ugc-without-moderation to unverified, never to a silent pass", () => {
+    // This is why unverified_if uses `absent` and not neq/eq. With fail_if
+    // alone, a MISSING key evaluates to "false" -> fail_if false -> PASS, and
+    // an old CLI would silently clear the highest-severity rule in the pack.
+    const { checks } = evaluateRules(oldCliProfile(), bundle);
+    const ugc = checks.find((c) => c.rule_id === "appstore.ugc-without-moderation");
+
+    expect(ugc?.status).toBe("unverified");
+  });
+
+  it("emits no finding for it, so old clients see exactly today's behaviour", () => {
+    const { findings } = evaluateRules(oldCliProfile(), bundle);
+    expect(findings.some((f) => f.rule_id === "appstore.ugc-without-moderation")).toBe(false);
+  });
+
+  it("an explicit null (scanned but unresolvable) also lands on unverified", () => {
+    const p = baseProfile({ capabilities: ["ugc"] });
+    p.signals.moderation_controls_found = null;
+
+    const ugc = evaluateRules(p, bundle).checks.find(
+      (c) => c.rule_id === "appstore.ugc-without-moderation"
+    );
+    expect(ugc?.status).toBe("unverified");
   });
 });
