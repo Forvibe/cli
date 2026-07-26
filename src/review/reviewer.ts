@@ -24,6 +24,7 @@ import type {
   RulepackBundle,
 } from "../engine/types.js";
 import { evaluateRules } from "../engine/rules.js";
+import type { SignalKey } from "../engine/profile-builder.js";
 import { detectFeatures } from "./feature-detector.js";
 import {
   searchStories,
@@ -125,8 +126,10 @@ Do not include an approval estimate; the final outcome is computed deterministic
    - low: Improves chances but not a guaranteed rejection
    - info: Best practice suggestion
 6. Focus on the TOP issues (max 10 findings). Quality over quantity.
-7. CRITICAL: You are seeing a SUBSET of the codebase, not ALL of it. If you cannot find evidence of something (e.g., a "Restore Purchases" button, account deletion flow, privacy policy link), do NOT assume it is missing. Only flag it if you see CONTRADICTING evidence (e.g., subscription code exists but zero restore mechanism in ANY of the visible code). When uncertain, use severity "low" or "info" instead of "high".
-8. Never flag an issue as "high" unless you have DIRECT code evidence that something is definitively wrong or missing. "I didn't see it in the provided code" is NOT sufficient evidence for a high-risk finding — the feature may exist in files not shown to you.`;
+7. EVIDENCE IS MANDATORY. Every finding MUST set "file" to a path that appears in the Source File Inventory, and "evidence" MUST quote the relevant code verbatim. A finding with no file, or an invented file path, is discarded before the user sees it.
+8. NEVER INFER ABSENCE. You are shown a SUBSET of the source, but the inventory lists EVERY file in the project. If a feature would live in a file you were not given, you have learned nothing about it. Say nothing. "I didn't see it in the provided code" is not evidence.
+9. The "Resolved By Deterministic Scan" section is GROUND TRUTH, produced by regexing every file in the project. If it says a feature was FOUND, that feature exists: do not report it as missing regardless of what your excerpts show. Only "unknown" entries are open questions.
+10. Report absence ONLY with positive contradicting evidence, e.g. subscription purchase code in a file you were shown PLUS the deterministic scan reporting restore purchases NOT FOUND.`;
 }
 
 interface AIResponseRaw {
@@ -241,6 +244,103 @@ export function dedupeAIFindings(
 }
 
 // ===========================================================================
+// Evidence guard for AI findings
+// ===========================================================================
+
+/** Phrasing that asserts a feature is absent rather than describing one. */
+const ABSENCE_CLAIM_RE =
+  /\b(missing|absent|no |not (?:present|implemented|found|available)|lacks?|lacking|without)\b/i;
+
+/**
+ * Claims that a resolved signal can directly refute.
+ *
+ * Both the guideline AND the topic must match. Keying on the guideline alone
+ * is too blunt: 3.1.2 covers far more than restore purchases, so a legitimate
+ * "paywall without a close button" finding would be discarded merely because
+ * restore purchases happened to be found elsewhere.
+ */
+const REFUTABLE_CLAIMS: { signal: SignalKey; guidelines: string[]; topic: RegExp }[] = [
+  {
+    signal: "account_deletion",
+    guidelines: ["5.1.1(v)", "5.1.1"],
+    topic: /account\s+deletion|delet\w*\s+(?:my\s+|the\s+|their\s+)?account|remov\w*\s+(?:my\s+|the\s+)?account/i,
+  },
+  {
+    signal: "restore_purchases",
+    guidelines: ["3.1.2", "3.1.1"],
+    topic: /restor\w*\s+(?:in-app\s+)?purchase|purchase\s+restor|restore\s+button/i,
+  },
+  {
+    signal: "privacy_policy_link",
+    guidelines: ["5.1.1", "5.1.2"],
+    topic: /privacy\s+policy/i,
+  },
+  {
+    signal: "moderation_controls",
+    guidelines: ["1.2"],
+    topic: /moderat|report\w*\s+(?:content|posts?|comments?|users?|abuse)|block\w*\s+(?:users?|authors?)|flag\w*\s+content/i,
+  },
+];
+
+export interface AIFindingFilterResult {
+  kept: ReviewFinding[];
+  droppedCount: number;
+  downgradedCount: number;
+}
+
+/**
+ * Rejects AI findings the evidence does not support.
+ *
+ * The failure this exists to stop: the model is handed a slice of the codebase,
+ * does not see the settings screen, and confidently reports "no account
+ * deletion option" as a high-severity finding. That claim is unfalsifiable from
+ * the model's position and it was wrong.
+ *
+ * Two tiers, deliberately: DROP only claims that assert absence while either
+ * contradicting a resolved fact or citing a file we never showed the model.
+ * Everything else is merely DOWNGRADED, so a real finding phrased awkwardly
+ * survives.
+ */
+export function filterUnsupportedAIFindings(
+  findings: ReviewFinding[],
+  opts: { corpusPaths: Set<string>; resolvedTrue: SignalKey[] }
+): AIFindingFilterResult {
+  const resolved = new Set(opts.resolvedTrue);
+  const kept: ReviewFinding[] = [];
+  let downgradedCount = 0;
+
+  for (const finding of findings) {
+    const text = `${finding.title ?? ""} ${finding.description ?? ""}`;
+    const claimsAbsence = ABSENCE_CLAIM_RE.test(text);
+
+    if (claimsAbsence) {
+      // Contradicts ground truth: the scan read every file and found it.
+      const guideline = finding.guideline_number ?? "";
+      const refuted = REFUTABLE_CLAIMS.some(
+        (claim) =>
+          resolved.has(claim.signal) &&
+          claim.guidelines.includes(guideline) &&
+          claim.topic.test(text)
+      );
+      if (refuted) continue;
+
+      // Asserts absence without pointing at anything we actually showed it.
+      if (!finding.file || !opts.corpusPaths.has(finding.file)) continue;
+    }
+
+    if (finding.risk_level === "high" && !finding.evidence?.trim()) {
+      kept.push({ ...finding, risk_level: "medium" });
+      downgradedCount += 1;
+      continue;
+    }
+
+    kept.push(finding);
+  }
+
+  return { kept, droppedCount: findings.length - kept.length, downgradedCount };
+}
+
+// ===========================================================================
 // Deep-mode feature -> capability mapping
 // ===========================================================================
 
@@ -311,9 +411,27 @@ export function mapFeaturesToCapabilities(analysis: AppFeatureAnalysis): Capabil
 // Prompt sections
 // ===========================================================================
 
-function formatValueOrUnknown(value: boolean | null): string {
-  if (value === null) return "unknown";
+function formatValueOrUnknown(value: boolean | null | undefined): string {
+  if (value === null || value === undefined) return "unknown";
   return value ? "yes" : "no";
+}
+
+/**
+ * Renders one signal as a ground-truth line, citing the file it was found in.
+ * The evidence path matters: it is what lets the model verify a claim instead
+ * of guessing, and what makes "no" credible rather than an artifact of a
+ * partial read.
+ */
+function formatSignalLine(
+  label: string,
+  value: boolean | null | undefined,
+  profile: AppProfile,
+  factPath: string
+): string {
+  if (value === null || value === undefined) return `- ${label}: unknown`;
+  if (!value) return `- ${label}: NOT FOUND anywhere in the scanned source`;
+  const file = profile.evidence[factPath]?.file;
+  return `- ${label}: FOUND${file ? ` (evidence: ${file})` : ""}`;
 }
 
 /** Compact AppProfile digest for the reviewer prompt. */
@@ -360,12 +478,70 @@ function formatProfileDigest(profile: AppProfile): string {
   }
 
   const signals = profile.signals;
+  const scanned = profile.stats.files_scanned;
+  const discovered = profile.stats.files_discovered;
+  const complete = profile.stats.coverage_complete;
+
+  lines.push("");
+  lines.push("### Resolved By Deterministic Scan (ground truth, do not contradict)");
+  if (discovered !== undefined && complete === true) {
+    lines.push(
+      `The scanner read ALL ${discovered} source files in this project. ` +
+        "The results below are facts, not impressions."
+    );
+  } else if (discovered !== undefined) {
+    lines.push(
+      `The scanner read ${scanned} of ${discovered} source files (coverage incomplete). ` +
+        'Anything marked "unknown" was not established either way.'
+    );
+  }
   lines.push(
-    "- Source signals: " +
-      `restore purchases ${formatValueOrUnknown(signals.restore_purchases_found)}, ` +
-      `account deletion ${formatValueOrUnknown(signals.account_deletion_found)}, ` +
-      `privacy policy link ${formatValueOrUnknown(signals.privacy_policy_link_found)}, ` +
-      `external checkout URL ${formatValueOrUnknown(signals.external_checkout_url_found)}`
+    formatSignalLine(
+      "Restore purchases",
+      signals.restore_purchases_found,
+      profile,
+      "signals.restore_purchases_found"
+    )
+  );
+  lines.push(
+    formatSignalLine(
+      "Account deletion",
+      signals.account_deletion_found,
+      profile,
+      "signals.account_deletion_found"
+    )
+  );
+  lines.push(
+    formatSignalLine(
+      "In-app privacy policy link",
+      signals.privacy_policy_link_found,
+      profile,
+      "signals.privacy_policy_link_found"
+    )
+  );
+  lines.push(
+    formatSignalLine(
+      "External checkout URL",
+      signals.external_checkout_url_found,
+      profile,
+      "signals.external_checkout_url_found"
+    )
+  );
+  lines.push(
+    formatSignalLine(
+      "User-generated content surface",
+      signals.ugc_surface_found,
+      profile,
+      "signals.ugc_surface_found"
+    )
+  );
+  lines.push(
+    formatSignalLine(
+      "Moderation controls (report/block)",
+      signals.moderation_controls_found,
+      profile,
+      "signals.moderation_controls_found"
+    )
   );
 
   return lines.join("\n");
@@ -399,6 +575,13 @@ export interface RunCodeReviewInput {
   staticFindings: ReviewFinding[];
   /** Loaded rulepack bundle: stories feed RAG; rules feed the deep-mode re-run. */
   bundle: RulepackBundle;
+  /**
+   * EVERY source path in the project, not just the ones in sourceContext.
+   * Shown to the model so it can tell "this feature has no home in this app"
+   * from "I wasn't given that file", and used to reject findings citing files
+   * that do not exist.
+   */
+  inventory?: string[];
 }
 
 export interface RunCodeReviewResult {
@@ -411,6 +594,10 @@ export interface RunCodeReviewResult {
   ragStoriesUsed: number;
   /** How many AI findings were dropped as duplicates of static findings. */
   dedupedCount: number;
+  /** AI findings rejected for asserting absence without supporting evidence. */
+  unsupportedCount: number;
+  /** AI findings demoted from high because they carried no evidence quote. */
+  downgradedCount: number;
   /** Profile, possibly enriched with pass-1 capabilities (deep mode). */
   profile: AppProfile;
   /** Checks/static findings, possibly re-evaluated after capability enrichment. */
@@ -483,6 +670,19 @@ ${featureAnalysis.riskAreas.map((r) => `- ${r}`).join("\n")}
 `
     : "";
 
+  // The complete path list. Cheap (a few KB) and the single most effective
+  // guard against invented "this feature is missing" findings: the model can
+  // see that e.g. a settings screen exists even when it was not given its body.
+  const inventorySection =
+    input.inventory && input.inventory.length > 0
+      ? `## Source File Inventory (${input.inventory.length} files, complete)
+Every source file in this project. Files not reproduced below still EXIST; you simply were not shown them.
+
+${input.inventory.join("\n")}
+
+`
+      : "";
+
   const userPrompt = `## App Information
 - Platform: ${input.platform}
 - App Name: ${input.appName}
@@ -501,7 +701,7 @@ These are REAL cases where Apple rejected similar apps. Use them to calibrate:
 
 ${storiesText}
 
-## Source Code Context
+${inventorySection}## Source Code Context
 
 ${input.sourceContext}
 
@@ -520,6 +720,8 @@ Now review this app as an Apple reviewer testing it on a device. Focus on behavi
       featuresDetected,
       ragStoriesUsed: relevantStories.length,
       dedupedCount: 0,
+      unsupportedCount: 0,
+      downgradedCount: 0,
       profile,
       checks,
       staticFindings,
@@ -529,12 +731,29 @@ Now review this app as an Apple reviewer testing it on a device. Focus on behavi
   const converted = convertFindings(parsed);
   const { kept, droppedCount } = dedupeAIFindings(converted, staticFindings);
 
+  // Reject claims the evidence cannot support. `resolvedTrue` is ground truth
+  // from a full-corpus scan, so an AI "feature X is missing" that contradicts
+  // it is simply wrong and must not reach the user.
+  const resolvedTrue: SignalKey[] = [];
+  const sig = profile.signals;
+  if (sig.account_deletion_found === true) resolvedTrue.push("account_deletion");
+  if (sig.restore_purchases_found === true) resolvedTrue.push("restore_purchases");
+  if (sig.privacy_policy_link_found === true) resolvedTrue.push("privacy_policy_link");
+  if (sig.moderation_controls_found === true) resolvedTrue.push("moderation_controls");
+
+  const guarded = filterUnsupportedAIFindings(kept, {
+    corpusPaths: new Set(input.inventory ?? []),
+    resolvedTrue,
+  });
+
   return {
-    aiFindings: kept,
+    aiFindings: guarded.kept,
     aiAssessment: parsed.overallAssessment || "AI review completed.",
     featuresDetected,
     ragStoriesUsed: relevantStories.length,
     dedupedCount: droppedCount,
+    unsupportedCount: guarded.droppedCount,
+    downgradedCount: guarded.downgradedCount,
     profile,
     checks,
     staticFindings,

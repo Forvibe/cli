@@ -52,9 +52,26 @@ describe("scanSourceSignals", () => {
     expect(s.scanned_files).toBe(5);
   });
 
-  it("matches account deletion via the loose 'account ... delet' proximity pattern (case-insensitive)", () => {
-    const s = scanSourceSignals({ files: [{ path: "x.kt", content: "fun purgeAccountAndDeleteData() {}" }] });
-    expect(s.account_deletion_found).toBe(true);
+  it("matches account deletion across verb/noun forms including camelCase continuations", () => {
+    const hit = (content: string) =>
+      scanSourceSignals({ files: [{ path: "x.kt", content }] }).account_deletion_found;
+    expect(hit("fun purgeAccountAndDeleteData() {}")).toBe(true);
+    expect(hit("Future<bool> deleteAccount() async {}")).toBe(true);
+    expect(hit("func removeUserProfile() {}")).toBe(true);
+    expect(hit('Text("Delete my account")')).toBe(true);
+  });
+
+  // The scan now covers every file in the project rather than a curated
+  // subset, so a loose pattern would reliably hit dead code and report a
+  // delete flow that no user can reach. That false NEGATIVE is worse than the
+  // false positive the wider coverage was meant to fix.
+  it("does not match incidental prose or unrelated identifiers", () => {
+    const hit = (content: string) =>
+      scanSourceSignals({ files: [{ path: "x.kt", content }] }).account_deletion_found;
+    expect(hit("val accountBalanceDeleted = true")).toBe(false);
+    expect(hit("// TODO: delete the account someday")).toBe(false);
+    expect(hit("fun removeAccountingEntry() {}")).toBe(false);
+    expect(hit("deleteUsername(name)")).toBe(false);
   });
 
   it("account creation is case-sensitive on identifiers (signUp matches, signup does not)", () => {
@@ -177,5 +194,54 @@ describe("buildAppProfile (fixture-driven)", () => {
     const p = profileFor("swift-app");
     expect(p.ios?.plist?.background_modes).toContain("audio");
     expect(p.capabilities).not.toContain("background_audio");
+  });
+});
+
+describe("coverage-aware tri-state signals", () => {
+  const plain = [{ path: "a.dart", content: "class Foo {} // nothing interesting here" }];
+
+  it("reports unknown, not false, when coverage is incomplete", () => {
+    // This is the whole fix: a partial scan must not assert absence. The old
+    // behaviour emitted a confident `false` and rules turned it into a
+    // violation, which is how apps with a working delete-account flow were
+    // told they had none.
+    const s = scanSourceSignals({ files: plain, coverageComplete: false });
+
+    expect(Object.prototype.hasOwnProperty.call(s, "account_deletion_found")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(s, "restore_purchases_found")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(s, "privacy_policy_link_found")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(s, "webview_ratio")).toBe(false);
+    expect(s.coverage_complete).toBe(false);
+  });
+
+  it("still reports a positive from a partial scan (a hit is a hit)", () => {
+    // Coverage gating is asymmetric on purpose: finding deleteAccount proves
+    // deletion exists no matter how many other files were skipped.
+    const s = scanSourceSignals({
+      files: [{ path: "a.dart", content: "Future deleteAccount() async {}" }],
+      coverageComplete: false,
+    });
+
+    expect(s.account_deletion_found).toBe(true);
+    expect(s.account_creation_found).toBeUndefined();
+  });
+
+  it("defaults coverageComplete to true so existing callers are unaffected", () => {
+    const s = scanSourceSignals({ files: plain });
+
+    expect(s.coverage_complete).toBe(true);
+    expect(s.account_deletion_found).toBe(false);
+  });
+
+  it("records the file each signal was found in, for evidence attribution", () => {
+    const s = scanSourceSignals({
+      files: [
+        { path: "lib/a.dart", content: "nothing" },
+        { path: "lib/core/api_service.dart", content: "Future deleteAccount() async {}" },
+      ],
+    });
+
+    const hit = s.hits.find((h) => h.signal === "account_deletion");
+    expect(hit?.path).toBe("lib/core/api_service.dart");
   });
 });

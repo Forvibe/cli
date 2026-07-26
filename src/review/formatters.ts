@@ -29,6 +29,25 @@ const RISK_COLORS: Record<ReviewRiskLevel, (text: string) => string> = {
   info: chalk.gray,
 };
 
+/**
+ * Coverage line with a denominator.
+ *
+ * "34 source files analyzed" told the user nothing about the 224 files that
+ * were skipped, which is how a 13% scan came to read as a complete audit.
+ * A v1-shaped report (no discovered count) still renders the legacy phrasing.
+ */
+function formatCoverage(report: CodeReviewReport): string {
+  const analyzed = report.source_files_analyzed;
+  const discovered = report.source_files_discovered;
+  if (discovered === undefined || discovered <= 0) {
+    return `${analyzed} source files analyzed`;
+  }
+  const pct = Math.round((analyzed / discovered) * 100);
+  const ai = report.ai_context_files;
+  const aiPart = ai !== undefined ? ` · ${ai} sent to AI` : "";
+  return `${analyzed} of ${discovered} source files scanned (${pct}%)${aiPart}`;
+}
+
 const STATIC_ONLY_BANNER = "AI behavioral review skipped. Static rule results only.";
 
 function outcomeDisplay(outcome: string): string {
@@ -103,7 +122,14 @@ export function formatTerminal(report: CodeReviewReport): string {
   if (report.bundle_id) {
     lines.push(`  Bundle ID:   ${chalk.white(report.bundle_id)}`);
   }
-  lines.push(`  Files:       ${chalk.white(String(report.source_files_analyzed))} source files analyzed`);
+  lines.push(`  Files:       ${chalk.white(formatCoverage(report))}`);
+  if (report.source_scan_complete === false) {
+    lines.push(
+      chalk.yellow(
+        `               Partial scan. Signals that were not found are reported as unverified, not as violations.`
+      )
+    );
+  }
   lines.push(`  Stories:     ${chalk.white(String(report.rag_stories_used))} rejection cases referenced`);
   lines.push(`  Duration:    ${chalk.white((report.scan_duration_ms / 1000).toFixed(1) + "s")}`);
   lines.push("");
@@ -246,7 +272,12 @@ export function formatMarkdown(report: CodeReviewReport): string {
   if (report.bundle_id) {
     lines.push(`**Bundle ID:** ${report.bundle_id}`);
   }
-  lines.push(`**Files Analyzed:** ${report.source_files_analyzed}`);
+  lines.push(`**Files Analyzed:** ${formatCoverage(report)}`);
+  if (report.source_scan_complete === false) {
+    lines.push(
+      "> Partial scan. Signals that were not found are reported as unverified, not as violations."
+    );
+  }
   lines.push(`**Rejection Cases Referenced:** ${report.rag_stories_used}`);
   lines.push(`**Scan Duration:** ${(report.scan_duration_ms / 1000).toFixed(1)}s`);
   lines.push("");

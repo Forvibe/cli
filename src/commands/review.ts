@@ -13,11 +13,9 @@ import chalk from "chalk";
 import ora from "ora";
 import { detectTechStack } from "../analyzers/tech-detector.js";
 import { parseConfig } from "../analyzers/config-parser.js";
-import {
-  readSourceFiles,
-  joinSourceFiles,
-  generateProjectTree,
-} from "../analyzers/source-reader.js";
+import { joinSourceFiles, generateProjectTree } from "../analyzers/source-reader.js";
+import { readSourceCorpus } from "../engine/source-corpus.js";
+import { selectAiCorpus } from "../review/ai-corpus.js";
 import { ForvibeClient } from "../api/forvibe-client.js";
 import { getAvailableProviders, type AIProvider } from "../ai/providers.js";
 import { runStaticEngine } from "../engine/index.js";
@@ -138,16 +136,25 @@ export async function reviewCommand(options: {
     prefixText: "  ",
   }).start();
 
-  // Use large context for review - read as much code as possible
-  const maxChars = deep ? 400000 : 150000;
-  const sourceFiles = readSourceFiles(rootDir, techStack.stack, maxChars);
-  const sourceCode = joinSourceFiles(sourceFiles);
-  const projectTree = generateProjectTree(rootDir);
-  const sourceLines = sourceCode.split("\n").length;
+  // Read EVERY source file, untruncated. This corpus is what the deterministic
+  // signal scan sees; the AI's token budget is applied separately, further
+  // down. Coupling the two is what made the scanner report "no account
+  // deletion" for apps that plainly had one.
+  const corpus = readSourceCorpus(rootDir, techStack.stack);
+  const projectTree = generateProjectTree(rootDir, 5, 600);
 
+  const cov = corpus.coverage;
   sourceSpinner.succeed(
-    `Source code: ${chalk.bold(String(sourceLines))} lines in ${chalk.bold(String(sourceFiles.length))} files`
+    `Source: ${chalk.bold(String(cov.read))} of ${chalk.bold(String(cov.discovered))} files scanned ` +
+      chalk.gray(`(${(cov.total_bytes / 1024 / 1024).toFixed(1)} MB)`)
   );
+  if (!cov.complete) {
+    console.log(
+      chalk.yellow(
+        `  Partial scan (${cov.limits_hit.join(", ")}). Signals that were not found are reported as unverified, not as violations.`
+      )
+    );
+  }
 
   // Step 5: Static rule engine (deterministic; no network, no AI)
   const staticSpinner = ora({
@@ -155,8 +162,6 @@ export async function reviewCommand(options: {
     prefixText: "  ",
   }).start();
 
-  // Pass the exact same files the AI prompt will see, so behavioral signals
-  // are scanned over the same corpus.
   const staticResult = runStaticEngine({
     rootDir,
     stackResult: techStack,
@@ -168,8 +173,20 @@ export async function reviewCommand(options: {
       min_android_sdk: config.min_android_sdk,
     },
     bundle,
-    sourceFiles,
+    sourceCorpus: corpus,
   });
+
+  // Now, and only now, apply the LLM context budget: evidence files the
+  // deterministic scan actually matched go in first, as excerpts centred on
+  // the match, then a generic priority fill.
+  const maxChars = deep ? 400000 : 150000;
+  const aiCorpus = selectAiCorpus(
+    corpus,
+    staticResult.signalHits,
+    techStack.stack,
+    maxChars
+  );
+  const sourceCode = joinSourceFiles(aiCorpus.files);
 
   const checkCount = (status: string) =>
     staticResult.checks.filter((c) => c.status === status).length;
@@ -251,7 +268,10 @@ export async function reviewCommand(options: {
     report = assembleReportV2({
       platform: techStack.label,
       bundleId: config.bundle_id,
-      sourceFilesAnalyzed: sourceFiles.length,
+      sourceFilesAnalyzed: cov.read,
+      sourceFilesDiscovered: cov.discovered,
+      sourceScanComplete: cov.complete,
+      aiContextFiles: aiCorpus.files.length,
       featuresDetected: [],
       staticFindings: staticResult.findings,
       aiFindings: [],
@@ -307,12 +327,16 @@ export async function reviewCommand(options: {
         staticChecks: staticResult.checks,
         staticFindings: staticResult.findings,
         bundle,
+        inventory: aiCorpus.inventory,
       });
 
       report = assembleReportV2({
         platform: techStack.label,
         bundleId: config.bundle_id,
-        sourceFilesAnalyzed: sourceFiles.length,
+        sourceFilesAnalyzed: cov.read,
+      sourceFilesDiscovered: cov.discovered,
+      sourceScanComplete: cov.complete,
+      aiContextFiles: aiCorpus.files.length,
         featuresDetected: aiResult.featuresDetected,
         staticFindings: aiResult.staticFindings,
         aiFindings: aiResult.aiFindings,
@@ -340,6 +364,22 @@ export async function reviewCommand(options: {
         console.log(
           chalk.gray(
             `  Deduplicated ${aiResult.dedupedCount} findings already covered by static analysis.`
+          )
+        );
+      }
+      // Never filter silently: if the guard is misfiring, the user needs to be
+      // able to see that it is.
+      if (aiResult.unsupportedCount > 0) {
+        console.log(
+          chalk.gray(
+            `  Discarded ${aiResult.unsupportedCount} AI findings that claimed a feature was missing without supporting evidence.`
+          )
+        );
+      }
+      if (aiResult.downgradedCount > 0) {
+        console.log(
+          chalk.gray(
+            `  Downgraded ${aiResult.downgradedCount} high-risk AI findings that carried no code evidence.`
           )
         );
       }

@@ -104,15 +104,33 @@ export interface AppProfile {
     exported_components: number; queries_declared: boolean;
   } | null;
   capabilities: Capability[];
+  // Omitted-vs-value contract, same shape as the iOS plist scalars above:
+  //   property OMITTED = the scan could not determine this (partial coverage)
+  //                      -> rules resolve `absent` and yield "unverified"
+  //   false            = scanned the WHOLE corpus and genuinely did not find it
+  //   true             = found (coverage-independent; a hit is a hit)
+  // Emitting a confident `false` from a partial scan is what produced false
+  // "account deletion missing" / "no privacy policy" violations.
   signals: {
-    restore_purchases_found: boolean | null;   // null = could not determine
-    account_deletion_found: boolean | null;
-    privacy_policy_link_found: boolean | null;
-    external_checkout_url_found: boolean | null;
-    webview_ratio: number | null;
+    restore_purchases_found?: boolean | null;
+    account_deletion_found?: boolean | null;
+    privacy_policy_link_found?: boolean | null;
+    external_checkout_url_found?: boolean | null;
+    ugc_surface_found?: boolean | null;
+    moderation_controls_found?: boolean | null;
+    webview_ratio?: number | null;
   };
   evidence: Record<string, { file: string; detail?: string }>;
-  stats: { files_scanned: number; source_chars_read: number };
+  stats: {
+    files_scanned: number;
+    source_chars_read: number;
+    /** Source files the walker found. Denominator for files_scanned. */
+    files_discovered?: number;
+    /** False when a budget/limit stopped the scan short of the whole corpus. */
+    coverage_complete?: boolean;
+    /** Files actually placed in the AI prompt (a subset of files_scanned). */
+    ai_context_files?: number;
+  };
 }
 
 // =============================================
