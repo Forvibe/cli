@@ -1,9 +1,16 @@
 import type { AIProvider } from "./providers.js";
 import type {
   CLIProjectReport,
+  CreativeDirectionHint,
   ParsedConfig,
   SDKScanResult,
   BrandingResult,
+  ScreenshotDensity,
+  ScreenshotDesignHints,
+  ScreenshotFeatureHint,
+  ScreenshotRadiusStyle,
+  ScreenshotShadowStyle,
+  ScreenshotTheme,
   TechStackResult,
 } from "../types/report.js";
 
@@ -45,6 +52,19 @@ The "description" field must be a DETAILED, RICH description of 4-8 sentences th
 ## UNIQUE SELLING POINTS:
 - 3-5 points that make this app stand out
 - Be specific based on actual features found in the code
+
+## SCREENSHOT DESIGN DIRECTION — POWERS AUTOMATED APP STORE SCREENSHOTS:
+The "screenshot_design" object lets Forvibe generate App Store screenshot campaigns later without ever re-scanning this project. Ground every field in evidence you actually found in the source code, file tree, or README, and omit any optional field the evidence does not support. Never invent product facts.
+- "style_idea.concept" is a short, app-specific campaign idea. Generic directions like "modern, clean, minimal gradients" are useless — name the idea this particular app's behavior suggests.
+- "style_idea.metaphor" explains how real, observed product behavior can be represented visually. This is a visual proposal, not a claim that such artwork already exists.
+- "style_idea.recurringMotifs" are reusable visual motifs that make the screenshot pages feel like one campaign.
+- "style_idea.backgroundTreatment" and "style_idea.accentTreatment" describe meaningful use of surfaces and brand colors.
+- "style_idea.pageRhythm" describes how the screenshot sequence should visually progress from first page to last.
+- "screenshot_design.features" must list 3-7 of the most important, distinct, high-value features, each with a user-benefit description. SEVEN IS A MAXIMUM, NOT A TARGET — never pad with filler or trivial settings screens. This list is deliberately shorter and more curated than "key_features". If fewer than three features are substantiated by the code, return only those.
+- "brand_personality" and "visual_keywords" describe the app's character and visual energy in short words.
+- "typography.style", "heading_style" and "body_style" describe how the fonts the project actually uses should read.
+- "style.theme", "radius_style", "density" and "shadow_style" must reflect the UI you actually observed in the source, not a preference.
+- Do NOT output hex colors here; colors are extracted from the project separately.
 
 ## RESPONSE RULES:
 - Respond ONLY with a valid JSON object, no markdown, no explanation
@@ -114,10 +134,154 @@ ${input.sourceCode.substring(0, 40000)}`);
     "purchase_type": "one_time | subscription | both | none",
     "has_trial": false,
     "has_auto_renewal": false
+  },
+  "screenshot_design": {
+    "style_idea": {
+      "concept": "short app-specific campaign idea (max 160 chars)",
+      "metaphor": "how observed product behavior is represented visually (max 500 chars, omit if unsupported)",
+      "recurringMotifs": ["reusable motif tying pages together", "...up to 12"],
+      "backgroundTreatment": "how campaign backgrounds should behave (max 500 chars)",
+      "accentTreatment": "meaningful use of brand/accent colors (max 500 chars)",
+      "pageRhythm": "how the page sequence progresses (max 500 chars)"
+    },
+    "brand_personality": ["clear", "focused", "...up to 12 short words"],
+    "visual_keywords": ["calm", "organized", "...up to 20 short words"],
+    "typography": {
+      "style": "e.g. geometric sans-serif (max 120 chars)",
+      "heading_style": "e.g. bold and compact (max 160 chars)",
+      "body_style": "e.g. clear and readable (max 160 chars)"
+    },
+    "style": {
+      "theme": "light | dark | mixed",
+      "radius_style": "sharp | small | medium | large | pill",
+      "density": "compact | balanced | spacious",
+      "shadow_style": "none | subtle | medium | strong",
+      "characteristics": ["generous whitespace", "...up to 20"]
+    },
+    "features": [
+      { "name": "visible user benefit (max 120 chars)", "description": "truthful user outcome (max 500 chars)", "priority": 100 }
+    ]
   }
 }`);
 
   return parts.join("\n\n");
+}
+
+const THEMES: readonly ScreenshotTheme[] = ["light", "dark", "mixed"];
+const RADIUS_STYLES: readonly ScreenshotRadiusStyle[] = ["sharp", "small", "medium", "large", "pill"];
+const DENSITIES: readonly ScreenshotDensity[] = ["compact", "balanced", "spacious"];
+const SHADOW_STYLES: readonly ScreenshotShadowStyle[] = ["none", "subtle", "medium", "strong"];
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function trimmedText(value: unknown, maxLength: number): string | undefined {
+  if (typeof value !== "string") return undefined;
+  return value.trim().slice(0, maxLength) || undefined;
+}
+
+function trimmedList(value: unknown, maxItems: number, maxLength: number): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const items = value
+    .map((item) => trimmedText(item, maxLength))
+    .filter((item): item is string => Boolean(item))
+    .slice(0, maxItems);
+  return items.length > 0 ? items : undefined;
+}
+
+function pickEnum<T extends string>(value: unknown, allowed: readonly T[]): T | undefined {
+  return typeof value === "string" && (allowed as readonly string[]).includes(value)
+    ? (value as T)
+    : undefined;
+}
+
+function hasAnyValue(value: object): boolean {
+  return Object.values(value).some((entry) => entry !== undefined);
+}
+
+/**
+ * The server validates screenshot hints against a strict schema, so every field
+ * is length-capped and enum-checked here rather than trusting the model output.
+ */
+function normalizeStyleIdea(value: unknown): CreativeDirectionHint | string | undefined {
+  if (typeof value === "string") return trimmedText(value, 1200);
+  const raw = asRecord(value);
+  const concept = trimmedText(raw.concept, 160);
+  if (!concept) return undefined;
+  return {
+    concept,
+    metaphor: trimmedText(raw.metaphor, 500),
+    recurringMotifs: trimmedList(raw.recurringMotifs, 12, 120),
+    backgroundTreatment: trimmedText(raw.backgroundTreatment, 500),
+    accentTreatment: trimmedText(raw.accentTreatment, 500),
+    pageRhythm: trimmedText(raw.pageRhythm, 500),
+  };
+}
+
+function normalizeDesignFeatures(value: unknown): ScreenshotFeatureHint[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const features = value
+    .map((item, index): ScreenshotFeatureHint | null => {
+      const raw = asRecord(item);
+      const name = trimmedText(raw.name, 120);
+      if (!name) return null;
+      const priority =
+        typeof raw.priority === "number" && Number.isFinite(raw.priority)
+          ? Math.min(100, Math.max(0, Math.round(raw.priority)))
+          : Math.max(0, 100 - index * 10);
+      return { name, description: trimmedText(raw.description, 500), priority };
+    })
+    .filter((item): item is ScreenshotFeatureHint => item !== null)
+    .slice(0, 7);
+  return features.length > 0 ? features : undefined;
+}
+
+function buildScreenshotDesign(
+  value: unknown,
+  branding: BrandingResult
+): ScreenshotDesignHints | undefined {
+  const raw = asRecord(value);
+  const ui = branding.ui_colors;
+
+  const uiColors = {
+    accent: ui.accent ?? undefined,
+    background: ui.background ?? undefined,
+    surface: ui.surface ?? undefined,
+    text_primary: ui.text_primary ?? undefined,
+    text_secondary: ui.text_secondary ?? undefined,
+  };
+
+  const rawTypography = asRecord(raw.typography);
+  const typography = {
+    style: trimmedText(rawTypography.style, 120),
+    heading_style: trimmedText(rawTypography.heading_style, 160),
+    body_style: trimmedText(rawTypography.body_style, 160),
+  };
+
+  const rawStyle = asRecord(raw.style);
+  const style = {
+    // Colors come from the project itself, so the theme derived from them wins;
+    // the model only fills it when no surface colors could be extracted.
+    theme: ui.theme ?? pickEnum(rawStyle.theme, THEMES),
+    radius_style: pickEnum(rawStyle.radius_style, RADIUS_STYLES),
+    density: pickEnum(rawStyle.density, DENSITIES),
+    shadow_style: pickEnum(rawStyle.shadow_style, SHADOW_STYLES),
+    characteristics: trimmedList(rawStyle.characteristics, 20, 80),
+  };
+
+  const hints: ScreenshotDesignHints = {
+    brand_personality: trimmedList(raw.brand_personality, 12, 60),
+    visual_keywords: trimmedList(raw.visual_keywords, 20, 60),
+    ui_colors: hasAnyValue(uiColors) ? uiColors : undefined,
+    typography: hasAnyValue(typography) ? typography : undefined,
+    style: hasAnyValue(style) ? style : undefined,
+    features: normalizeDesignFeatures(raw.features),
+  };
+
+  return hasAnyValue(hints) ? hints : undefined;
 }
 
 interface AIAnalysis {
@@ -134,6 +298,7 @@ interface AIAnalysis {
     has_trial?: boolean;
     has_auto_renewal?: boolean;
   };
+  screenshot_design?: Record<string, unknown>;
 }
 
 /**
@@ -200,6 +365,10 @@ export async function generateReport(
     key_features: aiAnalysis.key_features || [],
     target_audience: aiAnalysis.target_audience || "",
     unique_selling_points: aiAnalysis.unique_selling_points || [],
+
+    // Screenshot Studio V3 hints
+    screenshot_style_idea: normalizeStyleIdea(aiAnalysis.screenshot_design?.style_idea),
+    screenshot_design: buildScreenshotDesign(aiAnalysis.screenshot_design, input.branding),
 
     // Branding
     primary_color: input.branding.primary_color || "#007AFF",

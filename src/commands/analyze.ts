@@ -390,6 +390,22 @@ export async function analyzeCommand(options: { dir?: string; apiUrl?: string })
   console.log(`  Data:         ${chalk.white(report.data_collected.join(", ") || "none")}`);
   console.log(`  Colors:       ${chalk.hex(report.primary_color)("■")} ${report.primary_color} ${report.secondary_color ? `${chalk.hex(report.secondary_color)("■")} ${report.secondary_color}` : ""}${report.brand_colors?.length ? chalk.gray(` +${report.brand_colors.length} brand colors`) : ""}`);
   console.log(`  Fonts:        ${report.detected_fonts?.length ? chalk.white(report.detected_fonts.join(", ")) : chalk.gray("none detected")}`);
+  const styleIdea = report.screenshot_style_idea;
+  const ssConcept = typeof styleIdea === "string" ? styleIdea : styleIdea?.concept;
+  console.log(
+    `  SS Concept:   ${ssConcept ? chalk.white(ssConcept.length > 80 ? ssConcept.substring(0, 80) + "..." : ssConcept) : chalk.gray("not generated")}`
+  );
+
+  const ssDesign = report.screenshot_design;
+  const ssParts = [
+    ssDesign?.features?.length && `${ssDesign.features.length} features`,
+    ssDesign?.style?.theme && `${ssDesign.style.theme} theme`,
+    ssDesign?.ui_colors?.background && `bg ${ssDesign.ui_colors.background}`,
+    ssDesign?.brand_personality?.length && `${ssDesign.brand_personality.length} traits`,
+  ].filter(Boolean);
+  console.log(
+    `  SS Design:    ${ssParts.length > 0 ? chalk.white(ssParts.join(" · ")) : chalk.gray("no hints collected")}`
+  );
   console.log(`  Icon:         ${report.app_icon_base64 ? chalk.green("✓ found") : chalk.gray("not found")}`);
   console.log(`  Assets:       ${report.app_assets?.length ? chalk.green(`${report.app_assets.length} found`) : chalk.gray("none")}`);
   console.log(chalk.gray("  ─────────────────────────────────────"));

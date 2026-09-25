@@ -1,6 +1,6 @@
 import { readFileSync, existsSync, readdirSync, statSync } from "fs";
 import { join, extname } from "path";
-import type { TechStack, BrandingResult } from "../types/report.js";
+import type { TechStack, BrandingResult, UIColorPalette } from "../types/report.js";
 import { readFileSafe, findFiles, findAllFiles } from "../utils/file-scanner.js";
 
 /**
@@ -16,6 +16,14 @@ export function extractBranding(
     app_icon_base64: null,
     app_icon_path: null,
     brand_colors: [],
+    ui_colors: {
+      accent: null,
+      background: null,
+      surface: null,
+      text_primary: null,
+      text_secondary: null,
+      theme: null,
+    },
   };
 
   // Extract colors
@@ -23,6 +31,7 @@ export function extractBranding(
   result.primary_color = colors.primary;
   result.secondary_color = colors.secondary;
   result.brand_colors = extractBrandColors(colors.allColors);
+  result.ui_colors = deriveUIColors(colors.allColors, colors.primary, colors.secondary);
 
   // Find and encode app icon
   const icon = findAppIcon(rootDir, techStack);
@@ -182,20 +191,45 @@ function extractMauiColors(rootDir: string): ColorResult {
   };
 }
 
-function isIrrelevantColor(hex: string): boolean {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  // Perceived brightness (0-255)
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  if (brightness > 242 || brightness < 13) return true;
-  // Grayscale check (R ≈ G ≈ B)
-  const maxDiff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
-  if (maxDiff < 15) return true;
-  return false;
+function channelsOf(hex: string): [number, number, number] {
+  return [
+    parseInt(hex.slice(1, 3), 16),
+    parseInt(hex.slice(3, 5), 16),
+    parseInt(hex.slice(5, 7), 16),
+  ];
 }
 
-function extractBrandColors(allColors: string[]): string[] {
+// Perceived brightness (0-255)
+function brightnessOf(hex: string): number {
+  const [r, g, b] = channelsOf(hex);
+  return (r * 299 + g * 587 + b * 114) / 1000;
+}
+
+/** Near-white, near-black and grayscale values, which are never brand colors. */
+function isNeutralColor(hex: string): boolean {
+  const brightness = brightnessOf(hex);
+  if (brightness > 242 || brightness < 13) return true;
+  const [r, g, b] = channelsOf(hex);
+  const maxDiff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
+  return maxDiff < 15;
+}
+
+function chromaOf(hex: string): number {
+  const [r, g, b] = channelsOf(hex);
+  return Math.max(r, g, b) - Math.min(r, g, b);
+}
+
+/**
+ * Backgrounds, surfaces and text in real apps are rarely pure gray — they are
+ * tinted, like a navy background over a blue brand color. Absolute chroma
+ * separates that UI chrome from brand colors, where isNeutralColor's grayscale
+ * test would misread a tinted surface as a brand color.
+ */
+function isChromeColor(hex: string): boolean {
+  return chromaOf(hex) < 60;
+}
+
+function rankColorsByFrequency(allColors: string[]): string[] {
   const freq = new Map<string, number>();
   for (const raw of allColors) {
     const hex = raw.toLowerCase().slice(0, 7); // normalize to #rrggbb
@@ -203,12 +237,62 @@ function extractBrandColors(allColors: string[]): string[] {
     freq.set(hex, (freq.get(hex) || 0) + 1);
   }
 
-  // Filter irrelevant and sort by frequency
-  const filtered = [...freq.entries()]
-    .filter(([hex]) => !isIrrelevantColor(hex))
-    .sort((a, b) => b[1] - a[1]);
+  return [...freq.entries()].sort((a, b) => b[1] - a[1]).map(([hex]) => hex);
+}
 
-  return filtered.slice(0, 3).map(([hex]) => hex);
+function extractBrandColors(allColors: string[]): string[] {
+  return rankColorsByFrequency(allColors)
+    .filter((hex) => !isNeutralColor(hex))
+    .slice(0, 3);
+}
+
+/**
+ * Recover the surface, text and accent colors that extractBrandColors drops.
+ * Screenshot generation needs them to match the app's real look, so they are
+ * classified by brightness rather than discarded as irrelevant.
+ */
+export function deriveUIColors(
+  allColors: string[],
+  primary: string | null,
+  secondary: string | null
+): UIColorPalette {
+  const ranked = rankColorsByFrequency(allColors);
+  const chrome = ranked.filter(isChromeColor);
+  const saturated = ranked.filter((hex) => !isChromeColor(hex));
+
+  const reserved = new Set(
+    [primary, secondary].filter((hex): hex is string => Boolean(hex)).map((hex) => hex.toLowerCase())
+  );
+  const accent = saturated.find((hex) => !reserved.has(hex)) ?? null;
+
+  const background = chrome[0] ?? null;
+  if (!background) {
+    return { accent, background: null, surface: null, text_primary: null, text_secondary: null, theme: null };
+  }
+
+  const backgroundIsLight = brightnessOf(background) > 128;
+  // Surface shares the background's end of the brightness scale; text has to sit
+  // at the opposite end to stay readable on that background.
+  const surface =
+    chrome.find(
+      (hex) =>
+        hex !== background &&
+        (brightnessOf(hex) > 128) === backgroundIsLight &&
+        Math.abs(brightnessOf(hex) - brightnessOf(background)) >= 8
+    ) ?? null;
+
+  const textCandidates = chrome
+    .filter((hex) => (brightnessOf(hex) > 128) !== backgroundIsLight)
+    .sort((a, b) => (backgroundIsLight ? brightnessOf(a) - brightnessOf(b) : brightnessOf(b) - brightnessOf(a)));
+
+  return {
+    accent,
+    background,
+    surface,
+    text_primary: textCandidates[0] ?? null,
+    text_secondary: textCandidates[1] ?? null,
+    theme: backgroundIsLight ? "light" : "dark",
+  };
 }
 
 function extractFlutterColors(rootDir: string): ColorResult {
