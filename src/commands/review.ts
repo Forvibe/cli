@@ -202,7 +202,7 @@ export async function reviewCommand(options: {
   let provider: AIProvider | null = null;
 
   if (!staticOnly) {
-    const availableProviders = getAvailableProviders(deep);
+    const availableProviders = getAvailableProviders();
 
     if (availableProviders.length === 0) {
       console.log();
