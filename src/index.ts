@@ -3,6 +3,7 @@
 import { Command } from "commander";
 import { analyzeCommand } from "./commands/analyze.js";
 import { reviewCommand } from "./commands/review.js";
+import { screenshotsCommand } from "./commands/screenshots.js";
 import { getCliVersion } from "./utils/version.js";
 
 const program = new Command();
@@ -24,6 +25,19 @@ program
     undefined
   )
   .action(analyzeCommand);
+
+program
+  .command("screenshots")
+  .description(
+    "Send your app's features, brand style, icon, and screenshots to Forvibe Screenshot Studio (use the code from Continue with Autopilot)"
+  )
+  .option("-d, --dir <path>", "Project directory to analyze", process.cwd())
+  .option(
+    "--api-url <url>",
+    "Forvibe API URL (for development)",
+    undefined
+  )
+  .action(screenshotsCommand);
 
 program
   .command("review")

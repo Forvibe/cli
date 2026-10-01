@@ -9,14 +9,13 @@ export interface AIProvider {
   ): Promise<string>;
 }
 
-function createGeminiProvider(apiKey: string, deep: boolean): AIProvider {
-  const modelId = deep ? "gemini-3.1-pro-preview" : "gemini-3-flash-preview";
+function createGeminiProvider(apiKey: string): AIProvider {
   return {
-    name: `Gemini (${deep ? "3.1 Pro" : "3 Flash"})`,
+    name: "Gemini 3.8 Flash",
     async generateJSON(systemPrompt, userPrompt, temperature) {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({
-        model: modelId,
+        model: "gemini-3.8-flash",
         generationConfig: {
           temperature,
           responseMimeType: "application/json",
@@ -35,8 +34,8 @@ function createGeminiProvider(apiKey: string, deep: boolean): AIProvider {
 
 function createOpenAIProvider(apiKey: string): AIProvider {
   return {
-    name: "OpenAI",
-    async generateJSON(systemPrompt, userPrompt, temperature) {
+    name: "OpenAI (GPT-5.6 Luna)",
+    async generateJSON(systemPrompt, userPrompt, _temperature) {
       const response = await fetch(
         "https://api.openai.com/v1/chat/completions",
         {
@@ -46,13 +45,13 @@ function createOpenAIProvider(apiKey: string): AIProvider {
             Authorization: `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
-            model: "gpt-4o-mini",
+            model: "gpt-5.6-luna",
             messages: [
               { role: "system", content: systemPrompt },
               { role: "user", content: userPrompt },
             ],
             response_format: { type: "json_object" },
-            temperature,
+            reasoning_effort: "low",
           }),
         }
       );
@@ -80,8 +79,8 @@ function createOpenAIProvider(apiKey: string): AIProvider {
 
 function createClaudeProvider(apiKey: string): AIProvider {
   return {
-    name: "Claude",
-    async generateJSON(systemPrompt, userPrompt, temperature) {
+    name: "Claude (Sonnet 5)",
+    async generateJSON(systemPrompt, userPrompt, _temperature) {
       const response = await fetch(
         "https://api.anthropic.com/v1/messages",
         {
@@ -92,11 +91,11 @@ function createClaudeProvider(apiKey: string): AIProvider {
             "anthropic-version": "2023-06-01",
           },
           body: JSON.stringify({
-            model: "claude-sonnet-4-6",
-            max_tokens: 8192,
+            model: "claude-sonnet-5",
+            max_tokens: 16000,
             system: systemPrompt,
             messages: [{ role: "user", content: userPrompt }],
-            temperature,
+            output_config: { effort: "medium" },
           }),
         }
       );
@@ -129,14 +128,14 @@ export interface AvailableProvider {
   create: () => AIProvider;
 }
 
-export function getAvailableProviders(deep: boolean = false): AvailableProvider[] {
+export function getAvailableProviders(): AvailableProvider[] {
   const providers: AvailableProvider[] = [];
 
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   if (anthropicKey) {
     providers.push({
       id: "claude",
-      name: "Claude",
+      name: "Claude (Sonnet 5)",
       recommended: true,
       create: () => createClaudeProvider(anthropicKey),
     });
@@ -146,7 +145,7 @@ export function getAvailableProviders(deep: boolean = false): AvailableProvider[
   if (openaiKey) {
     providers.push({
       id: "openai",
-      name: "OpenAI",
+      name: "OpenAI (GPT-5.6 Luna)",
       recommended: false,
       create: () => createOpenAIProvider(openaiKey),
     });
@@ -157,9 +156,9 @@ export function getAvailableProviders(deep: boolean = false): AvailableProvider[
   if (geminiKey) {
     providers.push({
       id: "gemini",
-      name: deep ? "Gemini 3.1 Pro" : "Gemini 3 Flash",
+      name: "Gemini 3.8 Flash",
       recommended: false,
-      create: () => createGeminiProvider(geminiKey, deep),
+      create: () => createGeminiProvider(geminiKey),
     });
   }
 

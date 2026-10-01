@@ -2,6 +2,7 @@ import { readFileSync, existsSync, readdirSync, statSync } from "fs";
 import { join, extname, relative, basename } from "path";
 import type { TechStack, CLIAppAsset, CLIAssetType } from "../types/report.js";
 import { readFileSafe } from "../utils/file-scanner.js";
+import { imageSize } from "../utils/image-size.js";
 
 const MAX_ASSET_SIZE = 5 * 1024 * 1024; // 5MB per asset (uploaded direct to Supabase Storage)
 const MAX_TOTAL_ASSETS = 10;
@@ -9,6 +10,19 @@ const MAX_SCREENSHOTS = 5;
 const MIN_ASSET_SIZE = 500; // Skip tiny placeholders
 const MIN_SCREENSHOT_SIZE = 10_000; // 10KB — screenshots from general dirs must be substantial
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
+const NOT_A_SCREEN = /(^|[-_. ])(icons?|logos?|splash|favicon|adaptive|foreground|background|banner|feature[-_ ]?graphic|promo)([-_. ]|$)/i;
+
+/**
+ * General image folders also hold icons, logos, and artwork. A screenshot is a
+ * portrait image at a phone or tablet ratio whose name is not an icon or logo;
+ * anything else would end up inside a phone frame as a fake app screen.
+ */
+export function looksLikeScreen(fileName: string, size: { width: number; height: number } | null): boolean {
+  if (NOT_A_SCREEN.test(fileName.replace(/\.[a-z0-9]+$/i, ""))) return false;
+  if (!size) return true;
+  const ratio = size.height / size.width;
+  return ratio >= 1.25 && ratio <= 2.4;
+}
 
 function getMimeType(filePath: string): string {
   const ext = extname(filePath).toLowerCase();
@@ -36,13 +50,15 @@ function tryReadImage(
     if (stat.size > MAX_ASSET_SIZE) return null;
 
     const buffer = readFileSync(filePath);
+    const size = imageSize(buffer);
+    if (assetType === "screenshot" && !looksLikeScreen(basename(filePath), size)) return null;
     return {
       asset_type: assetType,
       file_name: basename(filePath),
       mime_type: getMimeType(filePath),
       base64_data: buffer.toString("base64"),
-      width: null,
-      height: null,
+      width: size?.width ?? null,
+      height: size?.height ?? null,
       source_path: relative(rootDir, filePath),
     };
   } catch {
@@ -106,7 +122,8 @@ function collectImagesRecursive(
       if (assets.length >= MAX_TOTAL_ASSETS) return;
 
       const fullPath = join(dirPath, entry);
-      if (isImageFile(entry)) {
+      // Overlapping scan roots ("assets" and "assets/images") must not collect a file twice.
+      if (isImageFile(entry) && !assets.some((existing) => existing.source_path === relative(rootDir, fullPath))) {
         const asset = tryReadImage(rootDir, fullPath, assetType, minSize);
         if (asset) assets.push(asset);
       }
