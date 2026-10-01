@@ -1,4 +1,5 @@
 import type { CLIProjectReport, CLIAssetType } from "../types/report.js";
+import type { CLIScreenshotBrief } from "../types/screenshots.js";
 import type { CodeReviewReport } from "../types/review.js";
 
 export interface AssetUploadRequest {
@@ -23,10 +24,14 @@ export interface StoreConfig {
   languages: string[];
 }
 
+/** What the web generated the code for. Older servers omit it (store listing). */
+export type ConnectionFlow = "appstore" | "playstore" | "review" | "screenshots";
+
 interface ValidateOTCResponse {
   session_id: string;
   session_token: string;
   store_config?: StoreConfig | null;
+  flow_type?: ConnectionFlow;
 }
 
 interface SubmitReportResponse {
@@ -69,6 +74,7 @@ export class ForvibeClient {
   private sessionToken: string | null = null;
   public sessionId: string | null = null;
   public storeConfig: StoreConfig | null = null;
+  public flowType: ConnectionFlow = "appstore";
 
   constructor(baseUrl?: string) {
     this.baseUrl = (baseUrl || process.env.FORVIBE_API_URL || DEFAULT_API_URL).replace(/\/$/, "");
@@ -77,13 +83,13 @@ export class ForvibeClient {
   /**
    * Validate OTC code and get session token
    */
-  async validateOTC(code: string): Promise<ValidateOTCResponse> {
+  async validateOTC(code: string, expectedFlow?: ConnectionFlow): Promise<ValidateOTCResponse> {
     const normalizedCode = code.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
     const response = await fetch(`${this.baseUrl}/api/agent/validate-otc`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: normalizedCode }),
+      body: JSON.stringify(expectedFlow ? { code: normalizedCode, flow: expectedFlow } : { code: normalizedCode }),
     });
 
     if (!response.ok) {
@@ -98,6 +104,10 @@ export class ForvibeClient {
       if (response.status === 404) {
         throw new Error("Invalid connection code. Please check and try again.");
       }
+      // The code belongs to another command; the server did not consume it.
+      if (response.status === 409 && error.error) {
+        throw new Error(error.error);
+      }
 
       throw new Error(error.error || `Validation failed (${response.status})`);
     }
@@ -106,7 +116,31 @@ export class ForvibeClient {
     this.sessionToken = data.session_token;
     this.sessionId = data.session_id;
     this.storeConfig = data.store_config || null;
+    this.flowType = data.flow_type ?? "appstore";
     return data;
+  }
+
+  /**
+   * Submit the Screenshot Studio brief (flow_type "screenshots")
+   */
+  async submitScreenshotBrief(brief: CLIScreenshotBrief): Promise<SubmitReportResponse> {
+    if (!this.sessionToken) {
+      throw new Error("Not connected. Please validate OTC code first.");
+    }
+    const response = await fetchWithAuth(`${this.baseUrl}/api/agent/screenshot-brief`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.sessionToken}`,
+      },
+      body: JSON.stringify({ brief }),
+    });
+    if (!response.ok) {
+      const error = (await response.json().catch(() => ({}))) as { error?: string };
+      if (response.status === 401) throw new Error("Session expired. Please generate a new connection code in Screenshot Studio.");
+      throw new Error(error.error || `Could not send the brief (${response.status})`);
+    }
+    return (await response.json()) as SubmitReportResponse;
   }
 
   /**
